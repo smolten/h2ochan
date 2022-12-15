@@ -480,7 +480,7 @@ if (isset($_POST['delete'])) {
 		
 		if (!$thread = $query->fetch(PDO::FETCH_ASSOC)) {
 			// Non-existant
-			error($config['error']['nonexistant']);
+			error($config['error']['nonexistant'].": ".$id);
 		}
 	}
 	else {

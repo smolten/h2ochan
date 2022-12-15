@@ -2378,7 +2378,7 @@ function buildThread($id, $return = false, $mod = false) {
 
 		// Check if any posts were found
 		if (!isset($thread))
-			error($config['error']['nonexistant']);
+			error($config['error']['nonexistant'].": ".$id);
 	
 		$hasnoko50 = $thread->postCount() >= $config['noko50_min'];
 		$antibot = $mod || $return ? false : create_antibot($board['uri'], $id);
@@ -2454,7 +2454,7 @@ function buildThread50($id, $return = false, $mod = false, $thread = null, $anti
 
 		// Check if any posts were found
 		if (!isset($thread))
-			error($config['error']['nonexistant']);
+			error($config['error']['nonexistant'].": ".$id);
 
 
 		if ($query->rowCount() == $config['noko50_count']+1) {

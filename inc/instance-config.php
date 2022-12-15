@@ -19,5 +19,5 @@
 	
 	//$config['root']				= '/';
 	
-	@include('inc/secrets.php');
+	@include('inc/secrets.php'); // Config edits go THERE!!! 
 ?>
