@@ -36,14 +36,18 @@
 	    <br>
 	    <div class="mainBox">
 	        <br>
+	        {% if settings.description is not empty%}
 	        <div class="description">{{ settings.description }}</div>
-	        <br>
-	        <img class="imageofnow" src="{{ settings.imageofnow }}">
-	        <br>
-	        <div class="quoteofnow">{{ settings.quoteofnow }}</div>
-	        <br>
+	        <br>{% endif %}
+		{% if settings.imageofnow is not empty %}
+		<img class="imageofnow" src="{{ settings.imageofnow }}">
+	        <br>{% endif %}
+		{% if settings.quoteofnow is not empty %}
+		<div class="quoteofnow">{{ settings.quoteofnow }}</div>
+	        <br>{% endif %}
+		{% if settings.videoofnow is not empty %}
 	        <iframe class ="videoofnow" width="560" height="315" src="{{ settings.videoofnow }}"></iframe>
-	        <br>
+	        <br>{% endif %}
 	    </div>
 	    <div class="ban">
 		{% if news|count == 0 %}
