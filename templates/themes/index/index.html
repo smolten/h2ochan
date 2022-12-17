@@ -49,6 +49,7 @@
 	        <iframe class ="videoofnow" width="560" height="315" src="{{ settings.videoofnow }}"></iframe>
 	        <br>{% endif %}
 	    </div>
+	    {% if news|count > 0 %}
 	    <div class="ban">
 		{% if news|count == 0 %}
 			<p style="text-align:center" class="unimportant">(No news to show.)</p>
@@ -66,6 +67,7 @@
 			{% endfor %}
 		{% endif %}
 	    </div>
+	    {% endif %}
 	    <h1>Recent Images</h1>
 		<div class="box image">
 			<ul>
