@@ -48,3 +48,6 @@ favicon.ico
 /local-instances
 
 /vendor/
+
+#development
+/dev/*
