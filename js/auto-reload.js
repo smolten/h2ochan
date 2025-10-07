@@ -15,6 +15,9 @@
  *   //$config['additional_javascript'][] = 'js/titlebar-notifications.js';
  *   $config['additional_javascript'][] = 'js/auto-reload.js';
  *
+ * You must have boardlinks or else this script will not load.
+ * Search for "$config['boards'] = array(" within your inc/config.php and add something similar to your instance-config.php.
+ *
  */
 
 
@@ -241,4 +244,3 @@ $(document).ready(function(){
 		auto_update(poll_interval_delay);
 	}
 });
-

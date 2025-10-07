@@ -37,7 +37,7 @@ var banlist_init = function(token, my_boards, inMod) {
 	}
 	return pre+f.mask;
       } },
-      reason: {name: _("Reason"), width: "calc(100% - 715px - 6 * 4px)", fmt: function(f) {
+      reason: {name: _("Reason"), width: "calc(100% - 770px - 6 * 4px)", fmt: function(f) {
 	var add = "", suf = '';
         if (f.seen == 1) add += "<i class='fa fa-check' title='"+_("Seen")+"'></i>";
 	if (f.message) {
@@ -60,8 +60,8 @@ var banlist_init = function(token, my_boards, inMod) {
       // duration?
       expires: {name: _("Expires"), width: "235px", fmt: function(f) {
 	if (!f.expires || f.expires == 0) return "<em>"+_("never")+"</em>";
-        return strftime(window.post_date, new Date((f.expires|0)*1000), datelocale) + 
-          ((f.expires < time()) ? "" : " <small>"+_("in ")+until(f.expires|0)+"</small>");
+  var formattedDate = strftime("%m/%d/%Y (%a) %H:%M:%S", new Date((f.expires|0)*1000), datelocale);
+  return formattedDate + ((f.expires < time()) ? "" : " <small>"+_("in ")+until(f.expires|0)+"</small>");
       } },
       username: {name: _("Staff"), width: "100px", fmt: function(f) {
 	var pre='',suf='',un=f.username;
@@ -73,7 +73,12 @@ var banlist_init = function(token, my_boards, inMod) {
 	  un = "<em>"+_("system")+"</em>";
 	}
 	return pre + un + suf;
-      } }
+      } },
+      id: {
+         name: (inMod)?_("Edit"):"&nbsp;", width: (inMod)?"35px":"0px", fmt: function(f) {
+	 if (!inMod) return '';
+	 return "<a href='?/edit_ban/"+f.id+"'>Edit</a>";
+       } }
     }, {}, t);
 
     $("#select-all").click(function(e) {
@@ -124,14 +129,16 @@ var banlist_init = function(token, my_boards, inMod) {
     $(".banform").on("submit", function() { return false; });
 
     $("#unban").on("click", function() {
-      $(".banform .hiddens").remove();
-      $("<input type='hidden' name='unban' value='unban' class='hiddens'>").appendTo(".banform");
-
-      $.each(selected, function(e) {
-        $("<input type='hidden' name='ban_"+e+"' value='unban' class='hiddens'>").appendTo(".banform");
-      });
-
-      $(".banform").off("submit").submit();
+      if (confirm('Are you sure you want to unban the selected IPs?')) {
+        $(".banform .hiddens").remove();
+        $("<input type='hidden' name='unban' value='unban' class='hiddens'>").appendTo(".banform");
+    
+        $.each(selected, function(e) {
+          $("<input type='hidden' name='ban_"+e+"' value='unban' class='hiddens'>").appendTo(".banform");
+        });
+    
+        $(".banform").off("submit").submit();
+      }
     });
 
     if (device_type == 'desktop') {

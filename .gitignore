@@ -29,6 +29,7 @@
 thumbs.db
 Icon?
 Thumbs.db
+.env
 *.patch
 *.diff
 *.rej
@@ -44,5 +45,6 @@ Thumbs.db
 #vichan custom
 favicon.ico
 /static/spoiler.png
+/local-instances
 
 /vendor/

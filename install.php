@@ -1,7 +1,7 @@
 <?php
 
-// Installation/upgrade file	
-define('VERSION', '5.1.4');
+// Installation/upgrade file
+define('VERSION', '5.2.1');
 require 'inc/bootstrap.php';
 loadConfig();
 
@@ -59,41 +59,41 @@ $page = array(
 $config['minify_html'] = false;
 
 if (file_exists($config['has_installed'])) {
-	
+
 	// Check the version number
 	$version = trim(file_get_contents($config['has_installed']));
 	if (empty($version))
 		$version = 'v0.9.1';
-	
+
 	function __query($sql) {
 		sql_open();
-		
+
 		if (mysql_version() >= 50503)
 			return query($sql);
 		else
 			return query(str_replace('utf8mb4', 'utf8', $sql));
 	}
-	
+
 	$boards = listBoards();
-	
+
 	switch ($version) {
 		case 'v0.9':
 		case 'v0.9.1':
 			// Upgrade to v0.9.2-dev
-			
+
 			foreach ($boards as &$_board) {
 				// Add `capcode` field after `trip`
 				query(sprintf("ALTER TABLE `posts_%s` ADD  `capcode` VARCHAR( 50 ) NULL AFTER  `trip`", $_board['uri'])) or error(db_error());
-				
+
 				// Resize `trip` to 15 characters
 				query(sprintf("ALTER TABLE `posts_%s` CHANGE  `trip`  `trip` VARCHAR( 15 ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL", $_board['uri'])) or error(db_error());
 			}
 		case 'v0.9.2-dev':
 			// Upgrade to v0.9.2-dev-1
-			
+
 			// New table: `theme_settings`
 			query("CREATE TABLE IF NOT EXISTS `theme_settings` ( `name` varchar(40) NOT NULL, `value` text, UNIQUE KEY `name` (`name`)) ENGINE=InnoDB DEFAULT CHARSET=utf8;") or error(db_error());
-			
+
 			// New table: `news`
 			query("CREATE TABLE IF NOT EXISTS `news` ( `id` int(11) NOT NULL AUTO_INCREMENT, `name` text NOT NULL, `time` int(11) NOT NULL, `subject` text NOT NULL, `body` text NOT NULL, UNIQUE KEY `id` (`id`) ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1;") or error(db_error());
 		case 'v0.9.2.1-dev':
@@ -101,7 +101,7 @@ if (file_exists($config['has_installed'])) {
 			// Fix broken version number/mistake
 			$version = 'v0.9.2-dev-1';
 			// Upgrade to v0.9.2-dev-2
-			
+
 			foreach ($boards as &$_board) {
 				// Increase field sizes
 				query(sprintf("ALTER TABLE `posts_%s` CHANGE  `subject` `subject` VARCHAR( 50 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL", $_board['uri'])) or error(db_error());
@@ -109,7 +109,7 @@ if (file_exists($config['has_installed'])) {
 			}
 		case 'v0.9.2-dev-2':
 			// Upgrade to v0.9.2-dev-3 (v0.9.2)
-			
+
 			foreach ($boards as &$_board) {
 				// Add `custom_fields` field
 				query(sprintf("ALTER TABLE `posts_%s` ADD `embed` TEXT NULL", $_board['uri'])) or error(db_error());
@@ -117,7 +117,7 @@ if (file_exists($config['has_installed'])) {
 		case 'v0.9.2-dev-3': // v0.9.2-dev-3 == v0.9.2
 		case 'v0.9.2':
 			// Upgrade to v0.9.3-dev-1
-			
+
 			// Upgrade `theme_settings` table
 			query("TRUNCATE TABLE `theme_settings`") or error(db_error());
 			query("ALTER TABLE  `theme_settings` ADD  `theme` VARCHAR( 40 ) NOT NULL FIRST") or error(db_error());
@@ -142,16 +142,16 @@ if (file_exists($config['has_installed'])) {
 				query(sprintf("ALTER TABLE `posts_%s` CHANGE  `subject` `subject` VARCHAR( 100 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL", $_board['uri'])) or error(db_error());
 			}
 		case 'v0.9.3-dev-6':
-			// change to MyISAM
+			// change to InnoDB
 			$tables = array(
 				'bans', 'boards', 'ip_notes', 'modlogs', 'mods', 'mutes', 'noticeboard', 'pms', 'reports', 'robot', 'theme_settings', 'news'
 			);
 			foreach ($boards as &$board) {
 				$tables[] = "posts_{$board['uri']}";
 			}
-			
+
 			foreach ($tables as &$table) {
-				query("ALTER TABLE  `{$table}` ENGINE = MYISAM DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci") or error(db_error());
+				query("ALTER TABLE  `{$table}` ENGINE = INNODB DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci") or error(db_error());
 			}
 		case 'v0.9.3-dev-7':
 			foreach ($boards as &$board) {
@@ -173,10 +173,10 @@ if (file_exists($config['has_installed'])) {
 			query("ALTER TABLE  `boards` DROP PRIMARY KEY") or error(db_error());
 			query("ALTER TABLE  `reports` DROP INDEX  `id`") or error(db_error());
 			query("ALTER TABLE  `boards` DROP INDEX `uri`") or error(db_error());
-			
+
 			query("ALTER IGNORE TABLE  `robot` ADD PRIMARY KEY (`hash`)") or error(db_error());
 			query("ALTER TABLE  `bans` ADD FULLTEXT (`ip`)") or error(db_error());
-			query("ALTER TABLE  `ip_notes` ADD INDEX (`ip`)") or error(db_error());	
+			query("ALTER TABLE  `ip_notes` ADD INDEX (`ip`)") or error(db_error());
 			query("ALTER TABLE  `modlogs` ADD INDEX (`time`)") or error(db_error());
 			query("ALTER TABLE  `boards` ADD PRIMARY KEY(`uri`)") or error(db_error());
 			query("ALTER TABLE  `mutes` ADD INDEX (`ip`)") or error(db_error());
@@ -194,9 +194,9 @@ if (file_exists($config['has_installed'])) {
 					<p style="text-align:center">
 						<a href="?confirm=1">I have read and understood the agreement. Proceed to upgrading.</a>
 					</p>';
-				
+
 				file_write($config['has_installed'], 'v0.9.4-dev-2');
-				
+
 				break;
 			}
 		case 'v0.9.4-dev-3':
@@ -212,16 +212,16 @@ if (file_exists($config['has_installed'])) {
 			foreach ($boards as &$board) {
 				query(sprintf("ALTER TABLE  `posts_%s` ADD  `body_nomarkup` TEXT NULL AFTER  `body`", $board['uri'])) or error(db_error());
 			}
-			query("CREATE TABLE IF NOT EXISTS `cites` (  `board` varchar(8) NOT NULL,  `post` int(11) NOT NULL,  `target_board` varchar(8) NOT NULL,  `target` int(11) NOT NULL,  KEY `target` (`target_board`,`target`),  KEY `post` (`board`,`post`)) ENGINE=MyISAM DEFAULT CHARSET=utf8;") or error(db_error());
+			query("CREATE TABLE IF NOT EXISTS `cites` (  `board` varchar(8) NOT NULL,  `post` int(11) NOT NULL,  `target_board` varchar(8) NOT NULL,  `target` int(11) NOT NULL,  KEY `target` (`target_board`,`target`),  KEY `post` (`board`,`post`)) ENGINE=InnoDB DEFAULT CHARSET=utf8;") or error(db_error());
 		case 'v0.9.5-dev-2':
-			query("ALTER TABLE  `boards` 
+			query("ALTER TABLE  `boards`
 				CHANGE  `uri`  `uri` VARCHAR( 15 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
 				CHANGE  `title`  `title` VARCHAR( 40 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
 				CHANGE  `subtitle`  `subtitle` VARCHAR( 120 ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL") or error(db_error());
 		case 'v0.9.5-dev-3':
 			// v0.9.5
 		case 'v0.9.5':
-			query("ALTER TABLE  `boards` 
+			query("ALTER TABLE  `boards`
 				CHANGE  `uri`  `uri` VARCHAR( 50 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
 				CHANGE  `title`  `title` TINYTEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
 				CHANGE  `subtitle`  `subtitle` TINYTEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL") or error(db_error());
@@ -235,7 +235,7 @@ if (file_exists($config['has_installed'])) {
 				  `passed` smallint(6) NOT NULL,
 				  PRIMARY KEY (`hash`),
 				  KEY `board` (`board`,`thread`)
-				) ENGINE=MyISAM DEFAULT CHARSET=utf8;") or error(db_error());
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8;") or error(db_error());
 		case 'v0.9.6-dev-2':
 			query("ALTER TABLE `boards`
 				DROP `id`,
@@ -248,12 +248,12 @@ if (file_exists($config['has_installed'])) {
 				$query->bindValue(':newboard', $board['uri']);
 				$query->bindValue(':oldboard', $board['id']);
 				$query->execute() or error(db_error($query));
-				
+
 				$query = prepare("UPDATE `modlogs` SET `board` = :newboard WHERE `board` = :oldboard");
 				$query->bindValue(':newboard', $board['uri']);
 				$query->bindValue(':oldboard', $board['id']);
 				$query->execute() or error(db_error($query));
-				
+
 				$query = prepare("UPDATE `reports` SET `board` = :newboard WHERE `board` = :oldboard");
 				$query->bindValue(':newboard', $board['uri']);
 				$query->bindValue(':oldboard', $board['id']);
@@ -291,10 +291,10 @@ if (file_exists($config['has_installed'])) {
 				if (strlen($user['password']) == 40) {
 					mt_srand(microtime(true) * 100000 + memory_get_usage(true));
 					$salt = md5(uniqid(mt_rand(), true));
-			
+
 					$user['salt'] = $salt;
 					$user['password'] = hash('sha256', $user['salt'] . $user['password']);
-			
+
 					$_query = prepare("UPDATE `mods` SET `password` = :password, `salt` = :salt WHERE `id` = :id");
 					$_query->bindValue(':id', $user['id']);
 					$_query->bindValue(':password', $user['password']);
@@ -326,7 +326,7 @@ if (file_exists($config['has_installed'])) {
 					CHANGE `embed` `embed` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
 					DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;", $board['uri'])) or error(db_error());
 			}
-			
+
 			__query("ALTER TABLE  `antispam`
 				CHANGE  `board`  `board` VARCHAR( 120 ) CHARACTER SET ASCII COLLATE ascii_general_ci NOT NULL ,
 				CHANGE  `hash`  `hash` CHAR( 40 ) CHARACTER SET ASCII COLLATE ascii_bin NOT NULL ,
@@ -387,7 +387,7 @@ if (file_exists($config['has_installed'])) {
 				CHANGE  `theme`  `theme` VARCHAR( 40 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL ,
 				CHANGE  `name`  `name` VARCHAR( 40 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL ,
 				CHANGE  `value`  `value` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL ,
-				DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;") or eror(db_error());
+				DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;") or error(db_error());
 		case 'v0.9.6-dev-10':
 			query("ALTER TABLE  `antispam`
 				CHANGE  `board`  `board` VARCHAR( 58 ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;") or error(db_error());
@@ -462,7 +462,7 @@ if (file_exists($config['has_installed'])) {
 				  KEY `posthash` (`posthash`),
 				  KEY `filehash` (`filehash`),
 				  KEY `time` (`time`)
-				) ENGINE=MyISAM DEFAULT CHARSET=ascii COLLATE=ascii_bin AUTO_INCREMENT=1 ;") or error(db_error());
+				) ENGINE=InnoDB DEFAULT CHARSET=ascii COLLATE=ascii_bin AUTO_INCREMENT=1 ;") or error(db_error());
 		case 'v0.9.6-dev-19':
 			query("UPDATE ``mods`` SET `type` = 10 WHERE `type` = 0") or error(db_error());
 			query("UPDATE ``mods`` SET `type` = 20 WHERE `type` = 1") or error(db_error());
@@ -483,47 +483,47 @@ if (file_exists($config['has_installed'])) {
 				PRIMARY KEY (`id`),
 				KEY `expires` (`expires`),
 				KEY `ipstart` (`ipstart`,`ipend`)
-				) ENGINE=MyISAM  DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1") or error(db_error());
+				) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1") or error(db_error());
 			$listquery = query("SELECT * FROM ``bans`` ORDER BY `id`") or error(db_error());
 			while ($ban = $listquery->fetch(PDO::FETCH_ASSOC)) {
-				$query = prepare("INSERT INTO ``bans_new_temp`` VALUES 
+				$query = prepare("INSERT INTO ``bans_new_temp`` VALUES
 					(NULL, :ipstart, :ipend, :created, :expires, :board, :creator, :reason, :seen, NULL)");
-				
+
 				$range = Bans::parse_range($ban['ip']);
 				if ($range === false) {
 					// Invalid retard ban; just skip it.
 					continue;
 				}
-				
+
 				$query->bindValue(':ipstart', $range[0]);
 				if ($range[1] !== false && $range[1] != $range[0])
 					$query->bindValue(':ipend', $range[1]);
 				else
 					$query->bindValue(':ipend', null, PDO::PARAM_NULL);
-				
+
 				$query->bindValue(':created', $ban['set']);
-				
+
 				if ($ban['expires'])
 					$query->bindValue(':expires', $ban['expires']);
 				else
 					$query->bindValue(':expires', null, PDO::PARAM_NULL);
-				
+
 				if ($ban['board'])
 					$query->bindValue(':board', $ban['board']);
 				else
 					$query->bindValue(':board', null, PDO::PARAM_NULL);
-				
+
 				$query->bindValue(':creator', $ban['mod']);
-				
+
 				if ($ban['reason'])
 					$query->bindValue(':reason', $ban['reason']);
 				else
 					$query->bindValue(':reason', null, PDO::PARAM_NULL);
-				
+
 				$query->bindValue(':seen', $ban['seen']);
 				$query->execute() or error(db_error($query));
 			}
-			
+
 			// Drop old bans table
 			query("DROP TABLE ``bans``") or error(db_error());
 			// Replace with new table
@@ -538,7 +538,7 @@ if (file_exists($config['has_installed'])) {
 				  `denied` tinyint(1) NOT NULL,
 				  PRIMARY KEY (`id`),
 				  KEY `ban_id` (`ban_id`)
-				) ENGINE=MyISAM  DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;") or error(db_error());
+				) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;") or error(db_error());
 		case 'v0.9.6-dev-22':
 		case 'v0.9.6-dev-22 + <a href="https://int.vichan.net/devel/">vichan-devel-4.4.91</a>':
 		case 'v0.9.6-dev-22 + <a href="https://int.vichan.net/devel/">vichan-devel-4.4.92</a>':
@@ -555,9 +555,9 @@ if (file_exists($config['has_installed'])) {
 					<p style="text-align:center">
 						<a href="?confirm2=1">I have read and understood the agreement. Proceed to upgrading.</a>
 					</p>';
-				
+
 				file_write($config['has_installed'], '4.4.97');
-				
+
 				break;
 			}
 		case '4.4.98-pre':
@@ -573,9 +573,9 @@ if (file_exists($config['has_installed'])) {
 					<p style="text-align:center">
 						<a href="?confirm3=1">I have read and understood the warning. Proceed to upgrading.</a>
 					</p>';
-				
+
 				file_write($config['has_installed'], '4.5.2');
-				
+
 				break;
 			}
 
@@ -590,12 +590,12 @@ if (file_exists($config['has_installed'])) {
 		case '4.9.90':
 		case '4.9.91':
 		case '4.9.92':
-                        foreach ($boards as &$board) {
-                                query(sprintf('ALTER TABLE ``posts_%s`` ADD `slug` VARCHAR(255) DEFAULT NULL AFTER `embed`;', $board['uri'])) or error(db_error());
+						foreach ($boards as &$board) {
+								query(sprintf('ALTER TABLE ``posts_%s`` ADD `slug` VARCHAR(255) DEFAULT NULL AFTER `embed`;', $board['uri'])) or error(db_error());
 			}
-                case '4.9.93':
-                        query('ALTER TABLE ``mods`` CHANGE `password` `password` VARCHAR(255) NOT NULL;') or error(db_error());
-                        query('ALTER TABLE ``mods`` CHANGE `salt` `salt` VARCHAR(64) NOT NULL;') or error(db_error());
+				case '4.9.93':
+						query('ALTER TABLE ``mods`` CHANGE `password` `password` VARCHAR(255) NOT NULL;') or error(db_error());
+						query('ALTER TABLE ``mods`` CHANGE `salt` `salt` VARCHAR(64) NOT NULL;') or error(db_error());
 		case '5.0.0':
 			query('ALTER TABLE ``mods`` CHANGE `salt` `version` VARCHAR(64) NOT NULL;') or error(db_error());
 		case '5.0.1':
@@ -611,9 +611,9 @@ if (file_exists($config['has_installed'])) {
 			  UNIQUE KEY `u_pages` (`name`,`board`)
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8;') or error(db_error());
 		case '5.1.1':
-                        foreach ($boards as &$board) {
-                                query(sprintf("ALTER TABLE ``posts_%s`` ADD `cycle` int(1) NOT NULL AFTER `locked`", $board['uri'])) or error(db_error());
-                        }
+						foreach ($boards as &$board) {
+								query(sprintf("ALTER TABLE ``posts_%s`` ADD `cycle` int(1) NOT NULL AFTER `locked`", $board['uri'])) or error(db_error());
+						}
 		case '5.1.2':
 			query('CREATE TABLE IF NOT EXISTS ``nntp_references`` (
 				  `board` varchar(60) NOT NULL,
@@ -634,14 +634,14 @@ if (file_exists($config['has_installed'])) {
 			  	`text` varchar(255),
 			  	`created_at` int(11),
 			  	PRIMARY KEY (`cookie`,`extra`)
-				) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;') or error(db_error());
+				) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;') or error(db_error());
 		case false:
 			// TODO: enhance Tinyboard -> vichan upgrade path.
-			query("CREATE TABLE IF NOT EXISTS ``search_queries`` (  `ip` varchar(39) NOT NULL,  `time` int(11) NOT NULL,  `query` text NOT NULL) ENGINE=MyISAM DEFAULT CHARSET=utf8;") or error(db_error());
+			query("CREATE TABLE IF NOT EXISTS ``search_queries`` (  `ip` varchar(39) NOT NULL,  `time` int(11) NOT NULL,  `query` text NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8;") or error(db_error());
 
 			// Update version number
 			file_write($config['has_installed'], VERSION);
-			
+
 			$page['title'] = 'Upgraded';
 			$page['body'] = '<p style="text-align:center">Successfully upgraded from ' . $version . ' to <strong>' . VERSION . '</strong>.</p>';
 			break;
@@ -653,8 +653,8 @@ if (file_exists($config['has_installed'])) {
 			$page['title'] = 'Already installed';
 			$page['body'] = '<p style="text-align:center">It appears that vichan is already installed (' . $version . ') and there is nothing to upgrade! Delete <strong>' . $config['has_installed'] . '</strong> to reinstall.</p>';
 			break;
-	}			
-	
+	}
+
 	die(Element('page.html', $page));
 }
 
@@ -680,17 +680,19 @@ function create_config_from_array(&$instance_config, &$array, $prefix = '') {
 session_start();
 
 if ($step == 0) {
-	// Agreeement
+	// Agreement
 	$page['body'] = '
 	<textarea style="width:700px;height:370px;margin:auto;display:block;background:white;color:black" disabled>' . htmlentities(file_get_contents('LICENSE.md')) . '</textarea>
 	<p style="text-align:center">
 		<a href="?step=1">I have read and understood the agreement. Proceed to installation.</a>
 	</p>';
-	
+
 	echo Element('page.html', $page);
 } elseif ($step == 1) {
+	// The HTTPS check doesn't work properly when in those arrays, so let's run it here and pass along the result during the actual check.
+	$httpsvalue = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
 	$page['title'] = 'Pre-installation test';
-	
+
 	$can_exec = true;
 	if (!function_exists('shell_exec'))
 		$can_exec = false;
@@ -700,12 +702,12 @@ if ($step == 0) {
 		$can_exec = false;
 	elseif (trim(shell_exec('echo "TEST"')) !== 'TEST')
 		$can_exec = false;
-	
+
 	if (!defined('PHP_VERSION_ID')) {
 		$version = explode('.', PHP_VERSION);
 		define('PHP_VERSION_ID', ($version[0] * 10000 + $version[1] * 100 + $version[2]));
 	}
-	
+
 	// Required extensions
 	$extensions = array(
 		'PDO' => array(
@@ -729,17 +731,10 @@ if ($step == 0) {
 	$tests = array(
 		array(
 			'category' => 'PHP',
-			'name' => 'PHP &ge; 5.4',
+			'name' => 'PHP &ge; 7.4',
 			'result' => PHP_VERSION_ID >= 50400,
 			'required' => true,
-			'message' => 'vichan requires PHP 5.4 or better.',
-		),
-		array(
-			'category' => 'PHP',
-			'name' => 'PHP &ge; 5.6',
-			'result' => PHP_VERSION_ID >= 50600,
-			'required' => false,
-			'message' => 'vichan works best on PHP 5.6 or better.',
+			'message' => 'vichan requires PHP 7.4 or better.',
 		),
 		array(
 			'category' => 'PHP',
@@ -856,14 +851,14 @@ if ($step == 0) {
 		array(
 			'category' => 'File permissions',
 			'name' => getcwd() . '/templates/cache',
-			'result' => is_writable('templates') || (is_dir('templates/cache') && is_writable('templates/cache')),
+			'result' => is_dir('templates/cache/') && is_writable('templates/cache/'),
 			'required' => true,
 			'message' => 'You must give vichan permission to create (and write to) the <code>templates/cache</code> directory or performance will be drastically reduced.'
 		),
 		array(
 			'category' => 'File permissions',
 			'name' => getcwd() . '/tmp/cache',
-			'result' => is_dir('tmp/cache') && is_writable('tmp/cache'),
+			'result' => is_dir('tmp/cache/') && is_writable('tmp/cache/'),
 			'required' => true,
 			'message' => 'You must give vichan permission to write to the <code>tmp/cache</code> directory.'
 		),
@@ -876,12 +871,17 @@ if ($step == 0) {
 		),
 		array(
 			'category' => 'Misc',
-			'name' => 'Caching available (APC(u), XCache, Memcached or Redis)',
-			'result' => extension_loaded('apcu') || extension_loaded('apc') ||
-						extension_loaded('xcache') || extension_loaded('memcached') ||
-						extension_loaded('redis'),
+			'name' => 'HTTPS being used',
+			'result' => $httpsvalue,
 			'required' => false,
-			'message' => 'You will not be able to enable the additional caching system, designed to minimize SQL queries and significantly improve performance. <a href="http://php.net/manual/en/book.apc.php">APC</a> is the recommended method of caching, but <a href="http://xcache.lighttpd.net/">XCache</a>, <a href="http://www.php.net/manual/en/intro.memcached.php">Memcached</a> and <a href="http://pecl.php.net/package/redis">Redis</a> are also supported.'
+			'message' => 'You are not currently using https for vichan, or at least for your backend server. If this intentional, add "$config[\'cookies\'][\'secure_login_only\'] = 0;" (or 1 if using a proxy) on a new line under "Additional configuration" on the next page.'
+		),
+		array(
+			'category' => 'Misc',
+			'name' => 'Caching available (APCu, Memcached or Redis)',
+			'result' => extension_loaded('apcu') || extension_loaded('memcached') || extension_loaded('redis'),
+			'required' => false,
+			'message' => 'You will not be able to enable the additional caching system, designed to minimize SQL queries and significantly improve performance. <a href="https://www.php.net/manual/en/book.apcu.php">APCu</a> is the recommended method of caching, but <a href="http://www.php.net/manual/en/intro.memcached.php">Memcached</a> and <a href="http://pecl.php.net/package/redis">Redis</a> are also supported.'
 		),
 		array(
 			'category' => 'Misc',
@@ -893,7 +893,7 @@ if ($step == 0) {
 	);
 
 	$config['font_awesome'] = true;
-	
+
 	$additional_config = array();
 	foreach ($tests as $test) {
 		if ($test['result'] && isset($test['effect'])) {
@@ -914,19 +914,64 @@ if ($step == 0) {
 		'config' => $config,
 	));
 } elseif ($step == 2) {
-
-	// Basic config
 	$page['title'] = 'Configuration';
-
 	$sg = new SaltGen();
-	$config['cookies']['salt'] = $sg->generate();
-	$config['secure_trip_salt'] = $sg->generate();
+
+	// Initialize configuration with defaults and override with environment variables
+	$config['cookies'] = array(
+		'mod' => getenv('VICHAN_COOKIES_MOD') !== false ? getenv('VICHAN_COOKIES_MOD') : 'mod',
+		'salt' => $sg->generate(),
+	);
+
+	$config['flood_time'] = getenv('VICHAN_FLOOD_TIME') !== false ? (int)getenv('VICHAN_FLOOD_TIME') : 30;
+	$config['flood_time_ip'] = getenv('VICHAN_FLOOD_TIME_IP') !== false ? (int)getenv('VICHAN_FLOOD_TIME_IP') : 120;
+	$config['flood_time_same'] = getenv('VICHAN_FLOOD_TIME_SAME') !== false ? (int)getenv('VICHAN_FLOOD_TIME_SAME') : 3600;
+	$config['max_body'] = getenv('VICHAN_MAX_BODY') !== false ? (int)getenv('VICHAN_MAX_BODY') : 1800;
+	$config['reply_limit'] = getenv('VICHAN_REPLY_LIMIT') !== false ? (int)getenv('VICHAN_REPLY_LIMIT') : 250;
+	$config['max_links'] = getenv('VICHAN_MAX_LINKS') !== false ? (int)getenv('VICHAN_MAX_LINKS') : 20;
 	
+	$config['max_filesize'] = getenv('VICHAN_IMAGES_MAX_FILESIZE') !== false ? (int)getenv('VICHAN_IMAGES_MAX_FILESIZE') : 10485760; // This is 10MB
+	$config['thumb_width'] = getenv('VICHAN_IMAGES_THUMB_WIDTH') !== false ? (int)getenv('VICHAN_IMAGES_THUMB_WIDTH') : 250;
+	$config['thumb_height'] = getenv('VICHAN_IMAGES_THUMB_HEIGHT') !== false ? (int)getenv('VICHAN_IMAGES_THUMB_HEIGHT') : 250;
+	$config['max_width'] = getenv('VICHAN_IMAGES_MAX_WIDTH') !== false ? (int)getenv('VICHAN_IMAGES_MAX_WIDTH') : 10000;
+	$config['max_height'] = getenv('VICHAN_IMAGES_MAX_HEIGHT') !== false ? (int)getenv('VICHAN_IMAGES_MAX_HEIGHT') : 10000;
+	
+	$config['threads_per_page'] = getenv('VICHAN_DISPLAY_THREADS_PER_PAGE') !== false ? (int)getenv('VICHAN_DISPLAY_THREADS_PER_PAGE') : 10;
+	$config['max_pages'] = getenv('VICHAN_DISPLAY_MAX_PAGES') !== false ? (int)getenv('VICHAN_DISPLAY_MAX_PAGES') : 11;
+	$config['threads_preview'] = getenv('VICHAN_DISPLAY_THREADS_PREVIEW') !== false ? (int)getenv('VICHAN_DISPLAY_THREADS_PREVIEW') : 5;
+	
+	$config['root'] = getenv('VICHAN_DIRECTORIES_ROOT') !== false ? getenv('VICHAN_DIRECTORIES_ROOT') : '/';
+	
+	$config['secure_trip_salt'] = $sg->generate();
+	$config['secure_password_salt'] = $sg->generate();
+	
+	// Set database configuration from Docker environment variables, leave empty if not found
+	$config['db'] = array(
+		'type' => 'mysql', // Default, required for MySQL
+		'server' => getenv('VICHAN_MYSQL_HOST') !== false ? getenv('VICHAN_MYSQL_HOST') : '',
+		'database' => getenv('VICHAN_MYSQL_NAME') !== false ? getenv('VICHAN_MYSQL_NAME') : '',
+		'user' => getenv('VICHAN_MYSQL_USER') !== false ? getenv('VICHAN_MYSQL_USER') : '',
+		'password' => getenv('VICHAN_MYSQL_PASSWORD') !== false ? getenv('VICHAN_MYSQL_PASSWORD') : '',
+	);
+	
+	// Append secure_login_only to $_SESSION['more'] if VICHAN_SECURE_LOGIN_ONLY is set
+	if (getenv('VICHAN_SECURE_LOGIN_ONLY') !== false) {
+		$secure_login_only = (int)getenv('VICHAN_SECURE_LOGIN_ONLY');
+		$_SESSION['more'] .= "\n\$config['cookies']['secure_login_only'] = $secure_login_only;";
+	}
+
+	// Configuration notice at the top
+	$page['body'] = '<div class="ban"><h2>Configuration Note</h2>' .
+					'<p style="text-align:center;">The following settings can still be configured later. For more customization options, <a href="https://github.com/vichan-devel/vichan/wiki/config" target="_blank" rel="noopener noreferrer">check the Vichan configuration wiki.</a></p></div>';
+
+	// Append the configuration form
+	$page['body'] .= Element('installer/config.html', array(
+		'config' => $config,
+		'more' => $_SESSION['more'],
+	));
+
 	echo Element('page.html', array(
-		'body' => Element('installer/config.html', array(
-			'config' => $config,
-			'more' => $_SESSION['more'],
-		)),
+		'body' => $page['body'],
 		'title' => 'Configuration',
 		'config' => $config
 	));
@@ -934,7 +979,7 @@ if ($step == 0) {
 	$more = $_POST['more'];
 	unset($_POST['more']);
 
-	$instance_config = 
+	$instance_config =
 '<'.'?php
 
 /*
@@ -946,13 +991,13 @@ if ($step == 0) {
 */
 
 ';
-	
+
 	create_config_from_array($instance_config, $_POST);
-	
+
 	$instance_config .= "\n";
 	$instance_config .= $more;
 	$instance_config .= "\n";
-	
+
 	if (@file_put_contents('inc/secrets.php', $instance_config)) {
 		// flushes opcache if php >= 5.5.0 or opcache is installed via PECL
 		if (function_exists('opcache_invalidate')) {
@@ -972,66 +1017,88 @@ if ($step == 0) {
 		echo Element('page.html', $page);
 	}
 } elseif ($step == 4) {
-	// SQL installation
-	
 	buildJavascript();
-	
+
 	$sql = @file_get_contents('install.sql') or error("Couldn't load install.sql.");
-	
+
 	sql_open();
 	$mysql_version = mysql_version();
-	
+
 	// This code is probably horrible, but what I'm trying
 	// to do is find all of the SQL queires and put them
 	// in an array.
 	preg_match_all("/(^|\n)((SET|CREATE|INSERT).+)\n\n/msU", $sql, $queries);
 	$queries = $queries[2];
-	
+
 	$queries[] = Element('posts.sql', array('board' => 'b'));
-	
+
 	$sql_errors = '';
+	$sql_err_count = 0;
 	foreach ($queries as $query) {
 		if ($mysql_version < 50503)
-			$query = preg_replace('/(CHARSET=|CHARACTER SET )utf8mb4/', '$1utf8', $query);
+		$query = preg_replace('/(CHARSET=|CHARACTER SET )utf8mb4/', '$1utf8', $query);
 		$query = preg_replace('/^([\w\s]*)`([0-9a-zA-Z$_\x{0080}-\x{FFFF}]+)`/u', '$1``$2``', $query);
-		if (!query($query))
-			$sql_errors .= '<li>' . db_error() . '</li>';
+		if (!query($query)) {
+			$sql_err_count++;
+			$error = db_error();
+			$sql_errors .= "<li>$sql_err_count<ul><li>$query</li><li>$error</li></ul></li>";
+		}
 	}
-	
+
 	$page['title'] = 'Installation complete';
-	$page['body'] = '<p style="text-align:center">Thank you for using vichan. Please remember to report any bugs you discover. <a href="https://github.com/vichan-devel/vichan/wiki/Configuration-Basics">How do I edit the config files?</a></p>';
-	
+	$page['body'] = '<p style="text-align:center">Thank you for using vichan. <a href="https://github.com/vichan-devel/vichan/issues/new/choose" target="_blank" rel="noopener noreferrer">Please report any bugs you discover.</a></p>' .
+					'<p style="text-align:center">If you are new to vichan, <a href="https://github.com/vichan-devel/vichan/wiki" target="_blank" rel="noopener noreferrer">please check out the documentation.</a></p>';
+
+	// Admin panel notice
+	$page['body'] .= '<div class="ban"><h2>Next Steps</h2>' .
+					 '<p>You can now log in to the admin panel at <strong>/mod.php</strong> using the default credentials:</p>' .
+					 '<p><strong>Username:</strong> admin</p>' .
+					 '<p><strong>Password:</strong> password</p>' .
+					 '<p><strong>Important:</strong> For security, please change the administrator password immediately after logging in.</p>' .
+					 '<p style="text-align:center"><a href="/mod.php"><button>Go to Admin Panel</button></a></p></div>';
+
+
 	if (!empty($sql_errors)) {
-		$page['body'] .= '<div class="ban"><h2>SQL errors</h2><p>SQL errors were encountered when trying to install the database. This may be the result of using a database which is already occupied with a vichan installation; if so, you can probably ignore this.</p><p>The errors encountered were:</p><ul>' . $sql_errors . '</ul><p><a href="?step=5">Ignore errors and complete installation.</a></p></div>';
+		$page['body'] .= '<div class="ban"><h2>SQL errors</h2><p>SQL errors were encountered when trying to install the database. This may be the result of using a database which is already occupied with a vichan installation; if so, you can probably ignore this.</p><p>The errors encountered were:</p><ul>' . $sql_errors . '</ul>' .
+						 '<p style="text-align:center;color:#d00"><strong>Warning:</strong> Ignoring errors is not recommended and may cause installation issues.</p>' .
+						 '<p style="text-align:center"><a href="?step=5"><button>Next</button></a></p></div>';
 	} else {
 		$boards = listBoards();
 		foreach ($boards as &$_board) {
 			setupBoard($_board);
 			buildIndex();
 		}
-		
+
 		file_write($config['has_installed'], VERSION);
 		/*if (!file_unlink(__FILE__)) {
 			$page['body'] .= '<div class="ban"><h2>Delete install.php!</h2><p>I couldn\'t remove <strong>install.php</strong>. You will have to remove it manually.</p></div>';
 		}*/
 	}
-	
+
 	echo Element('page.html', $page);
 } elseif ($step == 5) {
 	$page['title'] = 'Installation complete';
-	$page['body'] = '<p style="text-align:center">Thank you for using vichan. Please remember to report any bugs you discover.</p>';
-	
+	$page['body'] = '<p style="text-align:center">Thank you for using vichan. Please report any bugs you discover.</p>' .
+					'<p style="text-align:center">If you are new to vichan, <a href="https://github.com/vichan-devel/vichan/wiki">please check out the documentation</a>.</p>';
+
+	// Admin panel notice
+	$page['body'] .= '<div class="ban"><h2>Next Steps</h2>' .
+					'<p>You can now log in to the admin panel at <strong>/mod.php</strong> using the default credentials:</p>' .
+					'<p><strong>Username:</strong> admin</p>' .
+					'<p><strong>Password:</strong> password</p>' .
+					'<p><strong>Important:</strong> For security, please change the administrator password immediately after logging in.</p>' .
+					'<p style="text-align:center"><a href="/mod.php"><button>Go to Admin Panel</button></a></p></div>';
+
 	$boards = listBoards();
 	foreach ($boards as &$_board) {
 		setupBoard($_board);
 		buildIndex();
 	}
-	
+
 	file_write($config['has_installed'], VERSION);
 	if (!file_unlink(__FILE__)) {
 		$page['body'] .= '<div class="ban"><h2>Delete install.php!</h2><p>I couldn\'t remove <strong>install.php</strong>. You will have to remove it manually.</p></div>';
 	}
-	
+
 	echo Element('page.html', $page);
 }
-
