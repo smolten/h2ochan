@@ -60,7 +60,7 @@
 		'title' => 'Video of the Now',
 		'name' => 'videoofnow',
 		'type' => 'text',
-		'default' => 'https://www.youtube.com/embed/zndkMAHKjNM',
+		'default' => 'https://www.youtube.com/embed/YbaTur4A1OU',
 		'size' => 50
 	);
 	
@@ -74,8 +74,15 @@
 	);
 	
 	$theme['config'][] = Array(
-		'title' => 'Excluded boards',
+		'title' => 'Excluded boards (recent posts)',
 		'name' => 'exclude',
+		'type' => 'text',
+		'comment' => '(space seperated)'
+	);
+	
+	$theme['config'][] = Array(
+		'title' => 'Excluded boards (boardlist)',
+		'name' => 'excludeboardlist',
 		'type' => 'text',
 		'comment' => '(space seperated)'
 	);
