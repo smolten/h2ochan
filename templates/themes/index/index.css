@@ -46,7 +46,8 @@
 	border-radius: 10px;
 }
 .icon {
-	display: block;
+	display: inline-block;
+	vertical-align: middle;
 	margin-left: auto;
 	margin-right: auto;
 	height: 3em;
