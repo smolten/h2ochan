@@ -14,8 +14,8 @@
 <body>
 	{{ boardlist.top }}
 	<header>
-	    <img class="icon" src="{{ settings.icon }}">
-		<h1>{{ settings.title }}</h1>
+	    <img class="icon" src="{{ settings.icon }}" align="middle" height="2em"> 
+		<h1 style="display:inline; margin:0;">{{ settings.title }}</h1> 
 		<div class="subtitle">{{ settings.subtitle }}</div>
 	</header>
 	{% if config.url_banner %}<img class="board_image" src="{{ config.url_banner }}" {% if config.banner_width or config.banner_height %}style="{% if config.banner_width %}width:{{ config.banner_width }}px{% endif %};{% if config.banner_width %}height:{{ config.banner_height }}px{% endif %}" {% endif %}alt="" />{% endif %}
