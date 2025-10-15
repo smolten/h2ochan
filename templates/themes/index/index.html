@@ -13,9 +13,11 @@
 </head>
 <body>
 	{{ boardlist.top }}
-	<header>
-	    <img class="icon" src="{{ settings.icon }}">
-		<h1>{{ settings.title }}</h1>
+	<header style="text-align: center;">
+		<span style="display: inline-block; vertical-align: middle;">
+	    	<img class="icon" src="{{ settings.icon }}">
+			<h1 style="display: inline-block; margin: 0; vertical-align: middle;">{{ settings.title }}</h1>
+		</span>
 		<div class="subtitle">{{ settings.subtitle }}</div>
 	</header>
 	{% if config.url_banner %}<img class="board_image" src="{{ config.url_banner }}" {% if config.banner_width or config.banner_height %}style="{% if config.banner_width %}width:{{ config.banner_width }}px{% endif %};{% if config.banner_width %}height:{{ config.banner_height }}px{% endif %}" {% endif %}alt="" />{% endif %}
