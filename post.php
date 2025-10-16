@@ -203,6 +203,29 @@ function delete_cyclical_posts(string $boardUri, int $threadId, int $cycleLimit)
 }
 
 /**
+ * Board locked or bible read-only
+ */
+function check_board_lock($post, $config)
+{
+    // Skip lock checks if user is a moderator
+    if (isset($post['mod']) && $post['mod'])
+        return;
+
+    // Custom 'bible' lock
+    if (isset($config['board_locked']) && $config['board_locked'] === "bible") {
+        error("Bible is read-only");
+    }
+
+    // Default lock
+    if (!empty($config['board_locked']) && $config['board_locked']) {
+        error("Board is read-only");
+    }
+}
+
+
+
+
+/**
  * Method handling functions
  */
 
@@ -401,9 +424,7 @@ if (isset($_POST['delete'])) {
 	if (!openBoard($_POST['board']))
 		error($config['error']['noboard']);
 
-	if ((!isset($_POST['mod']) || !$_POST['mod']) && $config['board_locked']) {
-		error("Board is locked");
-	}
+	check_board_lock($_POST, $config);
 
 	// Check if banned
 	checkBan($board['uri']);
@@ -496,9 +517,7 @@ if (isset($_POST['delete'])) {
 	if (!openBoard($_POST['board']))
 		error($config['error']['noboard']);
 
-	if ((!isset($_POST['mod']) || !$_POST['mod']) && $config['board_locked']) {
-		error("Board is locked");
-	}
+	check_board_lock($_POST, $config);
 
 	// Check if banned
 	checkBan($board['uri']);
@@ -594,9 +613,7 @@ if (isset($_POST['delete'])) {
 	if (!openBoard($post['board']))
 		error($config['error']['noboard']);
 
-	if ((!isset($_POST['mod']) || !$_POST['mod']) && $config['board_locked']) {
-		error("Board is locked");
-	}
+	check_board_lock($_POST, $config);
 
 	if (!isset($_POST['name']))
 		$_POST['name'] = $config['anonymous'];
