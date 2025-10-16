@@ -321,7 +321,7 @@
 		]
 	];
 
-	// Ability to lock a board for normal users and still allow mods to post.  Could also be useful for making an archive board
+	// Ability to lock a board for normal users and still allow mods to post.  Could also be useful for making an archive board. Set to bible for boards that remain read-only during site-wide lock-toggles.
 	$config['board_locked'] = false;
 
 	// If poster's proxy supplies X-Forwarded-For header, check if poster's real IP is banned.
