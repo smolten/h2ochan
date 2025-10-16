@@ -7,7 +7,8 @@
  *
  *  You can copy values from config.php (defaults) and paste them here.
  */
-
+	// site icon
+	$config['url_favicon'] = '/templates/themes/index/h2ofavicon.png';
 
 
 	// Database stuff
