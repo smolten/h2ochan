@@ -3247,3 +3247,29 @@ function mod_debug_sql(Context $ctx) {
 
 	mod_page(_('Debug: SQL'), $config['file_mod_debug_sql'], $args, $mod);
 }
+
+// h2o custom - toggle lock on all non-bible boards
+function mod_lock_all($ctx) {
+    mod_set_lock_all($ctx, true);
+}
+
+function mod_unlock_all($ctx) {
+    mod_set_lock_all($ctx, false);
+}
+function mod_set_lock_all($ctx, bool $lock) {
+    global $config;
+    check_login($ctx, true);
+
+    foreach (listBoards() as $board) {
+        // Skip read-only "bible" boards
+        if (($config['boards'][$board['uri']]['board_locked'] ?? false) === "bible") {
+            continue;
+        }
+
+        $config['boards'][$board['uri']]['board_locked'] = $lock;
+        save_board_config($board['uri']);
+    }
+
+    header('Location: ?/', true, 303);
+    exit;
+}

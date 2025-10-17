@@ -96,6 +96,10 @@ $pages = [
 	'/config'				=> 'secure_POST config',	// config editor
 	'/config/(\%b)'				=> 'secure_POST config',	// config editor
 
+	// custom h2ochan: toggle lock on all non-bible boards
+	'/lock_all'   => 'secure_POST lock_all',
+	'/unlock_all' => 'secure_POST unlock_all',
+
 	// these pages aren't listed in the dashboard without $config['debug']
 	//'/debug/antispam'			=> 'debug_antispam',
 	//'/debug/recent'				=> 'debug_recent_posts',
