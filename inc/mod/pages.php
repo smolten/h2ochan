@@ -3256,20 +3256,53 @@ function mod_lock_all($ctx) {
 function mod_unlock_all($ctx) {
     mod_set_lock_all($ctx, false);
 }
+
 function mod_set_lock_all($ctx, bool $lock) {
-    global $config;
-    check_login($ctx, true);
+    global $config, $mod;
 
-    foreach (listBoards() as $board) {
-        // Skip read-only "bible" boards
-        if (($config['boards'][$board['uri']]['board_locked'] ?? false) === "bible") {
-            continue;
-        }
-
-        $config['boards'][$board['uri']]['board_locked'] = $lock;
-        save_board_config($board['uri']);
+    // Path to instance config
+    $instance_file = './inc/secrets.php';
+    if (!file_exists($instance_file)) {
+        error_log("Instance config not found: $instance_file");
+        echo '<script>alert("secrets.php not found.");history.back();</script>';
+        exit;
     }
 
-    header('Location: ?/', true, 303);
+    // Read current contents
+    $contents = file_get_contents($instance_file);
+    if ($contents === false) {
+        error_log("Failed to read $instance_file");
+        echo '<script>alert("Unable to read secrets.php");history.back();</script>';
+        exit;
+    }
+
+    // Prepare regex and replacement
+    $pattern = '/(?:\s*\/\/[^\n]*\n)*\$config\[\'board_locked\'\]\s*=.*/';
+    $new_value = $lock ? 'true' : 'false';
+    $replacement =
+        "\n\n// Read-only global board lock by {$mod['username']} @ " . date('r') . "\n" .
+        "\$config['board_locked'] = {$new_value};";
+
+    // Replace or append
+    if (preg_match($pattern, $contents))
+        $contents = preg_replace($pattern, $replacement, $contents);
+    else {
+    	// ensure clean newline separation of new append
+	    //if (substr($contents, -1) !== "\n")
+	    //    $contents .= "\n";
+        $contents .= "\n\n{$replacement}\n";
+    }
+
+    // Write updated config
+    if (file_put_contents($instance_file, $contents) === false) {
+        error_log("Failed to write to $instance_file");
+        echo '<script>alert("Could not write secrets.php");history.back();</script>';
+        exit;
+    }
+
+    
+    // leaves user on useless page....
+    
     exit;
 }
+

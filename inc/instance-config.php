@@ -9,7 +9,12 @@
  */
 	// site icon
 	$config['url_favicon'] = '/templates/themes/index/h2ofavicon.png';
-
+	// show boardlist at top
+	//$config['do_boardlist'] = true;
+	$config['boards'] = array(
+		array('home' => 'http://h2ochan.org'),
+		array('bt', 'wah')
+	);
 
 	// Database stuff
 	$config['db']['type']		= 'mysql';
