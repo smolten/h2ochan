@@ -3300,7 +3300,6 @@ function mod_set_lock_all($ctx, bool $lock) {
         exit;
     }
 
-    
     // return from mod/lock to og page
     echo '<script>history.back();</script>';    
     exit;
