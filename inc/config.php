@@ -1347,6 +1347,7 @@
 	$config['file_mod_login'] = 'mod/login.html';
 	$config['file_mod_confim'] = 'mod/confirm.html';
 	$config['file_mod_board'] = 'mod/board.html';
+	$config['file_mod_board_bible'] = 'mod/board-bible.html'; // h2ochan custom
 	$config['file_mod_news'] = 'mod/news.html';
 	$config['file_mod_log'] = 'mod/log.html';
 

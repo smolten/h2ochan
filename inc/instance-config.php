@@ -10,11 +10,13 @@
 	// site icon
 	$config['url_favicon'] = '/templates/themes/index/h2ofavicon.png';
 	// show boardlist at top
-	//$config['do_boardlist'] = true;
 	$config['boards'] = array(
 		array('home' => 'http://h2ochan.org'),
 		array('bt', 'wah')
 	);
+	// bible hosting
+	$config['bible']['path_full'] = 'static/bible/eng-kjv.osis.xml';
+	$config['bible']['path_index'] = 'tmp/index-eng-kjv.osis.xml';
 
 	// Database stuff
 	$config['db']['type']		= 'mysql';

@@ -28,6 +28,14 @@
 
 		{% if mod|hasPermission(config.mod.newboard) %}
 			<li style="margin-top:15px"><a href="?/new-board"><strong>{% trans 'Create new board' %}</strong></a></li>
+
+			<li>Bible:</li>
+			<ul>
+				<li><a href="?/bible-make-index"><strong>Make Bible index</strong></a></li>
+				<li style="margin-top:15px"><a href="?/new-board-bible"><strong>{% trans 'Create new Bible board' %}</strong></a></li>
+				<li>Bible boards:</li>
+			</ul>
+			</li>
 		{% endif %}
 	</ul>
 </fieldset>
