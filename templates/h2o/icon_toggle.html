@@ -1,0 +1,20 @@
+{#
+  H2O icon renderer. Tilt Left for Open-For-Writing, tilt Right for Read-Only.
+  - uses settings.icon if set, otherwise fallback to ../templates/themes/index/h2ochanIcon.png
+    (homepage index has settings, but not per-board index)
+    (height:3em redundant for board, with main page index.css)
+  - rotation is 0 by default, -35 or 35 if config.board_locked is set
+#}
+
+{% set h2oicon = settings.icon ?? '../templates/themes/index/h2ochanIcon.png' %}
+
+{# base rotation #}
+{% set rotation = 0 %}
+{% if config.board_locked is defined %}
+  {% set rotation = config.board_locked ? 35 : -35 %}
+{% endif %}
+
+{# append default style if settings.icon not available #}
+{% set boardstyle = settings.icon is defined ? '' : 'height:3em;' %}
+
+<img class="icon" src="{{ h2oicon|e }}" style="{{ boardstyle }}transform: rotate({{ rotation }}deg);">
