@@ -51,8 +51,9 @@
 			{% if mod %}
 			<p>
 			<a href="?/">{% trans %}Return to dashboard{% endtrans %}</a></p>
-			<a href="?/lock_all" onclick="return confirm('Lock all boards?');">{% trans %}LOCK ALL{% endtrans %}</a> |
 	    		<a href="?/unlock_all" onclick="return confirm('Unlock all boards?');">{% trans %}UNLOCK ALL{% endtrans %}</a>
+			 | 
+			<a href="?/lock_all" onclick="return confirm('Lock all boards?');">{% trans %}LOCK ALL{% endtrans %}</a>
 			{% endif %}
 		</div>
 	</header>

@@ -565,6 +565,192 @@ function mod_new_board(Context $ctx) {
 	);
 }
 
+function mod_edit_board_bible(Context $ctx, $boardName) {
+	global $board, $config, $mod;
+
+	$cache = $ctx->get(CacheDriver::class);
+
+	if (!openBoard($boardName))
+		error($config['error']['noboard']);
+
+	if (!hasPermission($config['mod']['manageboards'], $board['uri']))
+			error($config['error']['noaccess']);
+
+	if (isset($_POST['title'], $_POST['subtitle'])) {
+		if (isset($_POST['delete'])) {
+			if (!hasPermission($config['mod']['manageboards'], $board['uri']))
+				error($config['error']['deleteboard']);
+
+			$query = prepare('DELETE FROM ``boards`` WHERE `uri` = :uri');
+			$query->bindValue(':uri', $board['uri']);
+			$query->execute() or error(db_error($query));
+
+			$cache->delete('board_' . $board['uri']);
+			$cache->delete('all_boards');
+
+			modLog('Deleted board: ' . sprintf($config['board_abbreviation'], $board['uri']), false);
+
+			// Delete posting table
+			$query = query(sprintf('DROP TABLE IF EXISTS ``posts_%s``', $board['uri'])) or error(db_error());
+
+			// Clear reports
+			$query = prepare('DELETE FROM ``reports`` WHERE `board` = :id');
+			$query->bindValue(':id', $board['uri'], PDO::PARAM_STR);
+			$query->execute() or error(db_error($query));
+
+			// Delete from table
+			$query = prepare('DELETE FROM ``boards`` WHERE `uri` = :uri');
+			$query->bindValue(':uri', $board['uri'], PDO::PARAM_STR);
+			$query->execute() or error(db_error($query));
+
+			$query = prepare("SELECT `board`, `post` FROM ``cites`` WHERE `target_board` = :board ORDER BY `board`");
+			$query->bindValue(':board', $board['uri']);
+			$query->execute() or error(db_error($query));
+			while ($cite = $query->fetch(PDO::FETCH_ASSOC)) {
+				if ($board['uri'] != $cite['board']) {
+					if (!isset($tmp_board))
+						$tmp_board = $board;
+					openBoard($cite['board']);
+					rebuildPost($cite['post']);
+				}
+			}
+
+			if (isset($tmp_board))
+				$board = $tmp_board;
+
+			$query = prepare('DELETE FROM ``cites`` WHERE `board` = :board OR `target_board` = :board');
+			$query->bindValue(':board', $board['uri']);
+			$query->execute() or error(db_error($query));
+
+			$query = prepare('DELETE FROM ``antispam`` WHERE `board` = :board');
+			$query->bindValue(':board', $board['uri']);
+			$query->execute() or error(db_error($query));
+
+			// Remove board from users/permissions table
+			$query = query('SELECT `id`,`boards` FROM ``mods``') or error(db_error());
+			while ($user = $query->fetch(PDO::FETCH_ASSOC)) {
+				$user_boards = explode(',', $user['boards']);
+				if (in_array($board['uri'], $user_boards)) {
+					unset($user_boards[array_search($board['uri'], $user_boards)]);
+					$_query = prepare('UPDATE ``mods`` SET `boards` = :boards WHERE `id` = :id');
+					$_query->bindValue(':boards', implode(',', $user_boards));
+					$_query->bindValue(':id', $user['id']);
+					$_query->execute() or error(db_error($_query));
+				}
+			}
+
+			// Delete entire board directory
+			rrmdir($board['uri'] . '/');
+		} else {
+			$query = prepare('UPDATE ``boards`` SET `title` = :title, `subtitle` = :subtitle WHERE `uri` = :uri');
+			$query->bindValue(':uri', $board['uri']);
+			$query->bindValue(':title', $_POST['title']);
+			$query->bindValue(':subtitle', $_POST['subtitle']);
+			$query->execute() or error(db_error($query));
+
+			modLog('Edited board information for ' . sprintf($config['board_abbreviation'], $board['uri']), false);
+		}
+
+		$cache->delete('board_' . $board['uri']);
+		$cache->delete('all_boards');
+
+
+		Vichan\Functions\Theme\rebuild_themes('boards');
+
+		header('Location: ?/', true, $config['redirect_http']);
+	} else {
+		mod_page(
+			sprintf('%s: ' . $config['board_abbreviation'], _('Edit board'), $board['uri']),
+			$config['file_mod_board_bible'],
+			[
+				'board' => $board,
+				'token' => make_secure_link_token('edit/' . $board['uri'])
+			],
+			$mod
+		);
+	}
+}
+
+function mod_new_board_bible(Context $ctx) {
+	global $board, $mod;
+	$config = $ctx->get('config');
+
+	if (!hasPermission($config['mod']['newboard']))
+		error($config['error']['noaccess']);
+
+	if (isset($_POST['uri'], $_POST['title'], $_POST['subtitle'])) {
+		if ($_POST['uri'] == '')
+			error(sprintf($config['error']['required'], 'URI'));
+
+		if ($_POST['title'] == '')
+			error(sprintf($config['error']['required'], 'title'));
+
+		if (!preg_match('/^' . $config['board_regex'] . '$/u', $_POST['uri']))
+			error(sprintf($config['error']['invalidfield'], 'URI'));
+
+		$cache = $ctx->get(CacheDriver::class);
+
+		$bytes = 0;
+		$chars = preg_split('//u', $_POST['uri'], -1, PREG_SPLIT_NO_EMPTY);
+		foreach ($chars as $char) {
+			$o = 0;
+			$ord = ordutf8($char, $o);
+			if ($ord > 0x0080)
+				$bytes += 5; // @01ff
+			else
+				$bytes ++;
+		}
+		$bytes + strlen('posts_.frm');
+
+		if ($bytes > 255) {
+			error('Your filesystem cannot handle a board URI of that length (' . $bytes . '/255 bytes)');
+			exit;
+		}
+
+		if (openBoard($_POST['uri'])) {
+			error(sprintf($config['error']['boardexists'], $board['url']));
+		}
+
+		$query = prepare('INSERT INTO ``boards`` VALUES (:uri, :title, :subtitle)');
+		$query->bindValue(':uri', $_POST['uri']);
+		$query->bindValue(':title', $_POST['title']);
+		$query->bindValue(':subtitle', $_POST['subtitle']);
+		$query->execute() or error(db_error($query));
+
+		modLog('Created a new board: ' . sprintf($config['board_abbreviation'], $_POST['uri']));
+
+		if (!openBoard($_POST['uri']))
+			error(_("Couldn't open board after creation."));
+
+		$query = Element('posts.sql', [ 'board' => $board['uri'] ]);
+
+		if (mysql_version() < 50503)
+			$query = preg_replace('/(CHARSET=|CHARACTER SET )utf8mb4/', '$1utf8', $query);
+
+		query($query) or error(db_error());
+
+		$cache = $ctx->get(CacheDriver::class);
+		$cache->delete('all_boards');
+
+		// Build the board
+		buildIndex();
+
+		Vichan\Functions\Theme\rebuild_themes('boards');
+
+		header('Location: ?/' . $board['uri'] . '/' . $config['file_index'], true, $config['redirect_http']);
+	}
+
+	mod_page(
+		_('New Bible board'),
+		$config['file_mod_board_bible'],
+		[
+			'new' => true,
+			'token' => make_secure_link_token('new-board-bible')
+		],
+		$mod
+	);
+}
+
 function mod_noticeboard(Context $ctx, $page_no = 1) {
 	global $pdo, $mod;
 	$config = $ctx->get('config');
@@ -3248,15 +3434,17 @@ function mod_debug_sql(Context $ctx) {
 	mod_page(_('Debug: SQL'), $config['file_mod_debug_sql'], $args, $mod);
 }
 
-// h2o custom - toggle lock on all non-bible boards
+
+
+
+// h2o custom
+// toggle lock on all boards, expecting bible boards overwrite own configs
 function mod_lock_all($ctx) {
     mod_set_lock_all($ctx, true);
 }
-
 function mod_unlock_all($ctx) {
     mod_set_lock_all($ctx, false);
 }
-
 function mod_set_lock_all($ctx, bool $lock) {
     global $config, $mod;
 
@@ -3304,4 +3492,85 @@ function mod_set_lock_all($ctx, bool $lock) {
     echo '<script>history.back();</script>';    
     exit;
 }
+// create index of bible book names given xml of entire bible
+function mod_bible_make_index(Context $ctx) {
+    global $mod;
+    $config = $ctx->get('config');
 
+    if (!hasPermission($config['mod']['newboard'])) // adjust permission if needed
+        error($config['error']['noaccess']);
+
+    $path_full = $config['bible']['path_full'];
+    $path_index = $config['bible']['path_index'];
+
+    // Confirm overwrite if index exists
+    if (file_exists($path_index) && !isset($_GET['overwrite_index'])) {
+    $url = '?/bible-make-index&overwrite_index=1';
+    echo sprintf(
+        '<script>
+            if (confirm("Index file %s exists. Overwrite?")) {
+                window.location.href="%s";
+            } else {
+                alert("Bible index not overwritten.");
+            }
+        </script>',
+        addslashes($path_index),
+        $url
+    );
+    exit;
+    }
+
+    $handle = fopen($path_full, 'r');
+    if (!$handle) {
+        error(sprintf(
+        	_('Cannot open Bible XML file %s (current dir: %s)'),
+	        $path_full,
+        	getcwd()
+    	));
+    }
+
+    $titles = [];
+
+    while (($line = fgets($handle)) !== false) {
+        if (preg_match('/<div\s+type="book".*?osisID="([^"]+)".*?>\s*<title\s+type="main"\s+short="([^"]+)">(.+?)<\/title>/i', $line, $matches)) {
+            // $matches[1] = osisID
+            // $matches[2] = short
+            // $matches[3] = full title
+            $titles[] = [
+                'osisID' => $matches[1],
+                'short' => $matches[2],
+                'full' => $matches[3]
+            ];
+        }
+    }
+
+    fclose($handle);
+
+    // Build index XML
+    $xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<books>\n";
+    foreach ($titles as $t) {
+        $xml .= sprintf(
+            "  <title osisID=\"%s\" short=\"%s\">%s</title>\n",
+            htmlspecialchars($t['osisID']),
+            htmlspecialchars($t['short']),
+            htmlspecialchars($t['full'])
+        );
+    }
+    $xml .= "</books>\n";
+
+    if (file_put_contents($path_index, $xml) === false) {
+        error(sprintf(_('Failed to write index to %s'), $path_index));
+    }
+
+    modLog('Bible index created: ' . $path_index);
+
+    // Simple success alert
+    echo sprintf(
+    '<script>
+        alert("Bible index successfully written to %s");
+        history.back();
+    </script>',
+    addslashes($path_index)
+    );
+    exit;
+}

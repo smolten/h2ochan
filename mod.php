@@ -56,6 +56,10 @@ $pages = [
 	'/edit/(\%b)'				=> 'secure_POST edit_board',	// edit board details
 	'/new-board'				=> 'secure_POST new_board',	// create a new board
 
+	// h2o bible hosting
+	'/bible-make-index'			=> 'secure_POST bible_make_index',
+	'/new-board-bible'			=> 'secure_POST new_board_bible',
+
 	'/rebuild'				=> 'secure_POST rebuild',	// rebuild static files
 	'/reports'				=> 'reports',			// report queue
 	'/reports/(\d+)/dismiss(&all|&post)?'		=> 'secure report_dismiss',	// dismiss a report
