@@ -6,27 +6,84 @@
 
 <form action="{{ action }}" method="post">
 	<input type="hidden" name="token" value="{{ token }}">
+	<input type="hidden" name="token_test_parse" value="{{ token_test_parse }}">
 	<table>
+
+		<tr>
+	            <th>{% trans 'Bible Book' %}</th>
+	            <td>
+	                {% if not bible_index %}
+	                    Index not found at {{ bible_path_index }}
+	                {% else %}
+	                    <select name="bible_book" id="bible_book">
+	                        <option value="">-- Select a Book --</option>
+	                        {% for book in bible_index %}
+	                            <option
+	                                value="{{ book.short|e('html_attr') }}"
+	                                data-uri="{{ book.osisID|e('html_attr') }}"
+	                                data-title="{{ book.short|e('html_attr') }}"
+	                                data-subtitle="{{ book.text|e('html_attr') }}"
+	                            >
+	                                {{ book.short }}
+	                            </option>
+	                        {% endfor %}
+	                    </select>
+	                {% endif %}
+	            </td>
+	        </tr>
+<tr>
+    <th>DEBUG_Select</th>
+    <td>
+	Chapter:
+        <select id="debug_chapter" name="debug_chapter">
+            {% for i in range(1, 100) %}
+                <option value="{{ i }}">{{ i }}</option>
+            {% endfor %}
+        </select>
+	Verse:
+        <select id="debug_verse" name="debug_verse">
+            {% for i in range(1, 100) %}
+                <option value="{{ i }}">{{ i }}</option>
+            {% endfor %}
+        </select>
+	Num_verses:
+	<select id="debug_count" name="debug_count">
+	    {% for c in range(1, 100) %}
+		<option value="{{ c }}">{{ c }}</option>
+	    {% endfor %}
+	</select>
+        <button type="button" name="debug_parse" id="debug_parse">Test Parse</button>
+    </td>
+</tr>
+
+<tr>
+    <th>DEBUG_Output</th>
+    <td>
+	<pre>
+{{ debug_output|default('Select a book, chapter, and verse, then press Test Parse.') }}
+        </pre>
+    </td>
+</tr>
 		<tr>
 			<th>{% trans 'URI' %}</th>
 			<td>
 				{% if not new %}
 					{{ config.board_abbreviation|sprintf(board.uri) }}
 				{% else %}
-					/<input size="10" maxlength="255" type="text" name="uri" autocomplete="off">/
+					/<input size="10" maxlength="255" type="text" id="uri" autocomplete="off">/
 				{% endif %}
 			</td>
 		</tr>
 		<tr>
 			<th>{% trans 'Title' %}</th>
 			<td>
-				<input size="25" type="text" name="title" value="{{ board.title|e }}" autocomplete="off">
+				<input size="25" type="text" id="title" value="{{ board.title|e }}" autocomplete="off">
 			</td>
 		</tr>
 		<tr>
 			<th>{% trans 'Subtitle' %}</th>
 			<td>
-				<input size="25" type="text" name="subtitle" value="{{ board.subtitle|e }}" autocomplete="off">
+				<input size="25" type="text" id="subtitle" value="{{ board.subtitle|e }}" autocomplete="off">
 			</td>
 		</tr>
 	</table>
@@ -43,3 +100,59 @@
 	</ul>
 </form>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var sel = document.getElementById('bible_book');
+    var title = document.getElementById('title');
+    var uri = document.getElementById('uri');
+
+    if (sel) {
+	var subtitle = document.getElementById('subtitle');
+
+	sel.addEventListener('change', function() {
+	        var opt = sel.options[sel.selectedIndex];
+	        uri.value = opt.dataset.uri || '';
+	        title.value = opt.dataset.title || '';
+	        subtitle.value = opt.dataset.subtitle || '';
+    	});
+    }
+
+    var testparse = document.getElementById('debug_parse');
+    if (testparse) {
+	var chap = document.getElementById('debug_chapter');
+	var verse = document.getElementById('debug_verse');
+	var count = document.getElementById('debug_count');
+	var output = document.querySelector('pre');
+	var tokenInput = document.querySelector('input[name="token_test_parse"]');
+        testparse.addEventListener('click', function() {
+	    var titleOpt = sel.options[sel.selectedIndex];
+	    var title = titleOpt.dataset.title || '';
+	    if (title.length === 0) {
+	        output.textContent = 'Error: Choose a Book';
+		return;
+	    }
+
+            var params = new URLSearchParams();
+            params.append('uri', uri.value);
+	    params.append('chapter', chap.value);
+            params.append('verse', verse.value);
+            params.append('count', count.value);
+	    params.append('token', tokenInput.value);
+
+	    fetch('/mod.php?/bible-parse-test', {
+    		method: 'POST',
+    		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    		body: params.toString(),
+		credentials: 'same-origin'
+	    })
+            .then(response => response.text())
+            .then(text => {
+                output.textContent = text || '(no response)';
+            })
+            .catch(err => {
+                output.textContent = 'Error: ' + err;
+            });
+        });
+    }
+});
+</script>
