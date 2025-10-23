@@ -720,7 +720,7 @@ function mod_new_board_bible(Context $ctx) {
 		modLog('Created a new board: ' . sprintf($config['board_abbreviation'], $_POST['uri']));
 
 		if (!openBoard($_POST['uri']))
-			error(_("Couldn't open board after creation."));
+			error(_("Couldn't open board after creation."));		
 
 		$query = Element('posts.sql', [ 'board' => $board['uri'] ]);
 
@@ -733,6 +733,7 @@ function mod_new_board_bible(Context $ctx) {
 		$cache->delete('all_boards');
 
 		// Build the board
+		buildBibleBoard($ctx); // h2o custom - insert chapters as threads
 		buildIndex();
 
 		Vichan\Functions\Theme\rebuild_themes('boards');
@@ -740,16 +741,173 @@ function mod_new_board_bible(Context $ctx) {
 		header('Location: ?/' . $board['uri'] . '/' . $config['file_index'], true, $config['redirect_http']);
 	}
 
+	// check for bible index to pass in
+	$bible_path_full = $config['bible']['path_full'];
+	$bible_path_index = $config['bible']['path_index'];
+	$bible_index = [];
+	if (file_exists($bible_path_index)) // Convert <title> elements into an array of arrays with osisID/short/text
+	{
+	    $xml = simplexml_load_file($bible_path_index);
+	    foreach ($xml->title as $t)
+	    {
+		$bible_index[] = [
+			'osisID' => (string)$t['osisID'],
+			'short' => (string)$t['short'],
+			'text' => (string)$t
+		];
+	    }
+	}
+
 	mod_page(
 		_('New Bible board'),
 		$config['file_mod_board_bible'],
 		[
 			'new' => true,
-			'token' => make_secure_link_token('new-board-bible')
+			'token' => make_secure_link_token('new-board-bible'),
+			'token_test_parse' => make_secure_link_token('bible-parse-test'),
+			'bible_path_full' => $bible_path_full,
+			'bible_path_index' => $bible_path_index,
+			'bible_index' => $bible_index
 		],
 		$mod
 	);
 }
+
+function buildBibleBoard(Context $ctx)
+{
+	global $board, $mod;
+	$config = $ctx->get('config');
+	if (!hasPermission($config['mod']['newboard']))
+		error($config['error']['noaccess']);
+
+	// Load post.php once while we need to post
+	//static $postIncluded = false;
+	//if (!$postIncluded) {
+	//    require_once __DIR__ . '/../../post.php'; 
+	//    $postIncluded = true;
+	//}
+
+	// Add php comment and config file
+	$configFile = $board['dir'] . 'config.php';
+	$init_config = <<<INIT_PHP
+	<?php
+	// Board created for Bible chapter {$_POST['title']}
+	\$config['board_locked'] = 'bible';
+	INIT_PHP;
+	file_put_contents($configFile, $init_config);
+
+	// $board['dir'] is Gen for Genesis
+        $bookURI = trim(rtrim($board['dir'], '/')); // trim /
+	$chapters = parseBibleBookText($bookURI, $config['bible']['path_full']);
+	
+   	// post chapter 1, verse 1 as a thread
+	$post = [
+	    'board'   => $board['uri'],
+	    'op'      => true,  // this is a new thread
+	    'name'    => 'BibleBot',
+	    'email'   => '',
+	    'subject' => "Chapter 1",
+	    'body'    => $chapters[0][0] ?? 'MISSING', // text of verse(s)
+	    'password'=> bin2hex(random_bytes(8)), // required to allow deletion if needed
+	];
+	if (!empty($post['body'])) {
+	    $threadID = Vichan\post($post, $config);
+	    modLog("BibleBot created new thread $threadID on /" . $board['uri']);
+	} else {
+	    modLog("BibleBot: No text found for Chapter 1, Verse 1");
+	}	
+}
+
+function mod_bible_parse_test(Context $ctx) {
+    $config = $ctx->get('config');
+    $bookURI   = isset($_POST['uri'])   ? $_POST['uri']   : '';
+    $chapter = isset($_POST['chapter']) ? $_POST['chapter'] : '';
+    $verse   = isset($_POST['verse'])   ? $_POST['verse']   : '';
+    $count   = isset($_POST['count'])   ? $_POST['count']   : '';
+
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'uri: ' . $bookURI;
+
+    $chapters = parseBibleBookText($bookURI, $config['bible']['path_full']);
+    for($v=$verse; $v<$verse+$count; $v++) {
+	echo $chapters[$chapter][$v];
+    }
+    exit;
+}
+
+function parseBibleBookText(string $bookURI, string $biblePath): array {
+    if (!file_exists($biblePath)) {
+        throw new Exception("Bible XML not found at $biblePath");
+    }
+
+    $bookURI = trim(rtrim($bookURI, '/'));
+    $xml = simplexml_load_file($biblePath);
+    $xml->registerXPathNamespace('bib', 'http://www.bibletechnologies.net/2003/OSIS/namespace');
+
+    // Find the <div type="book" osisID="$bookURI">
+    $bookNode = null;
+    foreach ($xml->xpath('//bib:div[@type="book"]') as $node) {
+        $osis = (string)$node['osisID'];
+        //echo "Found book osisID: $osis\n";
+        if ($osis === $bookURI) {
+            $bookNode = $node;
+            break;
+        }
+    }
+    if (!$bookNode) {
+        throw new Exception("Book $bookURI not found in XML at $biblePath");
+    }
+
+    $chapters = [];
+    $currentChapterIndex = -1;
+
+    // Recursive function to traverse all nodes
+    $traverseNode = function($node) use (&$traverseNode, &$chapters, &$currentChapterIndex) {
+        $name = $node->getName();
+        $attrs = [];
+        foreach ($node->attributes() as $k => $v) {
+            $attrs[$k] = (string)$v;
+        }
+        echo "BIBLE_DEBUG: child node: $name attrs: " . json_encode($attrs) . "\n";
+
+        // New chapter
+        if ($name === 'chapter' && isset($attrs['n'])) {
+            $currentChapterIndex++;
+            $chapters[$currentChapterIndex] = [];
+        }
+
+        // Capture text directly under <verse> or other nodes
+        if (isset($node[0])) {
+            $text = trim((string)$node);
+            if ($text !== '') {
+                if ($currentChapterIndex === -1) {
+                    $currentChapterIndex = 0;
+                    $chapters[$currentChapterIndex] = [];
+                }
+                $chapters[$currentChapterIndex][] = $text;
+                echo "BIBLE_DEBUG: captured text: " . substr($text, 0, 80) . "\n";
+            }
+        }
+
+        // Recurse into children
+        foreach ($node->children($node->getNamespaces()[''] ?? null) as $child) {
+            $traverseNode($child);
+        }
+    };
+
+    // Start recursive traversal at book node
+    $traverseNode($bookNode);
+
+    echo "Done parsing book $bookURI, found " . count($chapters) . " chapters\n";
+    foreach ($chapters as $i => $ch) {
+        echo "Chapter " . ($i + 1) . " has " . count($ch) . " verses/text blocks\n";
+    }
+
+    return $chapters;
+}
+
+
+
 
 function mod_noticeboard(Context $ctx, $page_no = 1) {
 	global $pdo, $mod;
