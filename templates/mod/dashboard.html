@@ -27,13 +27,36 @@
 		{% endfor %}
 
 		{% if mod|hasPermission(config.mod.newboard) %}
-			<li style="margin-top:15px"><a href="?/new-board"><strong>{% trans 'Create new board' %}</strong></a></li>
+			<li><a href="?/new-board"><strong>{% trans 'Create new board' %}</strong></a></li>
 
-			<li>Bible:</li>
+			<li style="margin-top:15px">Bible:</li>
 			<ul>
 				<li><a href="?/bible-make-index"><strong>Make Bible index</strong></a></li>
 				<li><a href="?/new-board-bible"><strong>{% trans 'Create new Bible board' %}</strong></a></li>
 				<li>Bible boards:</li>
+		{% for board in boards_bible %}
+                        <li>
+                                <a href="?/{{ config.board_path|sprintf(board.uri) }}{{ config.file_index }}">{{ config.board_abbreviation|sprintf(board.
+uri) }}</a>
+                                         -
+                                {{ board.title|e }}
+                                {% if board.subtitle %}
+                                        <small>&mdash;
+                                                {% if config.allow_subtitle_html %}
+                                                        {{ board.subtitle }}
+                                                {% else %}
+                                                        {{ board.subtitle|e }}
+                                                {% endif %}
+                                        </small>
+                                {% endif %}
+                                {% if mod|hasPermission(config.mod.manageboards) %}
+                                         <a href="?/edit_bible/{{ board.uri }}"><small>[{% trans 'edit' %}]</small></a>
+                                {% endif %}
+                                {% if mod|hasPermission(config.mod.edit_pages) %}
+                                         <a href="?/edit_pages/{{ board.uri }}"><small>[{% trans 'pages' %}]</small></a>
+                                {% endif %}
+                        </li>
+                {% endfor %}
 			</ul>
 			</li>
 		{% endif %}

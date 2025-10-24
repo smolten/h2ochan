@@ -60,6 +60,7 @@ $pages = [
 	'/bible-make-index'			=> 'secure_POST bible_make_index',
 	'/new-board-bible'			=> 'secure_POST new_board_bible',
 	'/bible-parse-test'			=> 'secure_POST bible_parse_test',
+	'/edit_bible/(\%b)'			=> 'secure_POST edit_board_bible',
 
 	'/rebuild'				=> 'secure_POST rebuild',	// rebuild static files
 	'/reports'				=> 'reports',			// report queue

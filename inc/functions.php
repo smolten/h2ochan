@@ -667,30 +667,79 @@ function hasPermission($action = null, $board = null, $_mod = null) {
 	return true;
 }
 
-function listBoards($just_uri = false) {
-	global $config;
+function listBoards($just_uri = false, $check_locked = false) {
+    global $config;
 
-	$just_uri ? $cache_name = 'all_boards_uri' : $cache_name = 'all_boards';
+    // create a unique cache key per just_uri and check_locked value
+    $cache_name = 'all_boards';
+    if ($just_uri) {
+        $cache_name .= '_uri';
+    }
+    if ($check_locked !== false) {
+        // append the type of filter
+        if ($check_locked === true) {
+            $cache_name .= '_nonbible';
+        } elseif ($check_locked === 'bible') {
+            $cache_name .= '_bible';
+        }
+    }
+    if ($config['cache']['enabled'] && ($boards = cache::get($cache_name)))
+        return $boards;
 
-	if ($config['cache']['enabled'] && ($boards = cache::get($cache_name)))
-		return $boards;
+    if (!$just_uri) {
+        $query = query("SELECT * FROM ``boards`` ORDER BY `uri`") or error(db_error());
+        $boards = $query->fetchAll();
+    } else {
+        $boards = array();
+        $query = query("SELECT `uri` FROM ``boards``") or error(db_error());
+        while ($board = $query->fetchColumn()) {
+            $boards[] = $board;
+        }
+    }
 
-	if (!$just_uri) {
-		$query = query("SELECT * FROM ``boards`` ORDER BY `uri`") or error(db_error());
-		$boards = $query->fetchAll();
-	} else {
-		$boards = array();
-		$query = query("SELECT `uri` FROM ``boards``") or error(db_error());
-		while ($board = $query->fetchColumn()) {
-			$boards[] = $board;
-		}
-	}
+    // non-standard - filter for 'bible' boards nor non-'bible' boards
+    if ($check_locked !== false) {
+        $filtered = [];
+        foreach ($boards as $b) {
+            $uri = $just_uri ? $b : $b['uri'];
+            $board_conf = loadBoardConfig($uri);
+            if ($check_locked === true && (!isset($board_conf['board_locked']) || $board_conf['board_locked'] !== 'bible')) {
+                $filtered[] = $b;
+            } elseif ($check_locked === 'bible' && isset($board_conf['board_locked']) && $board_conf['board_locked'] === 'bible') {
+                $filtered[] = $b;
+            }
+        }
+        $boards = $filtered;
+    }
 
-	if ($config['cache']['enabled'])
-		cache::set($cache_name, $boards);
+    if ($config['cache']['enabled'])
+        cache::set($cache_name, $boards);
 
-	return $boards;
+    return $boards;
 }
+/**
+ * Return board-specific overrides only.
+ *
+ * @param string $board_uri Folder name under boards/
+ * @return array key/value overrides (possibly empty)
+ */
+function loadBoardConfig($board_uri) {
+    $conf = [];
+    $file = "$board_uri/config.php";
+
+    if (file_exists($file)) {
+        // Board config.php populates $config array
+        $config = [];
+        require $file;
+
+        if (isset($config['board_locked'])) {
+            $conf['board_locked'] = $config['board_locked'];
+        }
+    }
+
+    return $conf;
+}
+
 
 function displayBan($ban) {
 	global $config, $board;

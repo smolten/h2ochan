@@ -222,9 +222,6 @@ function check_board_lock($post, $config)
     }
 }
 
-
-
-
 /**
  * Method handling functions
  */
