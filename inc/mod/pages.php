@@ -565,113 +565,12 @@ function mod_new_board(Context $ctx) {
 	);
 }
 
-function mod_edit_board_bible(Context $ctx, $boardName) {
-	global $board, $config, $mod;
-
-	$cache = $ctx->get(CacheDriver::class);
-
-	if (!openBoard($boardName))
-		error($config['error']['noboard']);
-
-	if (!hasPermission($config['mod']['manageboards'], $board['uri']))
-			error($config['error']['noaccess']);
-
-	if (isset($_POST['title'], $_POST['subtitle'])) {
-		if (isset($_POST['delete'])) {
-			if (!hasPermission($config['mod']['manageboards'], $board['uri']))
-				error($config['error']['deleteboard']);
-
-			$query = prepare('DELETE FROM ``boards`` WHERE `uri` = :uri');
-			$query->bindValue(':uri', $board['uri']);
-			$query->execute() or error(db_error($query));
-
-			$cache->delete('board_' . $board['uri']);
-			$cache->delete('all_boards');
-
-			modLog('Deleted board: ' . sprintf($config['board_abbreviation'], $board['uri']), false);
-
-			// Delete posting table
-			$query = query(sprintf('DROP TABLE IF EXISTS ``posts_%s``', $board['uri'])) or error(db_error());
-
-			// Clear reports
-			$query = prepare('DELETE FROM ``reports`` WHERE `board` = :id');
-			$query->bindValue(':id', $board['uri'], PDO::PARAM_STR);
-			$query->execute() or error(db_error($query));
-
-			// Delete from table
-			$query = prepare('DELETE FROM ``boards`` WHERE `uri` = :uri');
-			$query->bindValue(':uri', $board['uri'], PDO::PARAM_STR);
-			$query->execute() or error(db_error($query));
-
-			$query = prepare("SELECT `board`, `post` FROM ``cites`` WHERE `target_board` = :board ORDER BY `board`");
-			$query->bindValue(':board', $board['uri']);
-			$query->execute() or error(db_error($query));
-			while ($cite = $query->fetch(PDO::FETCH_ASSOC)) {
-				if ($board['uri'] != $cite['board']) {
-					if (!isset($tmp_board))
-						$tmp_board = $board;
-					openBoard($cite['board']);
-					rebuildPost($cite['post']);
-				}
-			}
-
-			if (isset($tmp_board))
-				$board = $tmp_board;
-
-			$query = prepare('DELETE FROM ``cites`` WHERE `board` = :board OR `target_board` = :board');
-			$query->bindValue(':board', $board['uri']);
-			$query->execute() or error(db_error($query));
-
-			$query = prepare('DELETE FROM ``antispam`` WHERE `board` = :board');
-			$query->bindValue(':board', $board['uri']);
-			$query->execute() or error(db_error($query));
-
-			// Remove board from users/permissions table
-			$query = query('SELECT `id`,`boards` FROM ``mods``') or error(db_error());
-			while ($user = $query->fetch(PDO::FETCH_ASSOC)) {
-				$user_boards = explode(',', $user['boards']);
-				if (in_array($board['uri'], $user_boards)) {
-					unset($user_boards[array_search($board['uri'], $user_boards)]);
-					$_query = prepare('UPDATE ``mods`` SET `boards` = :boards WHERE `id` = :id');
-					$_query->bindValue(':boards', implode(',', $user_boards));
-					$_query->bindValue(':id', $user['id']);
-					$_query->execute() or error(db_error($_query));
-				}
-			}
-
-			// Delete entire board directory
-			rrmdir($board['uri'] . '/');
-		} else {
-			$query = prepare('UPDATE ``boards`` SET `title` = :title, `subtitle` = :subtitle WHERE `uri` = :uri');
-			$query->bindValue(':uri', $board['uri']);
-			$query->bindValue(':title', $_POST['title']);
-			$query->bindValue(':subtitle', $_POST['subtitle']);
-			$query->execute() or error(db_error($query));
-
-			modLog('Edited board information for ' . sprintf($config['board_abbreviation'], $board['uri']), false);
-		}
-
-		$cache->delete('board_' . $board['uri']);
-		$cache->delete('all_boards');
-
-
-		Vichan\Functions\Theme\rebuild_themes('boards');
-
-		header('Location: ?/', true, $config['redirect_http']);
-	} else {
-		mod_page(
-			sprintf('%s: ' . $config['board_abbreviation'], _('Edit board'), $board['uri']),
-			$config['file_mod_board_bible'],
-			[
-				'board' => $board,
-				'token' => make_secure_link_token('edit/' . $board['uri'])
-			],
-			$mod
-		);
-	}
-}
-
 function mod_new_board_bible(Context $ctx) {
+	//debug
+	//var_dump($_POST);
+	//exit;
+
+
 	global $board, $mod;
 	$config = $ctx->get('config');
 
@@ -806,12 +705,12 @@ function buildBibleBoard(Context $ctx)
 	    'op'      => true,  // this is a new thread
 	    'name'    => 'BibleBot',
 	    'email'   => '',
-	    'subject' => "Chapter 1",
-	    'body'    => $chapters[0][0] ?? 'MISSING', // text of verse(s)
+	    'subject' => "",
+	    'body'    => $chapters[1][1] ?? 'MISSING', // text of verse(s)
 	    'password'=> bin2hex(random_bytes(8)), // required to allow deletion if needed
 	];
 	if (!empty($post['body'])) {
-	    $threadID = Vichan\post($post, $config);
+	    //$threadID = Vichan\post($post, $config);
 	    modLog("BibleBot created new thread $threadID on /" . $board['uri']);
 	} else {
 	    modLog("BibleBot: No text found for Chapter 1, Verse 1");
