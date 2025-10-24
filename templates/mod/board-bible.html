@@ -70,20 +70,20 @@
 				{% if not new %}
 					{{ config.board_abbreviation|sprintf(board.uri) }}
 				{% else %}
-					/<input size="10" maxlength="255" type="text" id="uri" autocomplete="off">/
+					/<input size="10" maxlength="255" type="text" name="uri" id="uri" autocomplete="off">/
 				{% endif %}
 			</td>
 		</tr>
 		<tr>
 			<th>{% trans 'Title' %}</th>
 			<td>
-				<input size="25" type="text" id="title" value="{{ board.title|e }}" autocomplete="off">
+				<input size="25" type="text" name="title" id="title" value="{{ board.title|e }}" autocomplete="off">
 			</td>
 		</tr>
 		<tr>
 			<th>{% trans 'Subtitle' %}</th>
 			<td>
-				<input size="25" type="text" id="subtitle" value="{{ board.subtitle|e }}" autocomplete="off">
+				<input size="25" type="text" name="subtitle" id="subtitle" value="{{ board.subtitle|e }}" autocomplete="off">
 			</td>
 		</tr>
 	</table>
