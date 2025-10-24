@@ -105,6 +105,8 @@ document.addEventListener('DOMContentLoaded', function() {
     var sel = document.getElementById('bible_book');
     var title = document.getElementById('title');
     var uri = document.getElementById('uri');
+    var output = document.querySelector('pre');
+    output.dataset.default = output.textContent;
 
     if (sel) {
 	var subtitle = document.getElementById('subtitle');
@@ -114,6 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	        uri.value = opt.dataset.uri || '';
 	        title.value = opt.dataset.title || '';
 	        subtitle.value = opt.dataset.subtitle || '';
+		output.textContent = output.dataset.default;
     	});
     }
 
@@ -122,7 +125,6 @@ document.addEventListener('DOMContentLoaded', function() {
 	var chap = document.getElementById('debug_chapter');
 	var verse = document.getElementById('debug_verse');
 	var count = document.getElementById('debug_count');
-	var output = document.querySelector('pre');
 	var tokenInput = document.querySelector('input[name="token_test_parse"]');
         testparse.addEventListener('click', function() {
 	    var titleOpt = sel.options[sel.selectedIndex];

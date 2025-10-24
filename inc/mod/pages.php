@@ -824,90 +824,119 @@ function mod_bible_parse_test(Context $ctx) {
     $chapter = isset($_POST['chapter']) ? $_POST['chapter'] : '';
     $verse   = isset($_POST['verse'])   ? $_POST['verse']   : '';
     $count   = isset($_POST['count'])   ? $_POST['count']   : '';
+    $chapters = parseBibleBookText($bookURI, $config['bible']['path_full']);
 
     header('Content-Type: text/plain; charset=utf-8');
-    echo 'uri: ' . $bookURI;
-
-    $chapters = parseBibleBookText($bookURI, $config['bible']['path_full']);
-    for($v=$verse; $v<$verse+$count; $v++) {
-	echo $chapters[$chapter][$v];
+    if ($chapter > count($chapters)) {
+        echo "ERROR: Chapter $chapter > " . count($chapters) . "\n";
+        exit;
+    }
+    for($vNum=$verse; $vNum<$verse+$count; $vNum++) {
+	if($vNum > count($chapters[$chapter])) {
+            echo "ERROR: Verse $vNum > " . count($chapters[$chapter]) . "\n";
+	    exit;
+	}
+	echo "$vNum " . $chapters[$chapter][$vNum] . "\n";
     }
     exit;
 }
 
+// Genesis-only. Mileage may vary.
+// Certainly breaks on Psalms <lg> and <l> tags.
 function parseBibleBookText(string $bookURI, string $biblePath): array {
-    if (!file_exists($biblePath)) {
-        throw new Exception("Bible XML not found at $biblePath");
+    if (!file_exists($biblePath)) throw new Exception("Bible XML not found at $biblePath");
+
+    $xmlString = file_get_contents($biblePath);
+    // Remove namespaces to simplify XPath
+    $xmlString = preg_replace('/xmlns="[^"]+"/', '', $xmlString);
+
+    $dom = new DOMDocument();
+    $dom->preserveWhiteSpace = false;
+    $dom->formatOutput = false;
+    if (!$dom->loadXML($xmlString)) {
+        throw new Exception("Failed to parse XML");
     }
 
-    $bookURI = trim(rtrim($bookURI, '/'));
-    $xml = simplexml_load_file($biblePath);
-    $xml->registerXPathNamespace('bib', 'http://www.bibletechnologies.net/2003/OSIS/namespace');
+    $xpath = new DOMXPath($dom);
 
-    // Find the <div type="book" osisID="$bookURI">
-    $bookNode = null;
-    foreach ($xml->xpath('//bib:div[@type="book"]') as $node) {
-        $osis = (string)$node['osisID'];
-        //echo "Found book osisID: $osis\n";
-        if ($osis === $bookURI) {
-            $bookNode = $node;
-            break;
-        }
-    }
-    if (!$bookNode) {
-        throw new Exception("Book $bookURI not found in XML at $biblePath");
-    }
+    // Find the book node
+    $bookNodes = $xpath->query('//div[@type="book"][@osisID="'.$bookURI.'"]');
+    if ($bookNodes->length === 0) throw new Exception("Book $bookURI not found!");
+    $bookNode = $bookNodes->item(0);
 
     $chapters = [];
-    $currentChapterIndex = -1;
 
-    // Recursive function to traverse all nodes
-    $traverseNode = function($node) use (&$traverseNode, &$chapters, &$currentChapterIndex) {
-        $name = $node->getName();
-        $attrs = [];
-        foreach ($node->attributes() as $k => $v) {
-            $attrs[$k] = (string)$v;
-        }
-        echo "BIBLE_DEBUG: child node: $name attrs: " . json_encode($attrs) . "\n";
+    foreach ($xpath->query('.//p', $bookNode) as $p) {
+        $currentChapter = null;
+        $currentVerse = null;
+        $currentText = '';
+        $collecting = false;
 
-        // New chapter
-        if ($name === 'chapter' && isset($attrs['n'])) {
-            $currentChapterIndex++;
-            $chapters[$currentChapterIndex] = [];
-        }
+        foreach ($p->childNodes as $node) {
+            if ($node->nodeType === XML_ELEMENT_NODE) {
+                $tag = $node->nodeName;
 
-        // Capture text directly under <verse> or other nodes
-        if (isset($node[0])) {
-            $text = trim((string)$node);
-            if ($text !== '') {
-                if ($currentChapterIndex === -1) {
-                    $currentChapterIndex = 0;
-                    $chapters[$currentChapterIndex] = [];
+                switch ($tag) {
+                    case 'verse':
+                        $osisID = $node->getAttribute('osisID');
+                        $eID = $node->getAttribute('eID');
+
+                        if ($osisID) {
+                            // Save previous verse
+                            if ($currentChapter !== null && $currentVerse !== null && trim($currentText) !== '') {
+                                $chapters[$currentChapter][$currentVerse] = trim($currentText);
+                            }
+                            $currentText = '';
+
+                            [$book, $currentChapter, $currentVerse] = explode('.', $osisID);
+                            $currentChapter = (int)$currentChapter;
+                            $currentVerse = (int)$currentVerse;
+                            $collecting = true;
+
+                        } elseif ($eID) {
+                            // End of verse
+                            if ($currentChapter !== null && $currentVerse !== null && trim($currentText) !== '') {
+                                $chapters[$currentChapter][$currentVerse] = trim($currentText);
+                            }
+                            $currentText = '';
+                            $collecting = false;
+                            $currentChapter = null;
+                            $currentVerse = null;
+                        }
+                        break;
+
+                    case 'transChange':
+                        if ($collecting) {
+                            // Normalize whitespace inside <i> tags
+                            $text = preg_replace('/\s+/', ' ', $node->textContent);
+                            if ($currentText !== '') $currentText .= ' ';
+                            $currentText .= '<i>' . trim($text) . '</i>';
+                        }
+                        break;
+
+                    default:
+                        //throw new Exception("Unknown tag <$tag> encountered in $bookURI parsing");
+                        echo "Unknown tag <$tag> encountered in $bookURI parsing\n\n";
                 }
-                $chapters[$currentChapterIndex][] = $text;
-                echo "BIBLE_DEBUG: captured text: " . substr($text, 0, 80) . "\n";
+
+            } elseif ($node->nodeType === XML_TEXT_NODE && $collecting) {
+                // Normalize whitespace for text nodes
+                $text = preg_replace('/\s+/', ' ', $node->nodeValue);
+                if (trim($text) !== '') {
+                    if ($currentText !== '') $currentText .= ' ';
+                    $currentText .= trim($text);
+                }
             }
         }
 
-        // Recurse into children
-        foreach ($node->children($node->getNamespaces()[''] ?? null) as $child) {
-            $traverseNode($child);
+        // Store last verse in paragraph
+        if ($currentChapter !== null && $currentVerse !== null && trim($currentText) !== '') {
+            $chapters[$currentChapter][$currentVerse] = trim($currentText);
         }
-    };
-
-    // Start recursive traversal at book node
-    $traverseNode($bookNode);
-
-    echo "Done parsing book $bookURI, found " . count($chapters) . " chapters\n";
-    foreach ($chapters as $i => $ch) {
-        echo "Chapter " . ($i + 1) . " has " . count($ch) . " verses/text blocks\n";
     }
 
     return $chapters;
 }
-
-
-
 
 function mod_noticeboard(Context $ctx, $page_no = 1) {
 	global $pdo, $mod;
