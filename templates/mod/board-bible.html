@@ -14,7 +14,7 @@
 	            <td>
 	                {% if not bible_index %}
 	                    Index not found at {{ bible_path_index }}
-	                {% else %}
+	                {% elseif new %}
 	                    <select name="bible_book" id="bible_book">
 	                        <option value="">-- Select a Book --</option>
 	                        {% for book in bible_index %}
@@ -28,6 +28,8 @@
 	                            </option>
 	                        {% endfor %}
 	                    </select>
+			{% else %}
+			    <span id="bible_book_preset" name="bible_book_preset">TITLE</span>
 	                {% endif %}
 	            </td>
 	        </tr>
@@ -68,7 +70,7 @@
 			<th>{% trans 'URI' %}</th>
 			<td>
 				{% if not new %}
-					{{ config.board_abbreviation|sprintf(board.uri) }}
+					<span name="uri_preset" id="uri_preset">{{ config.board_abbreviation|sprintf(board.uri) }}</span>
 				{% else %}
 					/<input size="10" maxlength="255" type="text" name="uri" id="uri" autocomplete="off">/
 				{% endif %}
@@ -100,42 +102,62 @@
 	</ul>
 </form>
 
+// Pass PHP/Twig array into JS (only for Edit page)
+{% if not new %}
+<script>
+    var bible_index = {{ bible_index|json_encode|raw }};
+</script>
+{% endif %}
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    var sel = document.getElementById('bible_book');
+    var bibleTitleChoose = document.getElementById('bible_book');
+    var bibleTitlePreset = document.getElementById('bible_book_preset');
     var title = document.getElementById('title');
     var uri = document.getElementById('uri');
+    var uriPreset = document.getElementById('uri_preset');
+    var uriValue = '';
+    if (uri) uriValue = uri.value;
+    else uriValue = uriPreset.textContent.slice(1,-1);
+    if (bibleTitlePreset) {
+	var book = bible_index.find(book => book.osisID === uriValue) || null;
+        if(book) {
+            bibleTitlePreset.textContent = book.short;
+        } else {
+	    bibleTitlePreset.textContent = 'NO TITLE FOUND: ' + uriValue;
+	}
+    }
+    
     var output = document.querySelector('pre');
     output.dataset.default = output.textContent;
 
-    if (sel) {
+    if (bibleTitleChoose) {
 	var subtitle = document.getElementById('subtitle');
 
-	sel.addEventListener('change', function() {
-	        var opt = sel.options[sel.selectedIndex];
+	bibleTitleChoose.addEventListener('change', function() {
+	        var opt = bibleTitleChoose.options[bibleTitleChoose.selectedIndex];
 	        uri.value = opt.dataset.uri || '';
+		uriValue = uri.value;
 	        title.value = opt.dataset.title || '';
 	        subtitle.value = opt.dataset.subtitle || '';
 		output.textContent = output.dataset.default;
     	});
     }
 
+    var chap = document.getElementById('debug_chapter');
+    var verse = document.getElementById('debug_verse');
+    var count = document.getElementById('debug_count');
     var testparse = document.getElementById('debug_parse');
-    if (testparse) {
-	var chap = document.getElementById('debug_chapter');
-	var verse = document.getElementById('debug_verse');
-	var count = document.getElementById('debug_count');
-	var tokenInput = document.querySelector('input[name="token_test_parse"]');
-        testparse.addEventListener('click', function() {
-	    var titleOpt = sel.options[sel.selectedIndex];
-	    var title = titleOpt.dataset.title || '';
-	    if (title.length === 0) {
+    testparse.addEventListener('click', function() {
+
+	    if (!uriValue || uriValue.length === 0) {
 	        output.textContent = 'Error: Choose a Book';
 		return;
 	    }
 
+            var tokenInput = document.querySelector('input[name="token_test_parse"]');
             var params = new URLSearchParams();
-            params.append('uri', uri.value);
+            params.append('uri', uriValue);
 	    params.append('chapter', chap.value);
             params.append('verse', verse.value);
             params.append('count', count.value);
@@ -154,7 +176,6 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(err => {
                 output.textContent = 'Error: ' + err;
             });
-        });
-    }
+    });
 });
 </script>
