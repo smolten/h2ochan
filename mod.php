@@ -61,6 +61,13 @@ $pages = [
 	'/new-board-bible'			=> 'secure_POST new_board_bible',
 	'/bible-parse-test'			=> 'secure_POST bible_parse_test',
 	'/edit_bible/(\%b)'			=> 'secure_POST edit_board_bible',
+	'/board-status'                         => 'secure_POST board_status',
+	'/bible-post-threads'                   => 'secure_POST bible_post_threads',
+	'/bible-post-replies'			=> 'secure_POST bible_post_replies',
+
+	// h2o toggle lock on all non-bible boards
+	'/lock_all'   => 'secure_POST lock_all',
+	'/unlock_all' => 'secure_POST unlock_all',
 
 	'/rebuild'				=> 'secure_POST rebuild',	// rebuild static files
 	'/rebuild-fast'				=> 'secure_POST rebuild_fast',  // rebuild without confirmation
@@ -102,10 +109,6 @@ $pages = [
 
 	'/config'				=> 'secure_POST config',	// config editor
 	'/config/(\%b)'				=> 'secure_POST config',	// config editor
-
-	// custom h2ochan: toggle lock on all non-bible boards
-	'/lock_all'   => 'secure_POST lock_all',
-	'/unlock_all' => 'secure_POST unlock_all',
 
 	// these pages aren't listed in the dashboard without $config['debug']
 	//'/debug/antispam'			=> 'debug_antispam',

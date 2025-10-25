@@ -605,7 +605,10 @@ function mod_edit_board_bible(Context $ctx, $boardName) {
 				'board' => $board,
 				'token' => make_secure_link_token('edit_bible/' . $board['uri']),
                                 'token_test_parse' => make_secure_link_token('bible-parse-test'),
-                                'bible_path_full' => $bible_path_full,
+				'token_board_status' => make_secure_link_token('board-status'),
+         			'token_post_threads' => make_secure_link_token('bible-post-threads'),
+				'token_post_replies' => make_secure_link_token('bible-post-replies'),
+	                        'bible_path_full' => $bible_path_full,
                                 'bible_path_index' => $bible_path_index,
                                 'bible_index' => $bible_index
 			],
@@ -761,7 +764,8 @@ function mod_new_board_bible(Context $ctx) {
 
 		Vichan\Functions\Theme\rebuild_themes('boards');
 
-		header('Location: ?/' . $board['uri'] . '/' . $config['file_index'], true, $config['redirect_http']);
+		//header('Location: ?/' . $board['uri'] . '/' . $config['file_index'], true, $config['redirect_http']);
+		header('Location: ?/edit_bible/' . $board['uri'], true, $config['redirect_http']);
 	}
 
 	// check for bible index to pass in
@@ -813,59 +817,131 @@ function buildBibleBoard(Context $ctx)
 	file_put_contents($configFile, $init_config);
 
 	// $board['dir'] is Gen for Genesis
-        $bookURI = trim(rtrim($board['dir'], '/')); // trim /
-	$chapters = parseBibleBookText($bookURI, $config['bible']['path_full']);
+        //$bookURI = trim(rtrim($board['dir'], '/')); // trim /
+	//$chapters = parseBibleBookText($bookURI, $config['bible']['path_full']);
 	
    	// post chapter 1, verse 1 as a thread
-	postBibleThread($ctx, $board['uri'], $chapters[1][1]);
+	//postBibleThread($ctx, $board['uri'], $chapters[1][1]);
 }
-
-function postBibleThread($ctx, $boardUri, $verseText) {
+function mod_board_status(Context $ctx)
+{
+    global $board, $mod;
     $config = $ctx->get('config');
+    $bookURI = isset($_POST['uri']) ? preg_replace('/[^a-zA-Z0-9]/', '', $_POST['uri']) : '';
 
-    // Prepare POST data just like the form would submit
-    $postData = http_build_query([
-        'post'    => $config['button_newtopic'], // New Thread
-        'mod'     => 1,         // post in locked board
-        'board'   => $boardUri,
-        'body'    => $verseText,
-        'name'    => 'BibleBot',
-        'subject' => '',
-        'password'=> bin2hex(random_bytes(8)),
-    ]);
-
-    // HTTP context for POST, with cookie for mod
-    $options = [
-        'http' => [
-	    'header'  => "Content-type: application/x-www-form-urlencoded\r\n" .
-                     "Cookie: " . $_SERVER['HTTP_COOKIE'] . "\r\n",
-            'method'  => 'POST',
-            'content' => $postData,
-        ],
-    ];
-    $context  = stream_context_create($options);
-
-    // Make the POST request to post.php
-    modLog('POST: ' . json_encode($postData)); 
-    $result = file_get_contents('http://h2ochan.org/post.php', false, $context);
-    
-    if ($result === false) {
-        // Log error or handle failure
-        modLog("BibleBot: Failed to post to board /$boardUri");
-	$err = error_get_last();
-	if ($err) {
-    	    // Convert any type of value into a string
-    	    $raw = print_r($err, true);
-    	    modLog("BibleBot: Raw PHP error:\n" . $raw);
-	}
-
-	return null;
+    header('Content-Type: text/plain; charset=utf-8');
+    if (!$bookURI) {
+        echo "Error: Missing URI";
+        exit;
     }
 
-    // Log response for debugging
-    modLog("BibleBot: Posted to /$boardUri, response: " . $result);
+    // Count threads
+    $query = query(sprintf(
+        "SELECT COUNT(*) AS c FROM ``posts_%s`` WHERE `thread` IS NULL",
+        $bookURI
+    ));
+    $row = $query->fetch(PDO::FETCH_ASSOC);
+    $threads = $row ? (int)$row['c'] : 0;
 
-    return $result; // Returns the full HTML response from post.php
+    // Count total posts
+    $query = query(sprintf(
+        "SELECT COUNT(*) AS c FROM ``posts_%s``",
+        $bookURI
+    ));
+    $row = $query->fetch(PDO::FETCH_ASSOC);
+    $posts = $row ? (int)$row['c'] : 0;
+
+    echo "{$board['uri']}\tNum Threads: {$threads}\tNum Posts: {$posts}";
+    exit;
+}
+function mod_bible_post_threads(Context $ctx) {
+    global $board, $mod;
+    $config = $ctx->get('config');
+
+    if (!hasPermission($config['mod']['manageboards'], $board['uri']))
+        error($config['error']['noaccess']);
+
+    $bookURI = isset($_POST['uri']) ? preg_replace('/[^a-zA-Z0-9]/', '', $_POST['uri']) : '';   
+    if (!$bookURI)
+        error("Missing or invalid book URI.");
+
+    // Parse the full text of the book into chapters (array of chapters, each is array of verses)
+    $chapters = parseBibleBookText($bookURI, $config['bible']['path_full']);
+
+    for ($chapter = 1; $chapter <= count($chapters); $chapter++) {
+        $verses = $chapters[$chapter];           // array of verses for this chapter
+        if (!isset($verses[1]))        // error if Verse 1 not present
+	    error("Verse 1 doesn't exist");
+
+        $body = $verses[1];                      // Verse 1 content
+        $body_nomarkup = strip_tags($body);      // remove HTML tags
+        $slug = preg_replace('/[^a-zA-Z0-9]/', '', $body_nomarkup); // simple alpha-numeric slug
+
+        $query = prepare('INSERT INTO ``posts_' . $bookURI . '`` 
+            (thread, subject, email, name, trip, capcode, body, body_nomarkup, time, bump,
+		files, num_files, filehash, password, ip, sticky, locked, cycle, sage, embed, slug)
+            VALUES
+            (NULL, NULL, NULL, NULL, NULL, NULL, :body, :body_nomarkup, :faketime, :faketime,
+		NULL, 0, NULL, SUBSTRING(MD5(RAND()),1,12), :ip, 0, 0, 0, 0, NULL, :slug)');
+
+        $query->bindValue(':body', $body);
+        $query->bindValue(':body_nomarkup', $body_nomarkup);
+	$query->bindValue(':faketime', 1000-$chapter);
+        $query->bindValue(':ip', '127.0.0.1');
+        $query->bindValue(':slug', $slug);
+        $query->execute() or error(db_error($query));
+    }
+
+    modLog("Posted chapter threads for book $bookURI");
+    echo "Done: " . count($chapters) . " chapters processed.";
+    exit;
+}
+
+function mod_bible_post_replies(Context $ctx) {
+    global $board, $mod;
+    $config = $ctx->get('config');
+
+    if (!hasPermission($config['mod']['manageboards'], $board['uri']))
+        error($config['error']['noaccess']);
+
+    $bookURI = isset($_POST['uri']) ? preg_replace('/[^a-zA-Z0-9]/', '', $_POST['uri']) : '';
+    $chapters = parseBibleBookText($bookURI, $config['bible']['path_full']);
+
+    // Iterate chapters in reverse if needed (latest chapters first)
+    for ($chapter = count($chapters); $chapter >= 1; $chapter--) {
+        $parentPostID = $chapter; // Post ID of Verse 1 = chapter number
+        $verses = $chapters[$chapter];
+
+        // Skip Verse 1 because it's already a thread
+        for ($verse = 2; $verse <= count($verses); $verse++) {
+            $body = $verses[$verse];
+            $body_nomarkup = preg_replace('/<[^>]+>/', '', $body);          // strip HTML
+            $slug = preg_replace('/[^a-zA-Z0-9]/', '', $body_nomarkup);     // alpha-numeric slug
+
+            $query = prepare("
+                INSERT INTO ``posts_{$bookURI}``
+                (thread, subject, email, name, trip, capcode, body, body_nomarkup, time, bump,
+                 files, num_files, filehash, password, ip, sticky, locked, cycle, sage, embed, slug)
+                VALUES
+                (:thread, NULL, NULL, NULL, NULL, NULL, :body, :body_nomarkup,
+                 :faketime, :faketime,
+                 NULL, 0, NULL, SUBSTRING(MD5(RAND()),1,12),
+                 :ip, 0, 0, 0, 0, NULL, :slug)
+            ");
+
+            $query->bindValue(':thread', $parentPostID);
+            $query->bindValue(':body', $body);
+            $query->bindValue(':body_nomarkup', $body_nomarkup);
+	    $query->bindValue(':faketime', 1000-$chapter);
+            $query->bindValue(':ip', '127.0.0.1');
+            $query->bindValue(':slug', $slug);
+            $query->execute() or error(db_error($query));
+        }
+    }
+
+    modLog("Posted all verse replies for {$bookURI}");
+    echo "All verse replies posted for {$bookURI}";
+    exit;
 }
 
 
