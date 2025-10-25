@@ -2781,6 +2781,34 @@ function mod_new_pm(Context $ctx, $username) {
 	);
 }
 
+function mod_rebuild_fast(Context $ctx) {
+    $config = $ctx->get('config');
+    $cache = $ctx->get(CacheDriver::class);
+
+    if (!hasPermission($config['mod']['rebuild']))
+        error($config['error']['noaccess']);
+
+    // Construct POST array like the normal rebuild form
+    $_POST = [
+        'rebuild' => true,
+        'rebuild_cache' => true,
+        'rebuild_themes' => true,
+        'rebuild_javascript' => true,
+        'rebuild_index' => true,
+        'rebuild_thread' => true,
+        'boards_all' => true,
+        'token' => make_secure_link_token('rebuild')
+    ];
+
+    // Call the existing rebuild function directly
+    mod_rebuild($ctx);
+
+    // Redirect immediately to mod page
+    header('Location: ?/');
+    exit;
+}
+
+
 function mod_rebuild(Context $ctx) {
 	global $twig, $mod;
 	$config = $ctx->get('config');

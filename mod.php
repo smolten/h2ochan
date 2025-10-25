@@ -63,6 +63,7 @@ $pages = [
 	'/edit_bible/(\%b)'			=> 'secure_POST edit_board_bible',
 
 	'/rebuild'				=> 'secure_POST rebuild',	// rebuild static files
+	'/rebuild-fast'				=> 'secure_POST rebuild_fast',  // rebuild without confirmation
 	'/reports'				=> 'reports',			// report queue
 	'/reports/(\d+)/dismiss(&all|&post)?'		=> 'secure report_dismiss',	// dismiss a report
 
