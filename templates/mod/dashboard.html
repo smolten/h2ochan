@@ -50,7 +50,8 @@ uri) }}</a>
                                         </small>
                                 {% endif %}
                                 {% if mod|hasPermission(config.mod.manageboards) %}
-                                         <a href="?/edit_bible/{{ board.uri }}"><small>[{% trans 'edit' %}]</small></a>
+                                         <a href="?/edit_bible/{{ board.uri }}"><small>[{% trans 'edit' %} </small></a>
+					 <a href="?/edit/{{ board.uri }}"><small>(simple)]</small></a>
                                 {% endif %}
                                 {% if mod|hasPermission(config.mod.edit_pages) %}
                                          <a href="?/edit_pages/{{ board.uri }}"><small>[{% trans 'pages' %}]</small></a>

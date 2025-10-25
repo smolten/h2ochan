@@ -7,6 +7,9 @@
 <form action="{{ action }}" method="post">
 	<input type="hidden" name="token" value="{{ token }}">
 	<input type="hidden" name="token_test_parse" value="{{ token_test_parse }}">
+	<input type="hidden" name="token_board_status" value="{{ token_board_status }}">
+	<input type="hidden" name="token_post_threads" value="{{ token_post_threads }}">
+	<input type="hidden" name="token_post_replies" value="{{ token_post_replies }}">
 	<table>
 
 		<tr>
@@ -50,6 +53,7 @@
         </select>
 	Num_verses:
 	<select id="debug_count" name="debug_count">
+	    <option value="150">150</option>
 	    {% for c in range(1, 100) %}
 		<option value="{{ c }}">{{ c }}</option>
 	    {% endfor %}
@@ -88,23 +92,34 @@
 				<input size="25" type="text" name="subtitle" id="subtitle" value="{{ board.subtitle|e }}" autocomplete="off">
 			</td>
 		</tr>
+		{% if not new %}
+		<tr>
+			<th>Status</th>
+			<td>
+				<span name="posts_status" id="posts_status">NaN threads. NaN total posts.</span>
+			</td>
+		</tr>
+		<tr>
+			<th>ACTION</th>
+			<td>
+			<button type="button" name="get_status" id="get_status">Get Status</button>
+			<button type="button" name="do_post_threads" id="do_post_threads">Post Chapter Threads</button>
+        		<button type="button" name="do_post_replies" id="do_post_replies">Post Verse Replies</button>
+			</td>
+		</tr>		
+		{% endif %}
 	</table>
 	
 	<ul style="padding:0;text-align:center;list-style:none">
-		{% if new %}
-			<li><input type="submit" value="{% trans 'Create board' %}"></li>
-		{% else %}
-			<li><input type="submit" value="{% trans 'Save changes' %}"></li>
-			{% if mod|hasPermission(config.mod.deleteboard) %}
-				<li><input name="delete" onclick="return confirm('Are you sure you want to permanently delete this board?');" type="submit" value="{% trans 'Delete board' %}"></li>
-			{% endif %}
-		{% endif %}
+	{% if new %}
+            <li><input type="submit" value="{% trans 'Create board' %}"></li>
+	{% endif %}
 	</ul>
 </form>
 
-// Pass PHP/Twig array into JS (only for Edit page)
 {% if not new %}
 <script>
+    /*Pass PHP/Twig array into JS (only for Edit page)*/
     var bible_index = {{ bible_index|json_encode|raw }};
 </script>
 {% endif %}
@@ -117,8 +132,15 @@ document.addEventListener('DOMContentLoaded', function() {
     var uri = document.getElementById('uri');
     var uriPreset = document.getElementById('uri_preset');
     var uriValue = '';
-    if (uri) uriValue = uri.value;
-    else uriValue = uriPreset.textContent.slice(1,-1);
+    if (uri)  {
+	uriValue = uri.value;
+	console.log("set uri from editbox: " + uriValue);
+    }
+    else {
+	uriValue = uriPreset.textContent.replace(/^\/+|\/+$/g, '');
+	console.log("set uri from preset: " + uriValue);
+    }
+
     if (bibleTitlePreset) {
 	var book = bible_index.find(book => book.osisID === uriValue) || null;
         if(book) {
@@ -177,5 +199,66 @@ document.addEventListener('DOMContentLoaded', function() {
                 output.textContent = 'Error: ' + err;
             });
     });
+
+    var status = document.getElementById('posts_status');
+    document.getElementById('get_status').addEventListener('click', board_status);
+    document.getElementById('do_post_threads').addEventListener('click', do_threads);
+    document.getElementById('do_post_replies').addEventListener('click', do_replies);
+    board_status();
+    function board_status() {	
+        var tokenStatus = document.querySelector('input[name="token_board_status"]');
+        var params = new URLSearchParams();
+        params.append('uri', uriValue);
+        params.append('token', tokenStatus.value);
+
+        fetch('/mod.php?/board-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params.toString(),
+            credentials: 'same-origin'
+        })
+        .then(response => response.text())
+        .then(text => {
+            status.textContent = text || '(no response)';
+        })
+        .catch(err => {
+            status.textContent = 'Error: ' + err;
+        });
+    };
+    function do_threads() {
+    	var tokenThreads = document.querySelector('input[name="token_post_threads"]');
+	var params = new URLSearchParams();
+	params.append('uri', uriValue);
+	params.append('token', tokenThreads.value);
+	console.log("Posting threads for URI:", uriValue, "token:", tokenThreads.value);
+
+	fetch('/mod.php?/bible-post-threads', {
+	    method: 'POST',
+	    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+	    body: params.toString(),
+	    credentials: 'same-origin'
+	})
+	.then(() => board_status())
+	.catch(err => {
+	    status.textContent = 'Error: ' + err;
+	});
+    };
+    function do_replies() {
+    	var tokenReplies = document.querySelector('input[name="token_post_replies"]');
+	var params = new URLSearchParams();
+	params.append('uri', uriValue);
+	params.append('token', tokenReplies.value);
+
+	fetch('/mod.php?/bible-post-replies', {
+	    method: 'POST',
+	    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+	    body: params.toString(),
+	    credentials: 'same-origin'
+	})
+	.then(() => board_status())
+	.catch(err => {
+	    status.textContent = 'Error: ' + err;
+	});
+    };
 });
 </script>
