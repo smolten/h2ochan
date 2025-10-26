@@ -1056,7 +1056,7 @@
 	$config['boardlist_wrap_bracket'] = false;
 
 	// Show page navigation links at the top as well.
-	$config['page_nav_top'] = false;
+	$config['page_nav_top'] = true;
 
 	// Show "Catalog" link in page navigation. Use with the Catalog theme. Set to false to disable.
 	$config['catalog_link'] = 'catalog.html';
