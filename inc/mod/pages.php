@@ -815,13 +815,6 @@ function buildBibleBoard(Context $ctx)
 	\$config['board_locked'] = 'bible';
 	INIT_PHP;
 	file_put_contents($configFile, $init_config);
-
-	// $board['dir'] is Gen for Genesis
-        //$bookURI = trim(rtrim($board['dir'], '/')); // trim /
-	//$chapters = parseBibleBookText($bookURI, $config['bible']['path_full']);
-	
-   	// post chapter 1, verse 1 as a thread
-	//postBibleThread($ctx, $board['uri'], $chapters[1][1]);
 }
 function mod_board_status(Context $ctx)
 {
@@ -835,7 +828,7 @@ function mod_board_status(Context $ctx)
         exit;
     }
 
-    // Count threads
+    // Count threads (chapters, verse 1)
     $query = query(sprintf(
         "SELECT COUNT(*) AS c FROM ``posts_%s`` WHERE `thread` IS NULL",
         $bookURI
@@ -843,15 +836,15 @@ function mod_board_status(Context $ctx)
     $row = $query->fetch(PDO::FETCH_ASSOC);
     $threads = $row ? (int)$row['c'] : 0;
 
-    // Count total posts
+    // Count replies (verses 2 and up)
     $query = query(sprintf(
-        "SELECT COUNT(*) AS c FROM ``posts_%s``",
+        "SELECT COUNT(*) AS c FROM ``posts_%s`` WHERE `thread` IS NOT NULL",
         $bookURI
     ));
     $row = $query->fetch(PDO::FETCH_ASSOC);
-    $posts = $row ? (int)$row['c'] : 0;
+    $replies = $row ? (int)$row['c'] : 0;
 
-    echo "{$board['uri']}\tNum Threads: {$threads}\tNum Posts: {$posts}";
+    echo "{$board['uri']}\tNum Threads: {$threads}\tNum Replies: {$replies}";
     exit;
 }
 function mod_bible_post_threads(Context $ctx) {
@@ -868,32 +861,63 @@ function mod_bible_post_threads(Context $ctx) {
     // Parse the full text of the book into chapters (array of chapters, each is array of verses)
     $chapters = parseBibleBookText($bookURI, $config['bible']['path_full']);
 
+    $errors = [];  // Array to collect DB errors
+
     for ($chapter = 1; $chapter <= count($chapters); $chapter++) {
         $verses = $chapters[$chapter];           // array of verses for this chapter
-        if (!isset($verses[1]))        // error if Verse 1 not present
-	    error("Verse 1 doesn't exist");
+        if (!isset($verses[1])) {       // error if Verse 1 not present
+            $errors[] = [
+                'chapter' => $chapter,
+                'verse' => 1,
+                'message' => "Verse 1 doesn't exist"
+            ];
+            continue; // skip to next chapter
+        }
 
-        $body = $verses[1];                      // Verse 1 content
+        $prepend = '<a class="post_no" onclick="citeReply(' . $chapter . ')" ' .
+            'href="/' . $bookURI . '/res/' . $chapter . '.html#q1" ' .
+            'style="margin-right:0.3em; font-size: 2em;float: left;font-family: \"Garamond\", serif;">' . $chapter . '</a>';
+        $body = $prepend . $verses[1];                      // Chapter 1 Verse 1 (with BIG chapter num)
         $body_nomarkup = strip_tags($body);      // remove HTML tags
         $slug = preg_replace('/[^a-zA-Z0-9]/', '', $body_nomarkup); // simple alpha-numeric slug
+        $slug = substr($slug, 0, 256); // db char limit
 
-        $query = prepare('INSERT INTO ``posts_' . $bookURI . '`` 
-            (thread, subject, email, name, trip, capcode, body, body_nomarkup, time, bump,
-		files, num_files, filehash, password, ip, sticky, locked, cycle, sage, embed, slug)
-            VALUES
-            (NULL, NULL, NULL, NULL, NULL, NULL, :body, :body_nomarkup, :faketime, :faketime,
-		NULL, 0, NULL, SUBSTRING(MD5(RAND()),1,12), :ip, 0, 0, 0, 0, NULL, :slug)');
+        try {
+            $query = prepare('INSERT INTO ``posts_' . $bookURI . '``
+                (thread, subject, email, name, trip, capcode, body, body_nomarkup, time, bump,
+                    files, num_files, filehash, password, ip, sticky, locked, cycle, sage, embed, slug)
+                VALUES
+                (NULL, NULL, NULL, NULL, NULL, NULL, :body, :body_nomarkup, :faketime, :faketime,
+                    NULL, 0, NULL, SUBSTRING(MD5(RAND()),1,12), :ip, 0, 0, 0, 0, NULL, :slug)');
 
-        $query->bindValue(':body', $body);
-        $query->bindValue(':body_nomarkup', $body_nomarkup);
-	$query->bindValue(':faketime', 1000-$chapter);
-        $query->bindValue(':ip', '127.0.0.1');
-        $query->bindValue(':slug', $slug);
-        $query->execute() or error(db_error($query));
+            $query->bindValue(':body', $body);
+            $query->bindValue(':body_nomarkup', $body_nomarkup);
+            $query->bindValue(':faketime', 1000-$chapter);
+            $query->bindValue(':ip', '127.0.0.1');
+            $query->bindValue(':slug', $slug);
+
+            $query->execute();
+
+        } catch (PDOException $e) {
+            $errors[] = [
+                'chapter' => $chapter,
+                'verse' => 1,
+                'message' => $e->getMessage()
+            ];
+        }
     }
 
-    modLog("Posted chapter threads for book $bookURI");
-    echo "Done: " . count($chapters) . " chapters processed.";
+    // Log summary including errors
+    $note = "Posted chapter threads for book $bookURI";
+    if (!empty($errors)) {
+        $note .= " -- Errors encountered:\n";
+        foreach ($errors as $err) {
+            $note .= "Chapter {$err['chapter']}, Verse {$err['verse']}: {$err['message']}\n";
+        }
+    }
+
+    modLog($note);
+    echo nl2br($note);  // For web output with line breaks
     exit;
 }
 
@@ -907,43 +931,65 @@ function mod_bible_post_replies(Context $ctx) {
     $bookURI = isset($_POST['uri']) ? preg_replace('/[^a-zA-Z0-9]/', '', $_POST['uri']) : '';
     $chapters = parseBibleBookText($bookURI, $config['bible']['path_full']);
 
+        $errors = [];  // Array to collate all DB errors
+
     // Iterate chapters in reverse if needed (latest chapters first)
     for ($chapter = count($chapters); $chapter >= 1; $chapter--) {
-        $parentPostID = $chapter; // Post ID of Verse 1 = chapter number
         $verses = $chapters[$chapter];
 
-        // Skip Verse 1 because it's already a thread
+        // Skip Verse 1 because it's already the thread
         for ($verse = 2; $verse <= count($verses); $verse++) {
-            $body = $verses[$verse];
+            $prepend = '<a class="post_no" onclick="citeReply(1)" ' .
+                'href="/' . $bookURI . '/res/' . $chapter . '.html#q' . $verse . '" ' .
+                'style="margin-right: 0.3em; transform: translateY(-0.15em); float: left;">'.$verse.'</a>';
+            $body = $prepend . $verses[$verse];
             $body_nomarkup = preg_replace('/<[^>]+>/', '', $body);          // strip HTML
             $slug = preg_replace('/[^a-zA-Z0-9]/', '', $body_nomarkup);     // alpha-numeric slug
+	    $slug = substr($slug, 0, 256); // db char limit
 
-            $query = prepare("
-                INSERT INTO ``posts_{$bookURI}``
-                (thread, subject, email, name, trip, capcode, body, body_nomarkup, time, bump,
-                 files, num_files, filehash, password, ip, sticky, locked, cycle, sage, embed, slug)
-                VALUES
-                (:thread, NULL, NULL, NULL, NULL, NULL, :body, :body_nomarkup,
-                 :faketime, :faketime,
-                 NULL, 0, NULL, SUBSTRING(MD5(RAND()),1,12),
-                 :ip, 0, 0, 0, 0, NULL, :slug)
-            ");
+            try {
+                $query = prepare("
+                    INSERT INTO ``posts_{$bookURI}``
+                    (thread, subject, email, name, trip, capcode, body, body_nomarkup, time, bump,
+                     files, num_files, filehash, password, ip, sticky, locked, cycle, sage, embed, slug)
+                    VALUES
+                    (:thread, NULL, NULL, NULL, NULL, NULL, :body, :body_nomarkup, :faketime, :faketime,
+                     NULL, 0, NULL, SUBSTRING(MD5(RAND()),1,12), :ip, 0, 0, 0, 0, NULL, :slug)
+                ");
 
-            $query->bindValue(':thread', $parentPostID);
-            $query->bindValue(':body', $body);
-            $query->bindValue(':body_nomarkup', $body_nomarkup);
-	    $query->bindValue(':faketime', 1000-$chapter);
-            $query->bindValue(':ip', '127.0.0.1');
-            $query->bindValue(':slug', $slug);
-            $query->execute() or error(db_error($query));
+                $query->bindValue(':thread', $chapter);
+                $query->bindValue(':body', $body);
+                $query->bindValue(':body_nomarkup', $body_nomarkup);
+                $query->bindValue(':faketime', 1000-$chapter);
+                $query->bindValue(':ip', '127.0.0.1');
+                $query->bindValue(':slug', $slug);
+
+                $query->execute();
+
+            } catch (PDOException $e) {
+                // Collect error details
+                $errors[] = [
+                    'chapter' => $chapter,
+                    'verse' => $verse,
+                    'message' => $e->getMessage()
+                ];
+            }
         }
     }
 
-    modLog("Posted all verse replies for {$bookURI}");
-    echo "All verse replies posted for {$bookURI}";
+    // Log summary including errors
+    $note = "Posted all verse replies for {$bookURI}";
+    if (!empty($errors)) {
+        $note .= " -- Errors encountered:\n";
+        foreach ($errors as $err) {
+            $note .= "Chapter {$err['chapter']}, Verse {$err['verse']}: {$err['message']}\n";
+        }
+    }
+
+    modLog($note);
+    echo nl2br($note);  // For web output with line breaks
     exit;
 }
-
 
 function mod_bible_parse_test(Context $ctx) {
     $config = $ctx->get('config');
@@ -3854,7 +3900,8 @@ function mod_bible_make_index(Context $ctx) {
                 window.location.href="%s";
             } else {
                 alert("Bible index not overwritten.");
-            }
+            	history.back();
+	    }
         </script>',
         addslashes($path_index),
         $url
@@ -3875,9 +3922,6 @@ function mod_bible_make_index(Context $ctx) {
 
     while (($line = fgets($handle)) !== false) {
         if (preg_match('/<div\s+type="book".*?osisID="([^"]+)".*?>\s*<title\s+type="main"\s+short="([^"]+)">(.+?)<\/title>/i', $line, $matches)) {
-            // $matches[1] = osisID
-            // $matches[2] = short
-            // $matches[3] = full title
             $titles[] = [
                 'osisID' => $matches[1],
                 'short' => $matches[2],
