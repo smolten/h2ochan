@@ -813,6 +813,12 @@ function buildBibleBoard(Context $ctx)
 	<?php
 	// Board created for Bible chapter {$_POST['title']}
 	\$config['board_locked'] = 'bible';
+	// 1 bible chapter per page
+	\$config['threads_per_page'] = 1;
+	// Allow all chapters of Psalms to be shown 1 per page
+	\$config['max_pages'] = 151;
+	// Allow all verses in largest chapter of Psalms to display on 1 page
+	\$config['threads_preview'] = 176;
 	INIT_PHP;
 	file_put_contents($configFile, $init_config);
 }
@@ -2913,6 +2919,7 @@ function mod_rebuild_fast(Context $ctx) {
     // Construct POST array like the normal rebuild form
     $_POST = [
         'rebuild' => true,
+	'fast' => true,       // but FAST
         'rebuild_cache' => true,
         'rebuild_themes' => true,
         'rebuild_javascript' => true,
@@ -2922,18 +2929,18 @@ function mod_rebuild_fast(Context $ctx) {
         'token' => make_secure_link_token('rebuild')
     ];
 
-    // Call the existing rebuild function directly
+    // Call the normal rebuild function
     mod_rebuild($ctx);
-
-    // Redirect immediately to mod page
-    header('Location: ?/');
     exit;
 }
+
 
 
 function mod_rebuild(Context $ctx) {
 	global $twig, $mod;
 	$config = $ctx->get('config');
+
+	$fast = isset($_POST['fast']);
 
 	if (!hasPermission($config['mod']['rebuild']))
 		error($config['error']['noaccess']);
@@ -2995,8 +3002,13 @@ function mod_rebuild(Context $ctx) {
 				}
 			}
 		}
-
-		mod_page(_('Rebuild'), $config['file_mod_rebuilt'], [ 'logs' => $log ], $mod);
+		if ($fast === false)
+		    mod_page( _('Rebuilt'), $config['file_mod_rebuilt'], [ 'logs' => $log ], $mod);
+		else {
+		    echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Redirecting</title></head><body>';
+    		    echo '<script>history.back();</script>';
+    		    echo '</body></html>';
+		}
 		return;
 	}
 
