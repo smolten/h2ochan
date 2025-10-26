@@ -63,19 +63,24 @@
 	{{ config.ad.top }}
 
 	{% if not no_post_form %}
+	    {% if not config.board_locked %}
 		{% include 'post_form.html' %}
+	    {% endif %}
 	{% else %}
 		{% include 'boardlist.html' %}
 	{% endif %}
 
 	{% if config.page_nav_top %}
 		<div class="pages top">
-			{% for page in pages %}
-			 [<a {% if page.selected %}class="selected"{% endif %}{% if not page.selected %}href="{{ page.link }}"{% endif %}>{{ page.num }}</a>]{% if loop.last %} {% endif %}
-			{% endfor %}
-			{{ btn.next }}
+                 {{ btn.prev }} {% for page in pages %}
+                  [<a {% if page.selected %}class="selected"{% endif %}{% if not page.selected %}href="{{ page.link }}"{% endif %}>{{ page.num }}</a>]{% if loop.last %}{% endif %}
+                 {% endfor %} {{ btn.next }}
+                 {% if config.catalog_link %}
+                          | <a href="{{ config.root }}{% if mod %}{{ config.file_mod }}?/{% endif %}{{ board.dir }}{{ config.catalog_link }}">{% trans %}Catalog{% endtrans %}</a>
+                 {% endif %}
 		</div>
 	{% endif %}
+
 
 	{% if config.global_message %}<hr /><div class="blotter">{{ config.global_message }}</div>{% endif %}
 	<hr />
@@ -90,6 +95,9 @@
         	</form>
     	<!-- End Search Form -->
     	{% endif %}
+
+
+
 	<form name="postcontrols" action="{{ config.post_url }}" method="post">
 	<input type="hidden" name="board" value="{{ board.uri }}" />
 	{% if mod %}<input type="hidden" name="mod" value="1" />{% endif %}
@@ -98,12 +106,13 @@
 	</form>
 
 	<div class="pages">
-		{{ btn.prev }} {% for page in pages %}
-		 [<a {% if page.selected %}class="selected"{% endif %}{% if not page.selected %}href="{{ page.link }}"{% endif %}>{{ page.num }}</a>]{% if loop.last %} {% endif %}
-		{% endfor %} {{ btn.next }}
-		{% if config.catalog_link %}
-			 | <a href="{{ config.root }}{% if mod %}{{ config.file_mod }}?/{% endif %}{{ board.dir }}{{ config.catalog_link }}">{% trans %}Catalog{% endtrans %}</a>
-		{% endif %}
+                 {{ btn.prev }} {% for page in pages %}
+                  [<a {% if page.selected %}class="selected"{% endif %}{% if not page.selected %}href="{{ page.link }}"{% endif %}>{{ page.num }}</a>]{% if loop.last %}
+    {% endif %}
+                 {% endfor %} {{ btn.next }}
+                 {% if config.catalog_link %}
+                          | <a href="{{ config.root }}{% if mod %}{{ config.file_mod }}?/{% endif %}{{ board.dir }}{{ config.catalog_link }}">{% trans %}Catalog{% endtrans %}</a>
+                 {% endif %}
 	</div>
 
 	{{ boardlist.bottom }}

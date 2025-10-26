@@ -813,6 +813,8 @@ function buildBibleBoard(Context $ctx)
 	<?php
 	// Board created for Bible chapter {$_POST['title']}
 	\$config['board_locked'] = 'bible';
+	// No catalog (looks ugly with "deleted" image per chapter)
+	\$config['catalog_link'] = false;
 	// 1 bible chapter per page
 	\$config['threads_per_page'] = 1;
 	// Allow all chapters of Psalms to be shown 1 per page

@@ -14,6 +14,7 @@
 		array('home' => 'http://h2ochan.org'),
 		array('bt', 'wah')
 	);
+	$config['page_nav_top'] = true;
 	// bible hosting
 	$config['bible']['path_full'] = 'static/bible/eng-kjv.osis.xml';
 	$config['bible']['path_index'] = 'tmp/index-eng-kjv.osis.xml';
