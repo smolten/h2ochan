@@ -1,7 +1,7 @@
 body {
   background: #EEF2FF url('img/fade-blue.png') repeat-x 50% 0%;
   color: black;
-  font-family: arial,helvetica,sans-serif;
+  font-family: Georgia,sans-serif;
   font-size: 10pt;
   margin: 0 4px;
   padding-left: 4px;
@@ -263,13 +263,6 @@ div.delete {
 
 div.post.reply p {
   margin: 0.3em 0 0 0;
-}
-
-div.post.reply div.body {
-  margin-left: 1.8em;
-  margin-top: 0.8em;
-  padding-right: 3em;
-  padding-bottom: 0.3em;
 }
 
 div.post.reply.highlighted {
