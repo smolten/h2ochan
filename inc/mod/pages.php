@@ -885,7 +885,7 @@ function mod_bible_post_threads(Context $ctx) {
         $prepend = '<a class="post_no" onclick="citeReply(' . $chapter . ')" ' .
             'href="/' . $bookURI . '/res/' . $chapter . '.html#q1" ' .
             'style="margin-right:0.3em; font-size: 2em;float: left;font-family: \"Garamond\", serif;">' . $chapter . '</a>';
-        $body = $prepend . $verses[1];                      // Chapter 1 Verse 1 (with BIG chapter num)
+        $body = $prepend .' '. $verses[1];                      // Chapter 1 Verse 1 (with BIG chapter num)
         $body_nomarkup = strip_tags($body);      // remove HTML tags
         $slug = preg_replace('/[^a-zA-Z0-9]/', '', $body_nomarkup); // simple alpha-numeric slug
         $slug = substr($slug, 0, 256); // db char limit
@@ -950,7 +950,7 @@ function mod_bible_post_replies(Context $ctx) {
             $prepend = '<a class="post_no" onclick="citeReply(1)" ' .
                 'href="/' . $bookURI . '/res/' . $chapter . '.html#q' . $verse . '" ' .
                 'style="margin-right: 0.3em; transform: translateY(-0.15em); float: left;">'.$verse.'</a>';
-            $body = $prepend . $verses[$verse];
+            $body = $prepend .' '. $verses[$verse];
             $body_nomarkup = preg_replace('/<[^>]+>/', '', $body);          // strip HTML
             $slug = preg_replace('/[^a-zA-Z0-9]/', '', $body_nomarkup);     // alpha-numeric slug
 	    $slug = substr($slug, 0, 256); // db char limit
