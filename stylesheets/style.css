@@ -60,7 +60,7 @@ h2 {
 }
 
 header {
-  margin: 1em 0;
+  margin: 0.5em 0;
 }
 
 h1 {
@@ -77,10 +77,6 @@ header div.subtitle,h1 {
 
 header div.subtitle {
   font-size: 8pt;
-}
-
-form {
-  margin-bottom: 4em;
 }
 
 form table {
@@ -423,19 +419,11 @@ div.pages {
 }
 
 div.pages.top {
-  display: block;
+  display: inline-block;
   padding: 5px 8px;
   margin-bottom: 5px;
-  position: fixed;
   top: 0;
   right: 0;
-  opacity: 0.9;
-}
-
-@media screen and (max-width: 800px) {
-  div.pages.top {
-    display: none!important;
-  }
 }
 
 div.pages a.selected {
