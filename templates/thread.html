@@ -47,11 +47,21 @@
 
 	{% include 'attention_bar.html' %}
 
-	<div class="banner">{% trans %}Posting mode: Reply{% endtrans %} <a class="unimportant" href="{{ return }}">[{% trans %}Return{% endtrans %}]</a> <a class="unimportant" href="#bottom">[{% trans %}Go to bottom {% endtrans %}]</a></div>
+	<div class="banner">
+	    {% if config.board_locked %}
+		Reading mode: Focus
+	    {% else %}
+		{% trans %}Posting mode: Reply{% endtrans %}
+	    {% endif %}
+	    <a class="unimportant" href="{{ return }}">[{% trans %}Return{% endtrans %}]</a>
+	    <a class="unimportant" href="#bottom">[{% trans %}Go to bottom {% endtrans %}]</a>
+	</div>
 
 	{{ config.ad.top }}
-
-	{% include 'post_form.html' %}
+	
+	{% if mod or not config.board_locked %}
+	    {% include 'post_form.html' %}
+	{% endif %}
 
 	{% if config.global_message %}<hr /><div class="blotter">{{ config.global_message }}</div>{% endif %}
 	<hr />
@@ -73,8 +83,10 @@
 			<span id="thread-quick-reply">
 				<a id="link-quick-reply" href="#">[{% trans %}Post a Reply{% endtrans %}]</a>
 			</span>
-			
-			{% include 'report_delete.html' %}
+		
+			{% if config.board_locked != 'bible' %}	
+			    {% include 'report_delete.html' %}
+			{% endif %}
 		</div>
 		
 		<div class="clearfix"></div>
