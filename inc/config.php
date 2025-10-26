@@ -587,7 +587,7 @@
 	// $config['wordfilters'][] = array('/ca[rt]/', 'dog', true); // 'true' means it's a regular expression
 
 	// Always act as if the user had typed "noko" into the email field.
-	$config['always_noko'] = false;
+	$config['always_noko'] = true;
 
 	// Example: Custom tripcodes. The below example makes a tripcode of "#test123" evaluate to "!HelloWorld".
 	// $config['custom_tripcode']['#test123'] = '!HelloWorld';
@@ -604,18 +604,18 @@
 	// With the following, you can disable certain superfluous fields or enable "forced anonymous".
 
 	// When true, all names will be set to $config['anonymous'].
-	$config['field_disable_name'] = false;
+	$config['field_disable_name'] = true;
 	// When true, there will be no email field.
-	$config['field_disable_email'] = false;
+	$config['field_disable_email'] = true;
 	// When true, there will be no subject field.
 	$config['field_disable_subject'] = false;
 	// When true, there will be no subject field for replies.
-	$config['field_disable_reply_subject'] = false;
+	$config['field_disable_reply_subject'] = true;
 	// When true, a blank password will be used for files (not usable for deletion).
 	$config['field_disable_password'] = false;
 
 	// When true, users are instead presented a selectbox for email. Contains, blank, noko and sage.
-	$config['field_email_selectbox'] = false;
+	$config['field_email_selectbox'] = true;
 
 	// When true, the sage won't be displayed
 	$config['hide_sage'] = false;
@@ -814,7 +814,7 @@
 	$config['convert_args'] = '-size %dx%d %s -thumbnail %dx%d -auto-orient +profile "*" %s';
 
 	// Strip EXIF metadata from JPEG files.
-	$config['strip_exif'] = false;
+	$config['strip_exif'] = true;
 	// Use the command-line `exiftool` tool to strip EXIF metadata without decompressing/recompressing JPEGs.
 	// Ignored when $config['redraw_image'] is true.
 	$config['use_exiftool'] = false;
@@ -843,7 +843,7 @@
 		'png',
 		'webp'
 	];
-	// $config['allowed_ext'][] = 'svg';
+	$config['allowed_ext'][] = 'svg';
 
 	// Allowed extensions for OP. Inherits from the above setting if set to false. Otherwise, it overrides both allowed_ext and
 	// allowed_ext_files (filetypes for downloadable files should be set in allowed_ext_files as well). This setting is useful
@@ -944,7 +944,7 @@
 	// Maximum amount of threads to display per page.
 	$config['threads_per_page'] = 10;
 	// Maximum number of pages. Content past the last page is automatically purged.
-	$config['max_pages'] = 10;
+	$config['max_pages'] = 33;
 	// Replies to show per thread on the board index page.
 	$config['threads_preview'] = 5;
 	// Same as above, but for stickied threads.
@@ -956,7 +956,7 @@
 
 	// The default name (ie. Anonymous). Can be an array - in that case it's picked randomly from the array.
 	// Example: $config['anonymous'] = array('Bernd', 'Senpai', 'Jonne', 'ChanPro');
-	$config['anonymous'] = 'Anonymous';
+	$config['anonymous'] = 'droplet';
 
 	// Number of reports you can create at once.
 	$config['report_limit'] = 3;
@@ -965,7 +965,7 @@
 	$config['report_max_length'] = 30;
 
 	// Allow unfiltered HTML in board subtitle. This is useful for placing icons and links.
-	$config['allow_subtitle_html'] = false;
+	$config['allow_subtitle_html'] = true;
 
 /*
  * ====================
