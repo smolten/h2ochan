@@ -307,7 +307,7 @@ span.omitted {
 
 br.clear {
   clear: left;
-  display: block;
+  display: none;
 }
 
 span.controls {
