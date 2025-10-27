@@ -7,6 +7,7 @@
 	<input type="checkbox" class="bookmark" name="bookmark_{{ post.id }}" id="bookmark_{{ post.id }}"
 		data-post-id="{{ post.id }}" data-post-link="/{{ board.uri }}/res/{{ post.thread }}.html#q{{ post.id }}"
 	/>
+    {% if config.board_locked != 'bible' %}
 	<input type="checkbox" class="delete" name="delete_{{ post.id }}" id="delete_{{ post.id }}" />
 	<label for="delete_{{ post.id }}">
 		{% include 'post/subject.html' %}
@@ -19,10 +20,13 @@
 	{% include 'post/poster_id.html' %}&nbsp;
 	<a class="post_no" id="post_no_{{ post.id }}" onclick="highlightReply({{ post.id }})" href="{% if isnoko50 %}{{ post.link('', '50') }}{% else %}{{ post.link }}{% endif %}">No.</a>
 	<a class="post_no" onclick="citeReply({{ post.id }})" href="{% if isnoko50 %}{{ post.link('q', '50') }}{% else %}{{ post.link('q') }}{% endif %}">{{ post.id }}</a>
-	</p>
+</p>
 	{% endapply %}
-    {% include 'post/fileinfo.html' %} 
-    {% include 'post/post_controls.html' %}
+    	{% include 'post/fileinfo.html' %} 
+    	{% include 'post/post_controls.html' %}
+    {% else %}
+</p>
+    {% endif %}
 	{% apply spaceless %}
 	<div class="body" {% if post.files|length > 1 %}style="clear:both"{% endif %}>
 		{% endapply %}{% if index %}{{ post.body|truncate_body(post.link) }}{% else %}{{ post.body }}{% endif %}{% apply spaceless %}
