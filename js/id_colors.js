@@ -1,17 +1,5 @@
 if (active_page == 'thread' || active_page == 'index') {
 	$(document).ready(function(){
-		if (window.Options && Options.get_tab('general')) {
-			var selector = '#color-ids>input';
-			var e = 'change';
-			Options.extend_tab("general", "<label id='color-ids'><input type='checkbox' /> "+_('Color IDs')+"</label>");
-		}
-
-		else {
-			var selector = '#color-ids';
-			var e = 'click';
-			$('hr:first').before('<div id="color-ids" style="text-align:right"><a class="unimportant" href="javascript:void(0)">'+_('Color IDs')+'</a></div>')
-		}
-
 		$(selector).on(e, function() {
 			if (localStorage.color_ids === 'true') {
 				localStorage.color_ids = 'false';

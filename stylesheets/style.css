@@ -231,7 +231,10 @@ div.post.op hr {
 
 input.delete {
   float: left;
-  margin: 1px 6px 0 0;
+  /*margin: 1px 6px 0 0;*/
+}
+input.bookmark {
+  float: right;
 }
 
 .intro span.subject {
