@@ -4,6 +4,9 @@
 <p class="intro">
 	{% endapply %}
 	{% if not index %}<a id="{{ post.id }}" class="post_anchor"></a>{% endif %}
+	<input type="checkbox" class="bookmark" name="bookmark_{{ post.id }}" id="bookmark_{{ post.id }}"
+		data-post-id="{{ post.id }}" data-post-link="/{{ board.uri }}/res/{{ post.thread }}.html#q{{ post.id }}"
+	/>
 	<input type="checkbox" class="delete" name="delete_{{ post.id }}" id="delete_{{ post.id }}" />
 	<label for="delete_{{ post.id }}">
 		{% include 'post/subject.html' %}

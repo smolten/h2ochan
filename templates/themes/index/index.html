@@ -11,6 +11,7 @@
 	{% if config.font_awesome %}<link rel="stylesheet" href="{{ config.root }}{{ config.font_awesome_css }}">{% endif %}
 	{% include 'header.html' %}
 </head>
+<body data-boards='{{ boards|json_encode|e("html_attr") }}'> <!-- Allow bookmarks.js to read boards info -->
 <body>
 	{{ boardlist.top }}
 	<header style="text-align: center;">
@@ -35,6 +36,12 @@
 			{% endfor %}
 		</ul>
 	    </fieldset>
+	    <fieldset>
+		<legend id="bookmark-section">Bookmark</legend>
+    		<div id="bookmark-content">
+        	    <p style="text-align:center;">None. You'd better start readin', boy...</p>
+    		</div>
+	    </fieldset>	
 	    <br>
 		{% if settings.description or settings.imageofnow or settings.quoteofnow or settings.videoofnow %}
 			<div class="mainBox">

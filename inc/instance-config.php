@@ -12,7 +12,8 @@
 	// show boardlist at top
 	$config['boards'] = array(
 		array('home' => 'http://h2ochan.org'),
-		array('bt', 'wah')
+		array('KJB' => 'http://h2ochan.org/Gen'),
+		array('bt', 'eve', 'wah')
 	);
 	$config['page_nav_top'] = true;
 	// bible hosting
@@ -26,7 +27,12 @@
 	$config['db']['password']	= '';
 	$config['db']['database']	= '';
 	
-	//$config['root']				= '/';
+	// save post to cookie
+	$config['additional_javascript'][] = 'js/bookmark.js';
+
+	// id colors
+	$config['additional_javascript'][] = 'js/id_colors.js';
+	$config['additional_javascript'][] = 'js/id_highlighter.js';
 	
 	@include('inc/secrets.php'); // Config edits go THERE!!! 
 ?>
