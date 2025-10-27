@@ -10,6 +10,7 @@
 	<input type="checkbox" class="bookmark" name="bookmark_{{ post.id }}" id="bookmark_{{ post.id }}"
 		data-post-id="{{ post.id }}" data-post-link="/{{ board.uri }}/res/{{ post.id }}.html#q{{ post.id }}"
 	/>
+    {% if config.board_locked != 'bible' %}
 	<input type="checkbox" class="delete" name="delete_{{ post.id }}" id="delete_{{ post.id }}" />
 	<label for="delete_{{ post.id }}">
 		
@@ -63,8 +64,7 @@
 	{% endif %}
 	{% include 'post/post_controls.html' %}
 	</p>
-	<div class="body">
-		{% endapply %}{% if index %}{{ post.body|truncate_body(post.link) }}{% else %}{{ post.body }}{% endif %}{% apply spaceless %}
+{% endapply %}{% endif %}<div class="body">{% if index %}{{ post.body|truncate_body(post.link) }}{% else %}{{ post.body }}{% endif %}{% apply spaceless %}
 		{% if post.modifiers['ban message'] %}
 			{{ config.mod.ban_message|sprintf(post.modifiers['ban message']) }}
 		{% endif %}
