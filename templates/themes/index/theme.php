@@ -48,7 +48,7 @@
 			$recent_posts = Array();
 			$stats = Array();
 			
-			$boards = listBoards();
+			$boards = listBoards(false, true);
 			
 			$query = '';
 			foreach ($boards as &$_board) {
