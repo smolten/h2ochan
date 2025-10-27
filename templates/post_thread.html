@@ -7,6 +7,9 @@
 {% endapply %}
 {% include 'post/fileinfo.html' %}
 <div class="post op" id="op_{{ post.id }}" {%if post.num_files > 1%}style='clear:both'{%endif%}><p class="intro">
+	<input type="checkbox" class="bookmark" name="bookmark_{{ post.id }}" id="bookmark_{{ post.id }}"
+		data-post-id="{{ post.id }}" data-post-link="/{{ board.uri }}/res/{{ post.id }}.html#q{{ post.id }}"
+	/>
 	<input type="checkbox" class="delete" name="delete_{{ post.id }}" id="delete_{{ post.id }}" />
 	<label for="delete_{{ post.id }}">
 		
