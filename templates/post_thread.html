@@ -1,12 +1,14 @@
 {% apply spaceless %}
 {# tabs and new lines will be ignored #}
 
-<div class="thread" id="thread_{{ post.id }}" data-board="{{ board.uri }}">
+<div class="thread" id="thread_{{ post.id }}" data-board="{{ board.uri }}"
+    {% if config.board_locked == 'bible' %}style="column-count: 3; height: calc(100vh - 100px); column-gap: 0;"{%endif%}
+>
 {% if not index %}<a id="{{ post.id }}" class="post_anchor"></a>{% endif %}
 
 {% endapply %}
 {% include 'post/fileinfo.html' %}
-<div class="post op" id="op_{{ post.id }}" {%if post.num_files > 1%}style='clear:both'{%endif%}><p class="intro">
+<div class="post op" id="op_{{ post.id }}" {%if post.num_files > 1%}style='clear:both'{%endif%}><p class="{%if config.board_locked == 'bible'%}nointro{%else%}intro{%endif%}">
 	<input type="checkbox" class="bookmark" name="bookmark_{{ post.id }}" id="bookmark_{{ post.id }}"
 		data-post-id="{{ post.id }}" data-post-link="/{{ board.uri }}/res/{{ post.id }}.html#q{{ post.id }}"
 	/>
