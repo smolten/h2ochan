@@ -1,7 +1,7 @@
 {% apply spaceless %}
 {# tabs and new lines will be ignored #}
 <div class="post reply" id="reply_{{ post.id }}">
-<p class="intro">
+<p class={% if config.board_locked == 'bible' %}"nointro"{% else %}"intro"{% endif %}>
 	{% endapply %}
 	{% if not index %}<a id="{{ post.id }}" class="post_anchor"></a>{% endif %}
 	<input type="checkbox" class="bookmark" name="bookmark_{{ post.id }}" id="bookmark_{{ post.id }}"
