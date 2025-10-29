@@ -9,9 +9,9 @@
 {% set h2oicon = settings.icon ?? '../templates/themes/index/h2ochanIcon.png' %}
 
 {# base rotation #}
-{% set rotation = 0 %}
-{% if config.board_locked is defined %}
-  {% set rotation = config.board_locked ? 35 : -35 %}
+{% set rotation = -35 %}
+{% if config.board_locked or config.isbible %}
+  {% set rotation = 35 %}
 {% endif %}
 
 {# append default style if settings.icon not available #}

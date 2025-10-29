@@ -64,6 +64,7 @@ $pages = [
 	'/board-status'                         => 'secure_POST board_status',
 	'/bible-post-threads'                   => 'secure_POST bible_post_threads',
 	'/bible-post-replies'			=> 'secure_POST bible_post_replies',
+	'/bible-post-book'			=> 'secure_POST bible_post_book',
 
 	// h2o toggle lock on all non-bible boards
 	'/lock_all'   => 'secure_POST lock_all',
