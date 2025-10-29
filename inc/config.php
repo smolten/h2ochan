@@ -1129,7 +1129,7 @@
 	// $config['additional_javascript_url'] = 'http://static.example.org/vichan-javascript-stuff/';
 
 	// Compile all additional scripts into one file ($config['file_script']) instead of including them seperately.
-	$config['additional_javascript_compile'] = true;
+	$config['additional_javascript_compile'] = false;
 
 	// Minify Javascript using http://code.google.com/p/minify/.
 	$config['minify_js'] = false;
