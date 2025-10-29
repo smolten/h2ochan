@@ -212,7 +212,7 @@ function check_board_lock($post, $config)
         return;
 
     // Custom 'bible' lock
-    if (isset($config['board_locked']) && $config['board_locked'] === "bible") {
+    if (isset($config['isbible']) && $config['isbible']) {
         error("Bible is read-only");
     }
 

@@ -667,7 +667,7 @@ function hasPermission($action = null, $board = null, $_mod = null) {
 	return true;
 }
 
-function listBoards($just_uri = false, $check_locked = false) {
+function listBoards($just_uri = false, $check_bible = false) {
     global $config;
 
     // create a unique cache key per just_uri and check_locked value
@@ -675,12 +675,12 @@ function listBoards($just_uri = false, $check_locked = false) {
     if ($just_uri) {
         $cache_name .= '_uri';
     }
-    if ($check_locked !== false) {
+    if ($check_bible !== false) {
         // append the type of filter
-        if ($check_locked === true) {
-            $cache_name .= '_nonbible';
-        } elseif ($check_locked === 'bible') {
+        if ($check_bible === 'bible') {
             $cache_name .= '_bible';
+        } elseif ($check_bible === true) {
+            $cache_name .= '_nonbible';
         }
     }
     if ($config['cache']['enabled'] && ($boards = cache::get($cache_name)))
@@ -698,14 +698,14 @@ function listBoards($just_uri = false, $check_locked = false) {
     }
 
     // non-standard - filter for 'bible' boards nor non-'bible' boards
-    if ($check_locked !== false) {
+    if ($check_bible !== false) {
         $filtered = [];
         foreach ($boards as $b) {
             $uri = $just_uri ? $b : $b['uri'];
             $board_conf = loadBoardConfig($uri);
-            if ($check_locked === true && (!isset($board_conf['board_locked']) || $board_conf['board_locked'] !== 'bible')) {
+            if ($check_bible === true && (!isset($board_conf['isbible']) || !$board_conf['isbible']) ) {
                 $filtered[] = $b;
-            } elseif ($check_locked === 'bible' && isset($board_conf['board_locked']) && $board_conf['board_locked'] === 'bible') {
+            } elseif ($check_bible === 'bible' && (isset($board_conf['isbible']) && $board_conf['isbible']) ) {
                 $filtered[] = $b;
             }
         }
@@ -732,9 +732,10 @@ function loadBoardConfig($board_uri) {
         $config = [];
         require $file;
 
-        if (isset($config['board_locked'])) {
+        if (isset($config['board_locked']))
             $conf['board_locked'] = $config['board_locked'];
-        }
+	if (isset($config['isbible']))
+	   $conf['isbible'] = $config['isbible'];
     }
 
     return $conf;

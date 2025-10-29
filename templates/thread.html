@@ -84,7 +84,7 @@
 				<a id="link-quick-reply" href="#">[{% trans %}Post a Reply{% endtrans %}]</a>
 			</span>
 		
-			{% if config.board_locked != 'bible' %}	
+			{% if not config.isbible %}	
 			    {% include 'report_delete.html' %}
 			{% endif %}
 		</div>
