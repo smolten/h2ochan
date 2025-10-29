@@ -608,6 +608,7 @@ function mod_edit_board_bible(Context $ctx, $boardName) {
 				'token_board_status' => make_secure_link_token('board-status'),
          			'token_post_threads' => make_secure_link_token('bible-post-threads'),
 				'token_post_replies' => make_secure_link_token('bible-post-replies'),
+				'token_post_book' => make_secure_link_token('bible-post-book'),
 	                        'bible_path_full' => $bible_path_full,
                                 'bible_path_index' => $bible_path_index,
                                 'bible_index' => $bible_index
@@ -764,8 +765,8 @@ function mod_new_board_bible(Context $ctx) {
 
 		Vichan\Functions\Theme\rebuild_themes('boards');
 
-		//header('Location: ?/' . $board['uri'] . '/' . $config['file_index'], true, $config['redirect_http']);
-		header('Location: ?/edit_bible/' . $board['uri'], true, $config['redirect_http']);
+		//header('Location: ?/' . $board['uri'] . '/' . $config['file_index'], true, $config['redirect_http']);  // go to board
+		header('Location: ?/edit_bible/' . $board['uri'], true, $config['redirect_http']);  // go to edit page
 	}
 
 	// check for bible index to pass in
@@ -812,7 +813,7 @@ function buildBibleBoard(Context $ctx)
 	$init_config = <<<INIT_PHP
 	<?php
 	// Board created for Bible chapter {$_POST['title']}
-	\$config['board_locked'] = 'bible';
+	\$config['isbible'] = true;
 	// No catalog (looks ugly with "deleted" image per chapter)
 	\$config['catalog_link'] = false;
 	// 1 bible chapter per page
@@ -854,6 +855,11 @@ function mod_board_status(Context $ctx)
 
     echo "{$board['uri']}\tNum Threads: {$threads}\tNum Replies: {$replies}";
     exit;
+}
+
+function mod_bible_post_book(Context $ctx) {
+  mod_bible_post_threads($ctx);
+  mod_bible_post_replies($ctx);
 }
 function mod_bible_post_threads(Context $ctx) {
     global $board, $mod;
@@ -926,7 +932,6 @@ function mod_bible_post_threads(Context $ctx) {
 
     modLog($note);
     echo nl2br($note);  // For web output with line breaks
-    exit;
 }
 
 function mod_bible_post_replies(Context $ctx) {
@@ -996,7 +1001,6 @@ function mod_bible_post_replies(Context $ctx) {
 
     modLog($note);
     echo nl2br($note);  // For web output with line breaks
-    exit;
 }
 
 function mod_bible_parse_test(Context $ctx) {
@@ -1019,7 +1023,6 @@ function mod_bible_parse_test(Context $ctx) {
 	}
 	echo "$vNum " . $chapters[$chapter][$vNum] . "\n";
     }
-    exit;
 }
 
 // Genesis-only. Mileage may vary.

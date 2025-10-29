@@ -1,13 +1,13 @@
 {% apply spaceless %}
 {# tabs and new lines will be ignored #}
 <div class="post reply" id="reply_{{ post.id }}">
-<p class={% if config.board_locked == 'bible' %}"nointro"{% else %}"intro"{% endif %}>
+<p class={% if config.isbible %}"nointro"{% else %}"intro"{% endif %}>
 	{% endapply %}
 	{% if not index %}<a id="{{ post.id }}" class="post_anchor"></a>{% endif %}
 	<input type="checkbox" class="bookmark" name="bookmark_{{ post.id }}" id="bookmark_{{ post.id }}"
 		data-post-id="{{ post.id }}" data-post-link="/{{ board.uri }}/res/{{ post.thread }}.html#q{{ post.id }}"
 	/>
-    {% if config.board_locked != 'bible' %}
+    {% if not config.isbible %}
 	<input type="checkbox" class="delete" name="delete_{{ post.id }}" id="delete_{{ post.id }}" />
 	<label for="delete_{{ post.id }}">
 		{% include 'post/subject.html' %}

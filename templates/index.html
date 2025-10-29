@@ -102,7 +102,7 @@
 	<input type="hidden" name="board" value="{{ board.uri }}" />
 	{% if mod %}<input type="hidden" name="mod" value="1" />{% endif %}
 	{{ body }}
-	{% if config.board_locked != 'bible' %}
+	{% if not config.isbible %}
 	    {% include 'report_delete.html' %}
 	{% endif %}
 	</form>

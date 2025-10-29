@@ -10,6 +10,7 @@
 	<input type="hidden" name="token_board_status" value="{{ token_board_status }}">
 	<input type="hidden" name="token_post_threads" value="{{ token_post_threads }}">
 	<input type="hidden" name="token_post_replies" value="{{ token_post_replies }}">
+	<input type="hidden" name="token_post_book" value="{{ token_post_book }}">
 	<table>
 
 		<tr>
@@ -103,6 +104,7 @@
 			<th>ACTION</th>
 			<td>
 			<button type="button" name="get_status" id="get_status">Get Status</button>
+			<button type="button" name="do_post_book" id="do_post_book">Post Book</button><br>
 			<button type="button" name="do_post_threads" id="do_post_threads">Post Chapter Threads</button>
         		<button type="button" name="do_post_replies" id="do_post_replies">Post Verse Replies</button>
 			</td>
@@ -202,6 +204,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     var status = document.getElementById('posts_status');
     document.getElementById('get_status').addEventListener('click', board_status);
+    document.getElementById('do_post_book').addEventListener('click', do_book);
     document.getElementById('do_post_threads').addEventListener('click', do_threads);
     document.getElementById('do_post_replies').addEventListener('click', do_replies);
     board_status();
@@ -224,6 +227,24 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(err => {
             status.textContent = 'Error: ' + err;
         });
+    };
+    function do_book() {
+        var tokenBook = document.querySelector('input[name="token_post_book"]');
+	var params = new URLSearchParams();
+	params.append('uri', uriValue);
+	params.append('token', tokenBook.value);
+	console.log("Posting book of URI:", uriValue);
+
+	fetch('/mod.php?/bible-post-book', {
+	    method: 'POST',
+	    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+	    body: params.toString(),
+	    credentials: 'same-origin'
+	})
+	.then(() => board_status())
+	.catch(err => {
+	    status.textContent = 'Error: ' + err;
+	});
     };
     function do_threads() {
     	var tokenThreads = document.querySelector('input[name="token_post_threads"]');
