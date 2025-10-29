@@ -1,0 +1,4 @@
+<input type="checkbox" class="bookmark" name="bookmark_{{ post.id }}" id="bookmark_{{ post.id }}"
+       data-post-id="{{ post.id }}" 
+       data-post-link="/{{ board.uri }}/res/{% if post.thread %}{{ post.thread }}{% else %}{{ post.id }}{% endif %}.html#q{{ post.id }}"
+/>
