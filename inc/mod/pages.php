@@ -866,6 +866,7 @@ function mod_board_status(Context $ctx)
 }
 
 function mod_bible_post_book(Context $ctx) {
+  global $mod, $board;
   mod_bible_post_threads($ctx, false);
   mod_bible_post_replies($ctx, false);
 
