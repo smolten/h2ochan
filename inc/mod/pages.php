@@ -924,7 +924,7 @@ function mod_bible_post_threads(Context $ctx) {
     // Log summary including errors
     $note = "Posted chapter threads for book $bookURI";
     if (!empty($errors)) {
-        $note .= " -- Errors encountered:\n";
+        $note .= " -- ERROR(S):\n";
         foreach ($errors as $err) {
             $note .= "Chapter {$err['chapter']}, Verse {$err['verse']}: {$err['message']}\n";
         }
@@ -1003,25 +1003,42 @@ function mod_bible_post_replies(Context $ctx) {
     echo nl2br($note);  // For web output with line breaks
 }
 
+// Parse XML. If ERROR, return error as HTML and also modLog it.
 function mod_bible_parse_test(Context $ctx) {
     $config = $ctx->get('config');
     $bookURI   = isset($_POST['uri'])   ? $_POST['uri']   : '';
-    $chapter = isset($_POST['chapter']) ? $_POST['chapter'] : '';
-    $verse   = isset($_POST['verse'])   ? $_POST['verse']   : '';
-    $count   = isset($_POST['count'])   ? $_POST['count']   : '';
-    $chapters = parseBibleBookText($bookURI, $config['bible']['path_full']);
+    $chapter   = isset($_POST['chapter']) ? $_POST['chapter'] : '';
+    $verse     = isset($_POST['verse'])   ? $_POST['verse']   : '';
+    $count     = isset($_POST['count'])   ? $_POST['count']   : '';
 
     header('Content-Type: text/plain; charset=utf-8');
-    if ($chapter > count($chapters)) {
-        echo "ERROR: Chapter $chapter > " . count($chapters) . "\n";
-        exit;
-    }
-    for($vNum=$verse; $vNum<$verse+$count; $vNum++) {
-	if($vNum > count($chapters[$chapter])) {
-            echo "ERROR: Verse $vNum > " . count($chapters[$chapter]) . "\n";
-	    exit;
-	}
-	echo "$vNum " . $chapters[$chapter][$vNum] . "\n";
+
+    try {
+        $chapters = parseBibleBookText($bookURI, $config['bible']['path_full']);
+
+        if (!is_array($chapters)) {
+            throw new TypeError('parseBibleBookText did not return an array');
+        }
+
+        if ($chapter > count($chapters)) {
+            echo "ERROR: Chapter $chapter > " . count($chapters) . "\n";
+            modLog("ERROR for $bookURI: Chapter $chapter > " . count($chapters));
+            return;
+        }
+
+        for ($vNum = $verse; $vNum < $verse + $count; $vNum++) {
+            if (!isset($chapters[$chapter][$vNum])) {
+                echo "ERROR: Verse $vNum > " . count($chapters[$chapter]) . "\n";
+                modLog("ERROR for $bookURI: Verse $vNum > " . count($chapters[$chapter]));
+                return;
+            }
+            echo "$vNum " . $chapters[$chapter][$vNum] . "\n";
+        }
+    } catch (Throwable $e) {
+        $msg = "ERROR: Caught fatal error: " . $e->getMessage() . " in " .
+               $e->getFile() . ":" . $e->getLine();
+        echo $msg;
+        modLog("ERROR for $bookURI: " . $msg);
     }
 }
 
