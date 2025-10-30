@@ -611,7 +611,7 @@ function mod_edit_board_bible(Context $ctx, $boardName) {
 				'token_post_book' => make_secure_link_token('bible-post-book'),
 	                        'bible_path_full' => $bible_path_full,
                                 'bible_path_index' => $bible_path_index,
-                                'bible_index' => $bible_index
+                                'bible_index' => $bible_index,
 			],
 			$mod
 		);
@@ -759,13 +759,18 @@ function mod_new_board_bible(Context $ctx) {
 		$cache = $ctx->get(CacheDriver::class);
 		$cache->delete('all_boards');
 
+		$bibleCreateAll = false;
+		if(isset($_POST['bible_create_all'])) // remember FAST MODE for bible posting
+			$bibleCreateAll = true;
+
 		// Build the board
-		buildBibleBoard($ctx); // h2o custom - insert chapters as threads
+		buildBibleBoard($ctx, $bibleCreateAll); // h2o custom - insert chapters as threads
 		buildIndex();
 
 		Vichan\Functions\Theme\rebuild_themes('boards');
 
 		//header('Location: ?/' . $board['uri'] . '/' . $config['file_index'], true, $config['redirect_http']);  // go to board
+
 		header('Location: ?/edit_bible/' . $board['uri'], true, $config['redirect_http']);  // go to edit page
 	}
 
@@ -801,7 +806,7 @@ function mod_new_board_bible(Context $ctx) {
 	);
 }
 
-function buildBibleBoard(Context $ctx)
+function buildBibleBoard(Context $ctx, bool $bibleCreateAll)
 {
 	global $board, $mod;
 	$config = $ctx->get('config');
@@ -814,6 +819,8 @@ function buildBibleBoard(Context $ctx)
 	<?php
 	// Board created for Bible chapter {$_POST['title']}
 	\$config['isbible'] = true;
+	// Creation-time tmp variable....
+	\$config['bible_create_all'] = $bibleCreateAll;
 	// No catalog (looks ugly with "deleted" image per chapter)
 	\$config['catalog_link'] = false;
 	// 1 bible chapter per page
