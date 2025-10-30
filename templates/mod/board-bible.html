@@ -12,7 +12,6 @@
 	<input type="hidden" name="token_post_replies" value="{{ token_post_replies }}">
 	<input type="hidden" name="token_post_book" value="{{ token_post_book }}">
 	<table>
-
 		<tr>
 	            <th>{% trans 'Bible Book' %}</th>
 	            <td>
@@ -35,6 +34,10 @@
 			{% else %}
 			    <span id="bible_book_preset" name="bible_book_preset">TITLE</span>
 	                {% endif %}
+		    {% if new %}
+		    &nbsp;&nbsp;
+                    <button type="button" id="next_chapter">&gt;</button>
+		    {% endif %}
 	            </td>
 	        </tr>
 <tr>
@@ -70,6 +73,13 @@
 {{ debug_output|default('Select a book, chapter, and verse, then press Test Parse.') }}
         </pre>
     </td>
+</tr>
+<tr>
+    <th>CREATE_ALL</th>
+    <td><pre>
+	FAST MODE: 
+	<input type="checkbox" name="bible_create_all" id="bible_create_all" {% if config.bible_create_all %}checked{% endif %}>
+    </td></pre>
 </tr>
 		<tr>
 			<th>{% trans 'URI' %}</th>
@@ -123,6 +133,7 @@
 <script>
     /*Pass PHP/Twig array into JS (only for Edit page)*/
     var bible_index = {{ bible_index|json_encode|raw }};
+    var bible_create_all = {%if config.bible_create_all%}true{%else%}false{%endif%};
 </script>
 {% endif %}
 
@@ -203,11 +214,31 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     var status = document.getElementById('posts_status');
-    document.getElementById('get_status').addEventListener('click', board_status);
-    document.getElementById('do_post_book').addEventListener('click', do_book);
-    document.getElementById('do_post_threads').addEventListener('click', do_threads);
-    document.getElementById('do_post_replies').addEventListener('click', do_replies);
-    board_status();
+    var nextChapter = document.getElementById('next_chapter');
+    if(status) {
+        document.getElementById('get_status').addEventListener('click', board_status);	/*doesn't exist on NEW page*/
+        document.getElementById('do_post_book').addEventListener('click', do_book);
+        document.getElementById('do_post_threads').addEventListener('click', do_threads);
+        document.getElementById('do_post_replies').addEventListener('click', do_replies);
+
+	if(bible_create_all)
+	    do_book();
+	else
+	    board_status();
+    }
+    if (nextChapter)                                                                 /* doesn't exist on EDIT page*/
+	nextChapter.addEventListener('click',  () => {
+    	    let currentIndex = bibleTitleChoose.selectedIndex;
+    	    /* Move to next option if not at the end */
+    	    if (currentIndex < bibleTitleChoose.options.length - 1) {
+        	bibleTitleChoose.selectedIndex = currentIndex + 1;
+    	    }
+    	    /* Update variables to currently selected book short */
+	    const event = new Event('change', { bubbles: true });
+            bibleTitleChoose.dispatchEvent(event);
+    	    let bible_title_choose = bibleTitleChoose.value;
+    	    console.log('Selected book:', bible_title_choose);
+	});
     function board_status() {	
         var tokenStatus = document.querySelector('input[name="token_board_status"]');
         var params = new URLSearchParams();
@@ -229,6 +260,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     function do_book() {
+	status.textContent = "Writing Book....";
         var tokenBook = document.querySelector('input[name="token_post_book"]');
 	var params = new URLSearchParams();
 	params.append('uri', uriValue);
@@ -247,6 +279,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	});
     };
     function do_threads() {
+	status.textContent = "Writing Chapters-Only....";
     	var tokenThreads = document.querySelector('input[name="token_post_threads"]');
 	var params = new URLSearchParams();
 	params.append('uri', uriValue);
@@ -265,6 +298,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	});
     };
     function do_replies() {
+	status.textContent = "Writing Verses-Only....";
     	var tokenReplies = document.querySelector('input[name="token_post_replies"]');
 	var params = new URLSearchParams();
 	params.append('uri', uriValue);
