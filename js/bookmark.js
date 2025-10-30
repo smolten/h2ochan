@@ -1,6 +1,7 @@
 function setBookmark(postLink, postId) {
     fetch('/inc/bookmark.php', {
         method: 'POST',
+	credentials: 'same-origin',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -10,7 +11,9 @@ function setBookmark(postLink, postId) {
     .then(data => {
         if (data.success) {
             console.log('Bookmarked:', postLink);
-            updateBookmarkCheckboxes(postId);
+            var boardMatch = postLink.match(/\/([^\/]+)\//);
+            var boardUri = boardMatch ? boardMatch[1] : null;
+            updateBookmarkCheckboxes(postId, boardUri);
         }
     })
     .catch(error => console.error('Bookmark error:', error));
@@ -19,6 +22,7 @@ function setBookmark(postLink, postId) {
 function deleteBookmark() {
     fetch('/inc/bookmark.php', {
         method: 'POST',
+	credentials: 'same-origin',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -28,7 +32,7 @@ function deleteBookmark() {
     .then(data => {
         if (data.success) {
             console.log('Removed bookmark');
-            updateBookmarkCheckboxes(null);
+            updateBookmarkCheckboxes(null, null);
         }
     })
     .catch(error => console.error('Bookmark error:', error));
@@ -46,16 +50,15 @@ function getCookie(name) {
     return null;
 }
 
-// Update all bookmark checkboxes to reflect current state
-function updateBookmarkCheckboxes(bookmarkedPostId) {
+function updateBookmarkCheckboxes(bookmarkedPostId, bookmarkedBoardUri) {
     var checkboxes = document.querySelectorAll('.bookmark');
     checkboxes.forEach(function(checkbox) {
         var postId = checkbox.getAttribute('data-post-id');
-        checkbox.checked = (postId === bookmarkedPostId);
+        var boardUri = checkbox.getAttribute('data-board-uri');
+        checkbox.checked = (postId === bookmarkedPostId && boardUri === bookmarkedBoardUri);
     });
 }
 
-// Event delegation - listens on document for all bookmark checkboxes
 document.addEventListener('change', function(e) {
     if (e.target.classList.contains('bookmark')) {
         var postId = e.target.getAttribute('data-post-id');
@@ -70,7 +73,7 @@ document.addEventListener('change', function(e) {
         if (e.target.checked) {
             var currentBookmark = getCookie('vichan_bookmark');
 
-            if (currentBookmark && currentBookmark.id !== postId) {
+            if (currentBookmark && (currentBookmark.id !== postId || currentBookmark.link !== postLink)) {
                 if (confirm('Replace existing bookmark (>>>' + currentBookmark.link + ') with this post?')) {
                     setBookmark(postLink, postId);
                 } else {
@@ -88,12 +91,12 @@ document.addEventListener('change', function(e) {
 function displayBookmarkOnIndex() {
     var bookmark = getCookie('vichan_bookmark');
 
-    // Update checkboxes to reflect current bookmark
     if (bookmark) {
-        updateBookmarkCheckboxes(bookmark.id);
+        var boardMatch = bookmark.link.match(/\/([^\/]+)\//);
+        var boardUri = boardMatch ? boardMatch[1] : null;
+        updateBookmarkCheckboxes(bookmark.id, boardUri);
     }
 
-    // Only run index display on index page
     if (!window.location.pathname.match(/\/(index\.html)?$/)) {
         return;
     }
