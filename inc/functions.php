@@ -710,6 +710,11 @@ function listBoards($just_uri = false, $check_bible = false) {
             }
         }
         $boards = $filtered;
+        
+        // Sort bible boards by biblical order
+        if ($check_bible === 'bible' && !empty($boards)) {
+            $boards = sortBoardsByBibleOrder($boards, $just_uri, $config['bible']['path_index']);
+        }
     }
 
     if ($config['cache']['enabled'])
@@ -717,6 +722,56 @@ function listBoards($just_uri = false, $check_bible = false) {
 
     return $boards;
 }
+function sortBoardsByBibleOrder($boards, $just_uri, $bible_path_index) {
+    // Load and parse the XML index
+    if (!file_exists($bible_path_index)) {
+        if ($just_uri) {
+            return ['/ERROR/'];
+        } else {
+            return [[
+                'uri' => '/ERROR/',
+                'title' => 'Bible index file not found at path: ' . $bible_path_index,
+                'subtitle' => null
+            ]];
+        }
+    }
+    
+    $xml = simplexml_load_file($bible_path_index);
+    if (!$xml) {
+        if ($just_uri) {
+            return ['/ERROR/'];
+        } else {
+            return [[
+                'uri' => '/ERROR/',
+                'title' => 'Failed to parse Bible index XML at path: ' . $bible_path_index,
+                'subtitle' => null
+            ]];
+        }
+    }
+    
+    // Build order map: osisID => position
+    $orderMap = [];
+    $position = 0;
+    foreach ($xml->title as $title) {
+        $osisID = (string)$title['osisID'];
+        $orderMap[$osisID] = $position++;
+    }
+    
+    // Sort boards by biblical order
+    usort($boards, function($a, $b) use ($orderMap, $just_uri) {
+        $uriA = $just_uri ? $a : $a['uri'];
+        $uriB = $just_uri ? $b : $b['uri'];
+        
+        $posA = isset($orderMap[$uriA]) ? $orderMap[$uriA] : 9999;
+        $posB = isset($orderMap[$uriB]) ? $orderMap[$uriB] : 9999;
+        
+        return $posA - $posB;
+    });
+    
+    return $boards;
+}
+
+
 /**
  * Return board-specific overrides only.
  *
