@@ -815,12 +815,13 @@ function buildBibleBoard(Context $ctx, bool $bibleCreateAll)
 
 	// Add php comment and config file
 	$configFile = $board['dir'] . 'config.php';
+	$bibleCreateAllStr = $bibleCreateAll ? 'true' : 'false';
 	$init_config = <<<INIT_PHP
 	<?php
 	// Board created for Bible chapter {$_POST['title']}
 	\$config['isbible'] = true;
-	// Creation-time tmp variable....
-	\$config['bible_create_all'] = $bibleCreateAll;
+	// Creation-time tmp variable. TRUE from new-board.html -> edit-board.html. FALSE after book written.
+	\$config['bible_create_all'] = $bibleCreateAllStr;
 	// No catalog (looks ugly with "deleted" image per chapter)
 	\$config['catalog_link'] = false;
 	// 1 bible chapter per page
@@ -865,10 +866,34 @@ function mod_board_status(Context $ctx)
 }
 
 function mod_bible_post_book(Context $ctx) {
-  mod_bible_post_threads($ctx);
-  mod_bible_post_replies($ctx);
+  mod_bible_post_threads($ctx, false);
+  mod_bible_post_replies($ctx, false);
+
+  $bookURI = isset($_POST['uri']) ? preg_replace('/[^a-zA-Z0-9]/', '', $_POST['uri']) : '';   
+
+  // CLEAR fast mode from config.....
+  $config = $ctx->get('config');
+  $boardDir = sprintf($config['board_path'], $bookURI);
+  $configFile = $boardDir . 'config.php';
+  if (file_exists($configFile)) {
+    $content = file_get_contents($configFile);
+    // Replace true or 1 with false for bible_create_all
+    $content = preg_replace(
+  	'/\$config\[\'bible_create_all\'\]\s*=\s*(true|1);/',
+  	'$config[\'bible_create_all\'] = false;',
+  	$content
+    );
+    file_put_contents($configFile, $content);
+  }
+
+  // Rebuild the board so users can see posts
+  openBoard($bookURI);
+  buildIndex();
+  Vichan\Functions\Theme\rebuild_themes('post-thread', $board['uri']);
+
+  modLog("Posted book of " . $bookURI);
 }
-function mod_bible_post_threads(Context $ctx) {
+function mod_bible_post_threads(Context $ctx, bool $log=true) {
     global $board, $mod;
     $config = $ctx->get('config');
 
@@ -937,11 +962,14 @@ function mod_bible_post_threads(Context $ctx) {
         }
     }
 
-    modLog($note);
+    if($log || !empty($errors))
+    	modLog($note);
     echo nl2br($note);  // For web output with line breaks
+
+    // NO REBUILD for threads-only
 }
 
-function mod_bible_post_replies(Context $ctx) {
+function mod_bible_post_replies(Context $ctx, bool $log=true) {
     global $board, $mod;
     $config = $ctx->get('config');
 
@@ -1006,8 +1034,11 @@ function mod_bible_post_replies(Context $ctx) {
         }
     }
 
-    modLog($note);
+    if($log || !empty($errors))
+        modLog($note);
     echo nl2br($note);  // For web output with line breaks
+
+    // NO REBUILD for replies only
 }
 
 // Parse XML. If ERROR, return error as HTML and also modLog it.
