@@ -1,7 +1,7 @@
 function setBookmark(postLink, postId) {
     fetch('/inc/bookmark.php', {
         method: 'POST',
-	credentials: 'same-origin',
+        credentials: 'same-origin',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -10,6 +10,11 @@ function setBookmark(postLink, postId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            // ALSO set with JS for iOS
+            var bookmarkData = JSON.stringify(data.bookmark);
+            document.cookie = 'vichan_bookmark=' + encodeURIComponent(bookmarkData) + 
+                            '; path=/; max-age=31536000; secure; samesite=lax';
+            
             console.log('Bookmarked:', postLink);
             var boardMatch = postLink.match(/\/([^\/]+)\//);
             var boardUri = boardMatch ? boardMatch[1] : null;
@@ -22,7 +27,7 @@ function setBookmark(postLink, postId) {
 function deleteBookmark() {
     fetch('/inc/bookmark.php', {
         method: 'POST',
-	credentials: 'same-origin',
+        credentials: 'same-origin',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -31,6 +36,9 @@ function deleteBookmark() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            // ALSO delete with JS
+            document.cookie = 'vichan_bookmark=; path=/; max-age=0; secure; samesite=lax';
+            
             console.log('Removed bookmark');
             updateBookmarkCheckboxes(null, null);
         }
@@ -149,7 +157,7 @@ function displayBookmarkOnIndex() {
             }
 
             if (!postElement) {
-                content.innerHTML = '<ul style="margin:0;">' + boardLink + '</ul><br>' +
+                content.innerHTML = '<ul style="margin:0.3em;">' + boardLink + '</ul><br>' +
                                   '<p><a href="' + bookmark.link + '">Go to bookmarked post #' + postId + '</a></p>';
                 return;
             }
@@ -169,13 +177,13 @@ function displayBookmarkOnIndex() {
                 checkbox.checked = true;
             }
 
-            content.innerHTML = '<ul style="margin:0;">' + boardLink + '</ul><br>';
+            content.innerHTML = '<ul style="margin:0.3em;">' + boardLink + '</ul><br>';
             content.appendChild(clonedPost);
             content.appendChild(document.createElement('br'));
         })
         .catch(error => {
             console.error('Error fetching bookmark:', error);
-            content.innerHTML = '<ul style="margin:0;">' + boardLink + '</ul>' +
+            content.innerHTML = '<ul style="margin:0.3em;">' + boardLink + '</ul>' +
                               '<p><a href="' + bookmark.link + '">Go to bookmarked post</a></p>';
         });
 }
