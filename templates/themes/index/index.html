@@ -26,7 +26,7 @@
 	<div class="box-wrap">
 	    <fieldset>
 		<legend>Boards</legend>
-		<ul>
+		<ul style="margin-block-start: 0;">
 			{% for board in boards %}
 				<li class="boardlinksurl">
 					<a href="{{ config.board_path|sprintf(board.uri) }}">
@@ -36,7 +36,7 @@
 			{% endfor %}
 		</ul>
 	    </fieldset>
-	    <fieldset>
+	    <fieldset style="padding-block: 0;">
 		<legend id="bookmark-section">Bookmark</legend>
     		<div id="bookmark-content">
         	    <p style="text-align:center;">None. You'd better start readin', boy...</p>
@@ -82,7 +82,8 @@
 			{% endfor %}
 		{% endif %}
 	    </div>
-	    <h1>Recent Images</h1>
+		{% if false %} <!-- no Recent Images, thank you..... -->
+	        <h1>Recent Images</h1>
 		<div class="box image">
 			<ul>
 				{% for post in recent_images %}
@@ -94,6 +95,7 @@
 				{% endfor %}
 			</ul>
 		</div>
+		{% endif %}
 		<div class="mainBox">
 			<h2>Latest Posts</h2>
 			<ul>

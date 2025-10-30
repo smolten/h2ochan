@@ -1,7 +1,7 @@
 .box-wrap {
 	max-width: 670px;
 	min-width: 300px;
-	margin: 30px auto;
+	margin: 0.5em auto;
 	padding: 0;
 }
 .box {
