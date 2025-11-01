@@ -3063,6 +3063,13 @@ function mod_rebuild(Context $ctx) {
 				}
 			}
 		}
+
+		// Rebuild King James Bible index page
+		if (isset($_POST['rebuild_index'])) {
+			$log[] = 'Rebuilding King James Bible index page';
+			buildKingJamesBible();
+		}
+
 		if ($fast === false)
 		    mod_page( _('Rebuilt'), $config['file_mod_rebuilt'], [ 'logs' => $log ], $mod);
 		else {
@@ -3993,13 +4000,28 @@ function mod_bible_make_index(Context $ctx) {
     }
 
     $titles = [];
+    $current_testament = ''; // Track current testament: 'old', 'apo', or 'new'
 
     while (($line = fgets($handle)) !== false) {
+        // Check for testament bookGroup titles
+        if (preg_match('/<title>(Old Testament|Apocrypha\/Deuterocanon|New Testament)<\/title>/i', $line, $matches)) {
+            $testament_name = $matches[1];
+            if ($testament_name === 'Old Testament') {
+                $current_testament = 'old';
+            } elseif ($testament_name === 'Apocrypha/Deuterocanon') {
+                $current_testament = 'apo';
+            } elseif ($testament_name === 'New Testament') {
+                $current_testament = 'new';
+            }
+        }
+
+        // Check for book titles
         if (preg_match('/<div\s+type="book".*?osisID="([^"]+)".*?>\s*<title\s+type="main"\s+short="([^"]+)">(.+?)<\/title>/i', $line, $matches)) {
             $titles[] = [
                 'osisID' => $matches[1],
                 'short' => $matches[2],
-                'full' => $matches[3]
+                'full' => $matches[3],
+                'testament' => $current_testament
             ];
         }
     }
@@ -4010,9 +4032,10 @@ function mod_bible_make_index(Context $ctx) {
     $xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<books>\n";
     foreach ($titles as $t) {
         $xml .= sprintf(
-            "  <title osisID=\"%s\" short=\"%s\">%s</title>\n",
+            "  <title osisID=\"%s\" short=\"%s\" testament=\"%s\">%s</title>\n",
             htmlspecialchars($t['osisID']),
             htmlspecialchars($t['short']),
+            htmlspecialchars($t['testament']),
             htmlspecialchars($t['full'])
         );
     }

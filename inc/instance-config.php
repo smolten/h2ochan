@@ -12,7 +12,7 @@
 	// show boardlist at top
 	$config['boards'] = array(
 		array('home' => 'http://h2ochan.org'),
-		array('KJB' => 'http://h2ochan.org/Gen'),
+		array('KJB' => 'http://h2ochan.org/KJB'),
 		array('bt', 'eve', 'wah')
 	);
 	$config['page_nav_top'] = true;

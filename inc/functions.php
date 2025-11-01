@@ -2984,3 +2984,94 @@ function get_urls($body) {
 
 	return $match[0];
 }
+
+/**
+ * Categorize Bible boards by testament using the short index file
+ * Returns an array with 'old_testament', 'new_testament', and 'apocrypha' keys
+ */
+function categorizeBibleBoards($boards, $bible_path_index) {
+	$old_testament = [];
+	$new_testament = [];
+	$apocrypha = [];
+
+	// If the index doesn't exist, return empty arrays
+	if (!file_exists($bible_path_index)) {
+		return [
+			'old_testament' => $old_testament,
+			'new_testament' => $new_testament,
+			'apocrypha' => $apocrypha
+		];
+	}
+
+	// Parse the short index to get testament info
+	$xml = simplexml_load_file($bible_path_index);
+	if (!$xml) {
+		return [
+			'old_testament' => $old_testament,
+			'new_testament' => $new_testament,
+			'apocrypha' => $apocrypha
+		];
+	}
+
+	// Build a map of osisID => testament
+	$testament_map = [];
+	foreach ($xml->title as $title) {
+		$osisID = (string)$title['osisID'];
+		$testament = isset($title['testament']) ? (string)$title['testament'] : '';
+		$testament_map[$osisID] = $testament;
+	}
+
+	// Categorize boards by their testament
+	foreach ($boards as $board) {
+		$uri = $board['uri'];
+		$testament = isset($testament_map[$uri]) ? $testament_map[$uri] : '';
+
+		if ($testament === 'old') {
+			$old_testament[] = $board;
+		} elseif ($testament === 'new') {
+			$new_testament[] = $board;
+		} elseif ($testament === 'apo') {
+			$apocrypha[] = $board;
+		}
+	}
+
+	return [
+		'old_testament' => $old_testament,
+		'new_testament' => $new_testament,
+		'apocrypha' => $apocrypha
+	];
+}
+
+/**
+ * Build the King James Bible static index page at /KJB/index.html
+ */
+function buildKingJamesBible() {
+	global $config, $mod;
+
+	// Get all Bible boards
+	$boards = listBoards(false, 'bible');
+
+	// Categorize boards by testament using the short index
+	$categorized = categorizeBibleBoards($boards, $config['bible']['path_index']);
+
+	// Render the template
+	$html = Element('h2o/kingjamesbible.html', [
+		'config' => $config,
+		'boardlist' => createBoardlist(),
+		'old_testament' => $categorized['old_testament'],
+		'new_testament' => $categorized['new_testament'],
+		'apocrypha' => $categorized['apocrypha'],
+		'mod' => $mod,
+		'pm' => isset($mod) ? create_pm_header() : false
+	]);
+
+	// Create /KJB/ directory if it doesn't exist
+	$kjb_dir = $config['dir']['home'] . 'KJB';
+	if (!file_exists($kjb_dir)) {
+		@mkdir($kjb_dir, 0755, true) or error("Could not create directory: $kjb_dir");
+	}
+
+	// Write to /KJB/index.html
+	$output_path = $kjb_dir . '/index.html';
+	file_write($output_path, $html);
+}
