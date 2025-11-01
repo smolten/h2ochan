@@ -179,7 +179,6 @@ function displayBookmarkOnIndex() {
 
             content.innerHTML = '<ul style="margin:0.3em;">' + boardLink + '</ul><br>';
             content.appendChild(clonedPost);
-            content.appendChild(document.createElement('br'));
         })
         .catch(error => {
             console.error('Error fetching bookmark:', error);
