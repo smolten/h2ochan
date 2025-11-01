@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<books>
+  <title osisID="Gen" short="Genesis">The First Book of Moses, called Genesis</title>
+  <title osisID="Exod" short="Exodus">The Second Book of Moses, called Exodus</title>
+  <title osisID="Lev" short="Leviticus">The Third Book of Moses, called Leviticus</title>
+  <title osisID="Num" short="Numbers">The Fourth Book of Moses, called Numbers</title>
+  <title osisID="Deut" short="Deuteronomy">The Fifth Book of Moses, called Deuteronomy</title>
+  <title osisID="Josh" short="Joshua">The Book of Joshua</title>
+  <title osisID="Judg" short="Judges">The Book of Judges</title>
+  <title osisID="Ruth" short="Ruth">The Book of Ruth</title>
+  <title osisID="1Sam" short="1 Samuel">The First Book of Samuel Otherwise Called the First Book of the Kings</title>
+  <title osisID="2Sam" short="2 Samuel">The Second Book of Samuel Otherwise Called the Second Book of the Kings</title>
+  <title osisID="1Kgs" short="1 Kings">The First Book of the Kings Commonly Called the Third Book of the Kings</title>
+  <title osisID="2Kgs" short="2 Kings">The Second Book of the Kings Commonly Called the Fourth Book of the Kings</title>
+  <title osisID="1Chr" short="1 Chronicles">The First Book of the Chronicles</title>
+  <title osisID="2Chr" short="2 Chronicles">The Second Book of the Chronicles</title>
+  <title osisID="Ezra" short="Ezra">Ezra</title>
+  <title osisID="Neh" short="Nehemiah">The Book of Nehemiah</title>
+  <title osisID="Esth" short="Esther">The Book of Esther</title>
+  <title osisID="Job" short="Job">The Book of Job</title>
+  <title osisID="Ps" short="Psalms">The Book of Psalms</title>
+  <title osisID="Prov" short="Proverbs">The Proverbs</title>
+  <title osisID="Eccl" short="Ecclesiastes">Ecclesiastes or, the Preacher</title>
+  <title osisID="Song" short="Song of Solomon">The Song of Solomon</title>
+  <title osisID="Isa" short="Isaiah">The Book of the Prophet Isaiah</title>
+  <title osisID="Jer" short="Jeremiah">The Book of the Prophet Jeremiah</title>
+  <title osisID="Lam" short="Lamentations">The Lamentations of Jeremiah</title>
+  <title osisID="Ezek" short="Ezekiel">The Book of the Prophet Ezekiel</title>
+  <title osisID="Dan" short="Daniel">The Book of Daniel</title>
+  <title osisID="Hos" short="Hosea">Hosea</title>
+  <title osisID="Joel" short="Joel">Joel</title>
+  <title osisID="Amos" short="Amos">Amos</title>
+  <title osisID="Obad" short="Obadiah">Obadiah</title>
+  <title osisID="Jonah" short="Jonah">Jonah</title>
+  <title osisID="Mic" short="Micah">Micah</title>
+  <title osisID="Nah" short="Nahum">Nahum</title>
+  <title osisID="Hab" short="Habakkuk">Habakkuk</title>
+  <title osisID="Zeph" short="Zephaniah">Zephaniah</title>
+  <title osisID="Hag" short="Haggai">Haggai</title>
+  <title osisID="Zech" short="Zechariah">Zechariah</title>
+  <title osisID="Mal" short="Malachi">Malachi</title>
+  <title osisID="Tob" short="Tobit">The Book of Tobit</title>
+  <title osisID="Jdt" short="Judith">The Book of Judith</title>
+  <title osisID="EsthGr" short="Esther (Greek)">The Rest of the Chapters of the Book of Esther</title>
+  <title osisID="Wis" short="Wisdom">The Book of Wisdom or The Wisdom of Solomon</title>
+  <title osisID="Sir" short="Sirach">The Wisdom of Jesus the Son of Sirach, or Ecclesiasticus</title>
+  <title osisID="Bar" short="Baruch">The Book of Baruch</title>
+  <title osisID="EpJer" short="Letter of Jeremiah">The Epistle [or Letter] of Jeremiah [Jeremy]</title>
+  <title osisID="PrAzar" short="Azariah">The Prayer of Azariah</title>
+  <title osisID="Sus" short="Susanna">The History of Susanna [in Daniel]</title>
+  <title osisID="Bel" short="Bel">The Book of Bel and the Dragon [in Daniel]</title>
+  <title osisID="1Macc" short="1 Maccabees">The First Book of the Maccabees</title>
+  <title osisID="2Macc" short="2 Maccabees">The Second Book of the Maccabees</title>
+  <title osisID="1Esd" short="1 Esdras">The First Book of Esdras</title>
+  <title osisID="PrMan" short="Manasseh">The Prayer of Manasseh, or, The Prayer of Manasses King of Judah</title>
+  <title osisID="2Esd" short="2 Esdras">The Second Book of Esdras</title>
+  <title osisID="Matt" short="Matthew">The Gospel According to St. Matthew</title>
+  <title osisID="Mark" short="Mark">The Gospel According to St. Mark</title>
+  <title osisID="Luke" short="Luke">The Gospel According to St. Luke</title>
+  <title osisID="John" short="John">The Gospel According to St. John</title>
+  <title osisID="Acts" short="Acts">The Acts of the Apostles</title>
+  <title osisID="Rom" short="Romans">The Epistle of Paul the Apostle to the Romans</title>
+  <title osisID="1Cor" short="1 Corinthians">The First Epistle of Paul the Apostle to the Corinthians</title>
+  <title osisID="2Cor" short="2 Corinthians">The Second Epistle of Paul the Apostle to the Corinthians</title>
+  <title osisID="Gal" short="Galatians">The Epistle of Paul the Apostle to the Galatians</title>
+  <title osisID="Eph" short="Ephesians">The Epistle of Paul the Apostle to the Ephesians</title>
+  <title osisID="Phil" short="Philippians">The Epistle of Paul the Apostle to the Philippians</title>
+  <title osisID="Col" short="Colossians">The Epistle of Paul the Apostle to the Colossians</title>
+  <title osisID="1Thess" short="1 Thessalonians">The First Epistle of Paul to the Thessalonians</title>
+  <title osisID="2Thess" short="2 Thessalonians">The Second Epistle of Paul the Apostle to the Thessalonians</title>
+  <title osisID="1Tim" short="1 Timothy">The First Epistle of Paul the Apostle to Timothy</title>
+  <title osisID="2Tim" short="2 Timothy">The Second Epistle of Paul the Apostle to Timothy</title>
+  <title osisID="Titus" short="Titus">The Epistle of Paul to Titus</title>
+  <title osisID="Phlm" short="Philemon">The Epistle of Paul to Philemon</title>
+  <title osisID="Heb" short="Hebrews">The Epistle to the Hebrews</title>
+  <title osisID="Jas" short="James">The General Epistle of James</title>
+  <title osisID="1Pet" short="1 Peter">The First Epistle General of Peter</title>
+  <title osisID="2Pet" short="2 Peter">The Second Epistle General of Peter</title>
+  <title osisID="1John" short="1 John">The First Epistle General of John</title>
+  <title osisID="2John" short="2 John">The Second Epistle of John</title>
+  <title osisID="3John" short="3 John">The Third Epistle of John</title>
+  <title osisID="Jude" short="Jude">The General Epistle of Jude</title>
+  <title osisID="Rev" short="Revelation">The Revelation of St. John the Divine</title>
+</books>
