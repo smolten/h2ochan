@@ -1,0 +1,111 @@
+{% apply spaceless %}
+<!doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+	<title>/KJB/ - King James Bible</title>
+	<link rel="stylesheet" media="screen" href="{{ config.url_stylesheet }}"/>
+	{% if config.url_favicon %}<link rel="shortcut icon" href="{{ config.url_favicon }}" />{% endif %}
+	{% if config.default_stylesheet.1 != '' %}<link rel="stylesheet" type="text/css" id="stylesheet" href="{{ config.uri_stylesheets }}{{ config.default_stylesheet.1 }}">{% endif %}
+	{% if config.font_awesome %}<link rel="stylesheet" href="{{ config.root }}{{ config.font_awesome_css }}">{% endif %}
+	{% include 'header.html' %}
+	<style>
+		/* Book list padding and spacing */
+		.kjb-book-list {
+			padding: 0 0 0 1em;
+		}
+
+		.kjb-book-list li {
+			padding-right: 1em;
+		}
+
+		/* 2-column grid layout for desktop */
+		@media (min-width: 700px) {
+			.kjb-book-list {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 1em;
+			}
+		}
+	</style>
+</head>
+<body class="8chan vichan {% if mod %}is-moderator{% else %}is-not-moderator{% endif %}">
+	{{ boardlist.top }}
+
+	{% if pm %}<div class="top_notice">You have <a href="?/PM/{{ pm.id }}">an unread PM</a>{% if pm.waiting > 0 %}, plus {{ pm.waiting }} more waiting{% endif %}.</div><hr />{% endif %}
+	{% if config.url_banner %}<img class="board_image" src="{{ config.url_banner }}" {% if config.banner_width or config.banner_height %}style="{% if config.banner_width %}width:{{ config.banner_width }}px{% endif %};{% if config.banner_height %}height:{{ config.banner_height }}px{% endif %}" {% endif %}alt="" />{% endif %}
+	<header style="text-align: center;">
+		<span style="display: inline-block; vertical-align:middle;">
+			<img class="icon" src="../templates/themes/index/h2ochanIcon.png" style="height:3em;transform: rotate(35deg);">
+			<h1 style="display:inline-block; vertical-align:text-bottom; margin-bottom:0.25em;">/KJB/ - King James Bible</h1>
+		</span>
+		<div class="subtitle">An Unofficial Publication of the King James Bible for Anonymous</div>
+	</header>
+
+	<div class="box-wrap">
+		<fieldset>
+			<legend>Old Testament</legend>
+			<ul class="kjb-book-list" style="margin-block: 0">
+				{% for board in old_testament %}
+					<li class="boardlinksurl">
+						<a href="/{{ config.board_path|sprintf(board.uri) }}{{ config.file_index }}">{{ board.title|e }}</a>
+						{% if board.subtitle %}
+							 &mdash;
+							{% if config.allow_subtitle_html %}
+								{{ board.subtitle }}
+							{% else %}
+								{{ board.subtitle|e }}
+							{% endif %}
+						{% endif %}
+					</li>
+				{% endfor %}
+			</ul>
+		</fieldset>
+		<br>
+
+		{% if apocrypha|length > 0 %}
+		<fieldset>
+			<legend>Apocrypha/Deuterocanon</legend>
+			<ul class="kjb-book-list" style="margin-block: 0;">
+				{% for board in apocrypha %}
+					<li class="boardlinksurl">
+						<a href="/{{ config.board_path|sprintf(board.uri) }}{{ config.file_index }}">{{ board.title|e }}</a>
+						{% if board.subtitle %}
+							 &mdash;
+							{% if config.allow_subtitle_html %}
+								{{ board.subtitle }}
+							{% else %}
+								{{ board.subtitle|e }}
+							{% endif %}
+						{% endif %}
+					</li>
+				{% endfor %}
+			</ul>
+		</fieldset>
+		<br>
+		{% endif %}
+
+		<fieldset>
+			<legend>New Testament</legend>
+			<ul class="kjb-book-list" style="margin-block: 0;">
+				{% for board in new_testament %}
+					<li class="boardlinksurl">
+						<a href="/{{ config.board_path|sprintf(board.uri) }}{{ config.file_index }}">{{ board.title|e }}</a>
+						{% if board.subtitle %}
+							 &mdash;
+							{% if config.allow_subtitle_html %}
+								{{ board.subtitle }}
+							{% else %}
+								{{ board.subtitle|e }}
+							{% endif %}
+						{% endif %}
+					</li>
+				{% endfor %}
+			</ul>
+		</fieldset>
+	</div>
+
+	{% include 'footer.html' %}
+</body>
+</html>
+{% endapply %}
