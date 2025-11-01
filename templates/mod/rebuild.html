@@ -1,5 +1,8 @@
 <form style="width:300px;margin:auto" action="?/rebuild" method="post">
 	<input type="hidden" name="token" value="{{ token }}">
+	<p style="text-align:center">
+		<input type="submit" value="{% trans 'Rebuild' %}" name="rebuild">
+	</p>
 	<ul id="rebuild">
 		<li style="margin-bottom:8px">
 			<input type="checkbox" name="rebuild_all" id="rebuild_all" onchange="toggleall(this.checked)"> 
@@ -41,7 +44,25 @@
 	</ul>
 	
 	<hr>
-	
+	<ul id="boards 1">
+		<li style="margin-bottom:8px">
+			<input type="checkbox" name="boards_user" id="boards_user" onchange="toggleallboards_user(this.checked)" checked>
+			<label for="boards_all_user"><strong>User boards</strong></label>
+                        <script>
+                                function toggleallboards_user(val) {
+                                        /* TODO: something more suitable for all browsers? */
+                                        var elements = document.getElementById('boards 1').querySelectorAll('input');
+                                        for (i in elements) {
+                                                elements[i].checked = val;
+                                        }
+                                }
+                        </script>
+		</li>
+			<li>
+                                <input type="checkbox" name="" id="" checked>
+                                        /TEST/ - TEST
+                        </li>
+	</ul>
 	<ul id="boards">
 		<li style="margin-bottom:8px">
 			<input type="checkbox" name="boards_all" id="boards_all" onchange="toggleallboards(this.checked)" checked> 
@@ -66,7 +87,4 @@
 		{% endfor %}
 	</ul>
 	
-	<p style="text-align:center">
-		<input type="submit" value="{% trans 'Rebuild' %}" name="rebuild">
-	</p>
 </form>
