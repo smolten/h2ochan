@@ -3949,6 +3949,8 @@ function mod_set_lock_all($ctx, bool $lock) {
         exit;
     }
 
+    Vichan\Functions\Theme\rebuild_themes('boards');
+
     // return from mod/lock to og page
     echo '<script>history.back();</script>';    
     exit;
