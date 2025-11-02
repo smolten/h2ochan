@@ -26,6 +26,7 @@
 	                                data-uri="{{ book.osisID|e('html_attr') }}"
 	                                data-title="{{ book.short|e('html_attr') }}"
 	                                data-subtitle="{{ book.text|e('html_attr') }}"
+	                                data-exists="{{ book.exists ? '1' : '0' }}"
 	                            >
 	                                {{ book.short }}
 	                            </option>
@@ -37,6 +38,8 @@
 		    {% if new %}
 		    &nbsp;&nbsp;
                     <button type="button" id="next_chapter">&gt;</button>
+		    &nbsp;&nbsp;
+		    <label><input type="checkbox" id="include_existing_boards"> Include Existing Boards</label>
 		    {% endif %}
 	            </td>
 	        </tr>
@@ -170,6 +173,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (bibleTitleChoose) {
 	var subtitle = document.getElementById('subtitle');
+	var includeExistingCheckbox = document.getElementById('include_existing_boards');
 
 	bibleTitleChoose.addEventListener('change', function() {
 	        var opt = bibleTitleChoose.options[bibleTitleChoose.selectedIndex];
@@ -179,6 +183,44 @@ document.addEventListener('DOMContentLoaded', function() {
 	        subtitle.value = opt.dataset.subtitle || '';
 		output.textContent = output.dataset.default;
     	});
+
+	// Filter books based on "Include Existing Boards" checkbox
+	if (includeExistingCheckbox) {
+	    function filterBooks() {
+		var includeExisting = includeExistingCheckbox.checked;
+		var selectedValue = bibleTitleChoose.value;
+
+		// Show/hide options based on checkbox
+		Array.from(bibleTitleChoose.options).forEach(function(option) {
+		    if (option.value === '') {
+			// Always show the "-- Select a Book --" option
+			option.style.display = '';
+		    } else {
+			var exists = option.getAttribute('data-exists') === '1';
+			if (includeExisting || !exists) {
+			    option.style.display = '';
+			} else {
+			    option.style.display = 'none';
+			}
+		    }
+		});
+
+		// If selected option is now hidden, clear selection
+		if (selectedValue) {
+		    var selectedOption = bibleTitleChoose.options[bibleTitleChoose.selectedIndex];
+		    if (selectedOption && selectedOption.style.display === 'none') {
+			bibleTitleChoose.value = '';
+			uri.value = '';
+			title.value = '';
+			subtitle.value = '';
+		    }
+		}
+	    }
+
+	    includeExistingCheckbox.addEventListener('change', filterBooks);
+	    // Initial filter on page load
+	    filterBooks();
+	}
     }
 
     var chap = document.getElementById('debug_chapter');

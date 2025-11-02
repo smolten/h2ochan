@@ -779,15 +779,25 @@ function mod_new_board_bible(Context $ctx) {
 	$bible_path_full = $config['bible']['path_full'];
 	$bible_path_index = $config['bible']['path_index'];
 	$bible_index = [];
+
+	// Get all existing board URIs
+	$existing_boards = [];
+	$query = query("SELECT `uri` FROM ``boards``") or error(db_error());
+	while ($row = $query->fetch(PDO::FETCH_ASSOC)) {
+		$existing_boards[] = $row['uri'];
+	}
+
 	if (file_exists($bible_path_index)) // Convert <title> elements into an array of arrays with osisID/short/text
 	{
 	    $xml = simplexml_load_file($bible_path_index);
 	    foreach ($xml->title as $t)
 	    {
+		$osisID = (string)$t['osisID'];
 		$bible_index[] = [
-			'osisID' => (string)$t['osisID'],
+			'osisID' => $osisID,
 			'short' => (string)$t['short'],
-			'text' => (string)$t
+			'text' => (string)$t,
+			'exists' => in_array($osisID, $existing_boards)
 		];
 	    }
 	}
@@ -960,7 +970,16 @@ function mod_bible_post_threads(Context $ctx, bool $log=true) {
 
     $errors = [];  // Array to collect DB errors
 
-    for ($chapter = 1; $chapter <= count($chapters); $chapter++) {
+    // Use array_keys to get actual chapter numbers (handles books starting at chapter 6 or 10)
+    $chapterNumbers = array_keys($chapters);
+    sort($chapterNumbers); // Sort in ascending order
+
+    foreach ($chapterNumbers as $chapter) {
+        // Skip if this chapter doesn't exist in the array
+        if (!isset($chapters[$chapter]) || !is_array($chapters[$chapter])) {
+            continue;
+        }
+
         $verses = $chapters[$chapter];           // array of verses for this chapter
         if (!isset($verses[1])) {       // error if Verse 1 not present
             $errors[] = [
@@ -1033,8 +1052,17 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
         $errors = [];  // Array to collate all DB errors
 
     // Iterate chapters in reverse if needed (latest chapters first)
-    for ($chapter = count($chapters); $chapter >= 1; $chapter--) {
+    // Use array_keys to get actual chapter numbers (handles books starting at chapter 6 or 10)
+    $chapterNumbers = array_keys($chapters);
+    rsort($chapterNumbers); // Sort in descending order
+
+    foreach ($chapterNumbers as $chapter) {
         $verses = $chapters[$chapter];
+
+        // Skip if verses is not an array (shouldn't happen, but safety check)
+        if (!is_array($verses) || empty($verses)) {
+            continue;
+        }
 
         // Skip Verse 1 because it's already the thread
         for ($verse = 2; $verse <= count($verses); $verse++) {
@@ -1109,16 +1137,18 @@ function mod_bible_parse_test(Context $ctx) {
             throw new TypeError('parseBibleBookText did not return an array');
         }
 
-        if ($chapter > count($chapters)) {
-            echo "ERROR: Chapter $chapter > " . count($chapters) . "\n";
-            modLog("ERROR for $bookURI: Chapter $chapter > " . count($chapters));
+        if (!isset($chapters[$chapter])) {
+            $availableChapters = implode(', ', array_keys($chapters));
+            echo "ERROR: Chapter $chapter does not exist. Available chapters: $availableChapters\n";
+            modLog("ERROR for $bookURI: Chapter $chapter does not exist. Available: $availableChapters");
             return;
         }
 
         for ($vNum = $verse; $vNum < $verse + $count; $vNum++) {
             if (!isset($chapters[$chapter][$vNum])) {
-                echo "ERROR: Verse $vNum > " . count($chapters[$chapter]) . "\n";
-                modLog("ERROR for $bookURI: Verse $vNum > " . count($chapters[$chapter]));
+                $maxVerse = max(array_keys($chapters[$chapter]));
+                echo "ERROR: Verse $vNum does not exist in chapter $chapter. Max verse: $maxVerse\n";
+                modLog("ERROR for $bookURI: Verse $vNum does not exist in chapter $chapter. Max: $maxVerse");
                 return;
             }
             echo "$vNum " . $chapters[$chapter][$vNum] . "\n";
@@ -1131,8 +1161,9 @@ function mod_bible_parse_test(Context $ctx) {
     }
 }
 
-// Genesis-only. Mileage may vary.
-// Certainly breaks on Psalms <lg> and <l> tags.
+// Parse Bible book text from OSIS XML
+// Handles both <p> tags (most books) and <lg>/<l> tags (Psalms)
+// Handles books that start at non-1 chapters (e.g., EsthGr starts at chapter 10)
 function parseBibleBookText(string $bookURI, string $biblePath): array {
     if (!file_exists($biblePath)) throw new Exception("Bible XML not found at $biblePath");
 
@@ -1156,13 +1187,22 @@ function parseBibleBookText(string $bookURI, string $biblePath): array {
 
     $chapters = [];
 
-    foreach ($xpath->query('.//p', $bookNode) as $p) {
+    // Query for both <p> and <lg> (line group) and <l> (line) tags
+    // Psalms use <lg>/<l> structure, most others use <p>
+    $containers = $xpath->query('.//p | .//lg | .//l', $bookNode);
+
+    foreach ($containers as $container) {
         $currentChapter = null;
         $currentVerse = null;
         $currentText = '';
         $collecting = false;
 
-        foreach ($p->childNodes as $node) {
+        // Skip <p type="x-ms"> tags (these are titles/headers in Psalms)
+        if ($container->nodeName === 'p' && $container->getAttribute('type') === 'x-ms') {
+            continue;
+        }
+
+        foreach ($container->childNodes as $node) {
             if ($node->nodeType === XML_ELEMENT_NODE) {
                 $tag = $node->nodeName;
 
