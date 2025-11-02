@@ -169,56 +169,33 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     var output = document.querySelector('pre');
-    if (output) {
-        output.dataset.default = output.textContent;
-    }
+    output.dataset.default = output.textContent;
 
     if (bibleTitleChoose) {
 	var subtitle = document.getElementById('subtitle');
-	var includeExistingCheckbox = document.getElementById('include_existing_boards');
 
 	bibleTitleChoose.addEventListener('change', function() {
 	        var opt = bibleTitleChoose.options[bibleTitleChoose.selectedIndex];
-	        if (uri) {
-	            uri.value = opt.dataset.uri || '';
-		    uriValue = uri.value;
-	        }
+	        if (uri) uri.value = opt.dataset.uri || '';
+		if (uri) uriValue = uri.value;
 	        if (title) title.value = opt.dataset.title || '';
 	        if (subtitle) subtitle.value = opt.dataset.subtitle || '';
-		if (output && output.dataset.default) {
-		    output.textContent = output.dataset.default;
-		}
+		if (output) output.textContent = output.dataset.default;
     	});
 
+	var includeExistingCheckbox = document.getElementById('include_existing_boards');
 	if (includeExistingCheckbox) {
 	    function filterBooks() {
 		var includeExisting = includeExistingCheckbox.checked;
-		var selectedValue = bibleTitleChoose.value;
-
 		Array.from(bibleTitleChoose.options).forEach(function(option) {
 		    if (option.value === '') {
 			option.style.display = '';
 		    } else {
 			var exists = option.getAttribute('data-exists') === '1';
-			if (includeExisting || !exists) {
-			    option.style.display = '';
-			} else {
-			    option.style.display = 'none';
-			}
+			option.style.display = (includeExisting || !exists) ? '' : 'none';
 		    }
 		});
-
-		if (selectedValue) {
-		    var selectedOption = bibleTitleChoose.options[bibleTitleChoose.selectedIndex];
-		    if (selectedOption && selectedOption.style.display === 'none') {
-			bibleTitleChoose.value = '';
-			if (uri) uri.value = '';
-			if (title) title.value = '';
-			if (subtitle) subtitle.value = '';
-		    }
-		}
 	    }
-
 	    includeExistingCheckbox.addEventListener('change', filterBooks);
 	    filterBooks();
 	}
@@ -228,11 +205,10 @@ document.addEventListener('DOMContentLoaded', function() {
     var verse = document.getElementById('debug_verse');
     var count = document.getElementById('debug_count');
     var testparse = document.getElementById('debug_parse');
+    testparse.addEventListener('click', function() {
 
-    if (testparse) {
-        testparse.addEventListener('click', function() {
 	    if (!uriValue || uriValue.length === 0) {
-	        if (output) output.textContent = 'Error: Choose a Book';
+	        output.textContent = 'Error: Choose a Book';
 		return;
 	    }
 
@@ -252,204 +228,30 @@ document.addEventListener('DOMContentLoaded', function() {
 	    })
             .then(response => response.text())
             .then(text => {
-                if (output) output.textContent = text || '(no response)';
+                output.textContent = text || '(no response)';
             })
             .catch(err => {
-                if (output) output.textContent = 'Error: ' + err;
+                output.textContent = 'Error: ' + err;
             });
-        });
-    }
+    });
 
     var status = document.getElementById('posts_status');
     var nextChapter = document.getElementById('next_chapter');
     if(status) {
-        var btnGetStatus = document.getElementById('get_status');
-        var btnPostBook = document.getElementById('do_post_book');
-        var btnPostThreads = document.getElementById('do_post_threads');
-        var btnPostReplies = document.getElementById('do_post_replies');
-
-        function disableAllButtons() {
-            btnGetStatus.disabled = true;
-            btnPostBook.disabled = true;
-            btnPostThreads.disabled = true;
-            btnPostReplies.disabled = true;
-        }
-
-        function enableAllButtons() {
-            btnGetStatus.disabled = false;
-            btnPostBook.disabled = false;
-            btnPostThreads.disabled = false;
-            btnPostReplies.disabled = false;
-        }
-
-        function board_status() {
-        disableAllButtons();
-        status.style.color = '';
-        var tokenStatus = document.querySelector('input[name="token_board_status"]');
-        var params = new URLSearchParams();
-        params.append('uri', uriValue);
-        params.append('token', tokenStatus.value);
-
-        fetch('/mod.php?/board-status', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: params.toString(),
-            credentials: 'same-origin'
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('HTTP ' + response.status);
-            }
-            return response.text();
-        })
-        .then(text => {
-            status.textContent = text || '(no response)';
-            // Check for error in response
-            if (text && (text.includes('ERROR:') || text.includes('Error:'))) {
-                status.style.color = 'red';
-            }
-            enableAllButtons();
-        })
-        .catch(err => {
-            status.textContent = 'Error: ' + err;
-            status.style.color = 'red';
-            enableAllButtons();
-        });
-    };
-    function do_book() {
-	disableAllButtons();
-	status.style.color = '';
-	status.textContent = "Writing Book....";
-        var tokenBook = document.querySelector('input[name="token_post_book"]');
-	var params = new URLSearchParams();
-	params.append('uri', uriValue);
-	params.append('token', tokenBook.value);
-	console.log("Posting book of URI:", uriValue);
-
-	fetch('/mod.php?/bible-post-book', {
-	    method: 'POST',
-	    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-	    body: params.toString(),
-	    credentials: 'same-origin'
-	})
-	.then(response => {
-	    if (!response.ok) {
-		throw new Error('HTTP ' + response.status);
-	    }
-	    return response.text();
-	})
-	.then(text => {
-	    // Check if there was an error in the response
-	    if (text && (text.includes('ERROR:') || text.includes('Error:'))) {
-		status.textContent = text;
-		status.style.color = 'red';
-		enableAllButtons();
-	    } else {
-		// Success, get updated status
-		board_status();
-	    }
-	})
-	.catch(err => {
-	    status.textContent = 'Error: ' + err;
-	    status.style.color = 'red';
-	    enableAllButtons();
-	});
-    };
-    function do_threads() {
-	disableAllButtons();
-	status.style.color = '';
-	status.textContent = "Writing Chapters-Only....";
-    	var tokenThreads = document.querySelector('input[name="token_post_threads"]');
-	var params = new URLSearchParams();
-	params.append('uri', uriValue);
-	params.append('token', tokenThreads.value);
-	console.log("Posting threads for URI:", uriValue, "token:", tokenThreads.value);
-
-	fetch('/mod.php?/bible-post-threads', {
-	    method: 'POST',
-	    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-	    body: params.toString(),
-	    credentials: 'same-origin'
-	})
-	.then(response => {
-	    if (!response.ok) {
-		throw new Error('HTTP ' + response.status);
-	    }
-	    return response.text();
-	})
-	.then(text => {
-	    // Check if there was an error in the response
-	    if (text && (text.includes('ERROR:') || text.includes('Error:'))) {
-		status.textContent = text;
-		status.style.color = 'red';
-		enableAllButtons();
-	    } else {
-		// Success, get updated status
-		board_status();
-	    }
-	})
-	.catch(err => {
-	    status.textContent = 'Error: ' + err;
-	    status.style.color = 'red';
-	    enableAllButtons();
-	});
-    };
-    function do_replies() {
-	disableAllButtons();
-	status.style.color = '';
-	status.textContent = "Writing Verses-Only....";
-    	var tokenReplies = document.querySelector('input[name="token_post_replies"]');
-	var params = new URLSearchParams();
-	params.append('uri', uriValue);
-	params.append('token', tokenReplies.value);
-
-	fetch('/mod.php?/bible-post-replies', {
-	    method: 'POST',
-	    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-	    body: params.toString(),
-	    credentials: 'same-origin'
-	})
-	.then(response => {
-	    if (!response.ok) {
-		throw new Error('HTTP ' + response.status);
-	    }
-	    return response.text();
-	})
-	.then(text => {
-	    // Check if there was an error in the response
-	    if (text && (text.includes('ERROR:') || text.includes('Error:'))) {
-		status.textContent = text;
-		status.style.color = 'red';
-		enableAllButtons();
-	    } else {
-		// Success, get updated status
-		board_status();
-	    }
-	})
-	.catch(err => {
-	    status.textContent = 'Error: ' + err;
-	    status.style.color = 'red';
-	    enableAllButtons();
-	});
-        }
-
-        btnGetStatus.addEventListener('click', board_status);
-        btnPostBook.addEventListener('click', do_book);
-        btnPostThreads.addEventListener('click', do_threads);
-        btnPostReplies.addEventListener('click', do_replies);
+        document.getElementById('get_status').addEventListener('click', board_status);	/*doesn't exist on NEW page*/
+        document.getElementById('do_post_book').addEventListener('click', do_book);
+        document.getElementById('do_post_threads').addEventListener('click', do_threads);
+        document.getElementById('do_post_replies').addEventListener('click', do_replies);
 
 	if(bible_create_all) {
 	    do_book();
-	} else {
+	} else
 	    board_status();
-        }
     }
-
     if (nextChapter && bibleTitleChoose) {
 	nextChapter.addEventListener('click',  () => {
     	    let currentIndex = bibleTitleChoose.selectedIndex;
     	    let nextIndex = currentIndex + 1;
-
     	    while (nextIndex < bibleTitleChoose.options.length) {
     	        let option = bibleTitleChoose.options[nextIndex];
     	        if (option.style.display !== 'none') {
@@ -463,5 +265,81 @@ document.addEventListener('DOMContentLoaded', function() {
     	    }
 	});
     }
+    function board_status() {	
+        var tokenStatus = document.querySelector('input[name="token_board_status"]');
+        var params = new URLSearchParams();
+        params.append('uri', uriValue);
+        params.append('token', tokenStatus.value);
+
+        fetch('/mod.php?/board-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params.toString(),
+            credentials: 'same-origin'
+        })
+        .then(response => response.text())
+        .then(text => {
+            status.textContent = text || '(no response)';
+        })
+        .catch(err => {
+            status.textContent = 'Error: ' + err;
+        });
+    };
+    function do_book() {
+	status.textContent = "Writing Book....";
+        var tokenBook = document.querySelector('input[name="token_post_book"]');
+	var params = new URLSearchParams();
+	params.append('uri', uriValue);
+	params.append('token', tokenBook.value);
+	console.log("Posting book of URI:", uriValue);
+
+	fetch('/mod.php?/bible-post-book', {
+	    method: 'POST',
+	    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+	    body: params.toString(),
+	    credentials: 'same-origin'
+	})
+	.then(() => board_status())
+	.catch(err => {
+	    status.textContent = 'Error: ' + err;
+	});
+    };
+    function do_threads() {
+	status.textContent = "Writing Chapters-Only....";
+    	var tokenThreads = document.querySelector('input[name="token_post_threads"]');
+	var params = new URLSearchParams();
+	params.append('uri', uriValue);
+	params.append('token', tokenThreads.value);
+	console.log("Posting threads for URI:", uriValue, "token:", tokenThreads.value);
+
+	fetch('/mod.php?/bible-post-threads', {
+	    method: 'POST',
+	    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+	    body: params.toString(),
+	    credentials: 'same-origin'
+	})
+	.then(() => board_status())
+	.catch(err => {
+	    status.textContent = 'Error: ' + err;
+	});
+    };
+    function do_replies() {
+	status.textContent = "Writing Verses-Only....";
+    	var tokenReplies = document.querySelector('input[name="token_post_replies"]');
+	var params = new URLSearchParams();
+	params.append('uri', uriValue);
+	params.append('token', tokenReplies.value);
+
+	fetch('/mod.php?/bible-post-replies', {
+	    method: 'POST',
+	    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+	    body: params.toString(),
+	    credentials: 'same-origin'
+	})
+	.then(() => board_status())
+	.catch(err => {
+	    status.textContent = 'Error: ' + err;
+	});
+    };
 });
 </script>
