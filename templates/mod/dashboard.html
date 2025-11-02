@@ -1,10 +1,13 @@
 {% if config.url_banner %}<img class="board_image" src="{{ config.url_banner }}" {% if config.banner_width or config.banner_height %}style="{% if config.banner_width %}width:{{ config.banner_width }}px{% endif %};{% if config.banner_width %}height:{{ config.banner_height }}px{% endif %}" {% endif %}alt="" />{% endif %}
 <fieldset>
 	<legend>{% trans 'Boards' %}</legend>
+	<input type="hidden" name="token_all_boards_status" value="{{ token_all_boards_status }}">
+	<button type="button" id="get_all_boards_status">Get Status of All Boards</button>
 
 	<ul>
 		{% for board in boards %}
 			<li>
+				<span class="board-status" data-uri="{{ board.uri }}" style="display:inline-block;min-width:350px;font-family:monospace;"></span>
 				<a href="?/{{ config.board_path|sprintf(board.uri) }}{{ config.file_index }}">{{ config.board_abbreviation|sprintf(board.uri) }}</a>
 					 - 
 				{{ board.title|e }}
@@ -36,6 +39,7 @@
 				<li>Bible boards:</li>
 		{% for board in boards_bible %}
                         <li>
+                                <span class="board-status" data-uri="{{ board.uri }}" style="display:inline-block;min-width:350px;font-family:monospace;"></span>
                                 <a href="?/{{ config.board_path|sprintf(board.uri) }}{{ config.file_index }}">{{ config.board_abbreviation|sprintf(board.
 uri) }}</a>
                                          -
@@ -214,3 +218,68 @@ uri) }}</a>
 		<li><a href="?/logout/{{ logout_token }}">{% trans 'Logout' %}</a></li>
 	</ul>
 </fieldset>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var getAllStatusBtn = document.getElementById('get_all_boards_status');
+    var tokenInput = document.querySelector('input[name="token_all_boards_status"]');
+
+    if (getAllStatusBtn && tokenInput) {
+        getAllStatusBtn.addEventListener('click', function() {
+            getAllStatusBtn.disabled = true;
+            getAllStatusBtn.textContent = 'Loading...';
+
+            // Clear all status spans
+            var statusSpans = document.querySelectorAll('.board-status');
+            statusSpans.forEach(function(span) {
+                span.textContent = '';
+            });
+
+            var params = new URLSearchParams();
+            params.append('token', tokenInput.value);
+
+            fetch('/mod.php?/all-boards-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params.toString(),
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Update each board's status
+                statusSpans.forEach(function(span) {
+                    var uri = span.getAttribute('data-uri');
+                    if (data[uri]) {
+                        if (data[uri].error) {
+                            span.textContent = 'Error: ' + data[uri].error;
+                        } else {
+                            var threads = data[uri].threads;
+                            var replies = data[uri].replies;
+                            var total = data[uri].total;
+
+                            // Format: "Num Threads: X    Num Replies: Y    Total: Z"
+                            var threadsStr = 'Num Threads: ' + threads;
+                            var repliesStr = 'Num Replies: ' + replies;
+                            var totalStr = 'Total: ' + total;
+
+                            // Pad to fixed width
+                            span.textContent = threadsStr.padEnd(20) + repliesStr.padEnd(20) + totalStr;
+                        }
+                    }
+                });
+
+                getAllStatusBtn.disabled = false;
+                getAllStatusBtn.textContent = 'Get Status of All Boards';
+            })
+            .catch(err => {
+                console.error('Error fetching board statuses:', err);
+                statusSpans.forEach(function(span) {
+                    span.textContent = 'Error: ' + err;
+                });
+                getAllStatusBtn.disabled = false;
+                getAllStatusBtn.textContent = 'Get Status of All Boards';
+            });
+        });
+    }
+});
+</script>

@@ -193,6 +193,7 @@ function mod_dashboard(Context $ctx) {
 	}
 
 	$args['logout_token'] = make_secure_link_token('logout');
+	$args['token_all_boards_status'] = make_secure_link_token('all-boards-status');
 
 	mod_page(_('Dashboard'), $config['file_mod_dashboard'], $args, $mod);
 }
@@ -862,6 +863,55 @@ function mod_board_status(Context $ctx)
     $replies = $row ? (int)$row['c'] : 0;
 
     echo "{$board['uri']}\tNum Threads: {$threads}\tNum Replies: {$replies}";
+    exit;
+}
+
+function mod_all_boards_status(Context $ctx)
+{
+    global $mod;
+    $config = $ctx->get('config');
+
+    header('Content-Type: application/json; charset=utf-8');
+
+    // Get all boards (regular and bible)
+    $boards = listBoards(true);
+    $result = [];
+
+    foreach ($boards as $board) {
+        $boardURI = preg_replace('/[^a-zA-Z0-9]/', '', $board['uri']);
+
+        try {
+            // Count threads
+            $query = query(sprintf(
+                "SELECT COUNT(*) AS c FROM ``posts_%s`` WHERE `thread` IS NULL",
+                $boardURI
+            ));
+            $row = $query->fetch(PDO::FETCH_ASSOC);
+            $threads = $row ? (int)$row['c'] : 0;
+
+            // Count replies
+            $query = query(sprintf(
+                "SELECT COUNT(*) AS c FROM ``posts_%s`` WHERE `thread` IS NOT NULL",
+                $boardURI
+            ));
+            $row = $query->fetch(PDO::FETCH_ASSOC);
+            $replies = $row ? (int)$row['c'] : 0;
+
+            $total = $threads + $replies;
+
+            $result[$board['uri']] = [
+                'threads' => $threads,
+                'replies' => $replies,
+                'total' => $total
+            ];
+        } catch (Exception $e) {
+            $result[$board['uri']] = [
+                'error' => 'Board not found or error: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    echo json_encode($result);
     exit;
 }
 
