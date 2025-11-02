@@ -62,6 +62,7 @@ $pages = [
 	'/bible-parse-test'			=> 'secure_POST bible_parse_test',
 	'/edit_bible/(\%b)'			=> 'secure_POST edit_board_bible',
 	'/board-status'                         => 'secure_POST board_status',
+	'/all-boards-status'                    => 'secure_POST all_boards_status',
 	'/bible-post-threads'                   => 'secure_POST bible_post_threads',
 	'/bible-post-replies'			=> 'secure_POST bible_post_replies',
 	'/bible-post-book'			=> 'secure_POST bible_post_book',
