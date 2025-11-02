@@ -268,12 +268,6 @@ document.addEventListener('DOMContentLoaded', function() {
         var btnPostThreads = document.getElementById('do_post_threads');
         var btnPostReplies = document.getElementById('do_post_replies');
 
-        btnGetStatus.addEventListener('click', board_status);
-        btnPostBook.addEventListener('click', do_book);
-        btnPostThreads.addEventListener('click', do_threads);
-        btnPostReplies.addEventListener('click', do_replies);
-
-        // Helper functions to enable/disable all buttons
         function disableAllButtons() {
             btnGetStatus.disabled = true;
             btnPostBook.disabled = true;
@@ -288,30 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
             btnPostReplies.disabled = false;
         }
 
-	if(bible_create_all) {
-	    do_book();
-	} else
-	    board_status();
-    }
-    if (nextChapter && bibleTitleChoose) {
-	nextChapter.addEventListener('click',  () => {
-    	    let currentIndex = bibleTitleChoose.selectedIndex;
-    	    let nextIndex = currentIndex + 1;
-
-    	    while (nextIndex < bibleTitleChoose.options.length) {
-    	        let option = bibleTitleChoose.options[nextIndex];
-    	        if (option.style.display !== 'none') {
-    	            bibleTitleChoose.selectedIndex = nextIndex;
-    	            const event = new Event('change', { bubbles: true });
-                    bibleTitleChoose.dispatchEvent(event);
-                    console.log('Selected book:', bibleTitleChoose.value);
-                    break;
-    	        }
-    	        nextIndex++;
-    	    }
-	});
-    }
-    function board_status() {
+        function board_status() {
         disableAllButtons();
         status.style.color = '';
         var tokenStatus = document.querySelector('input[name="token_board_status"]');
@@ -460,6 +431,37 @@ document.addEventListener('DOMContentLoaded', function() {
 	    status.style.color = 'red';
 	    enableAllButtons();
 	});
-    };
+        }
+
+        btnGetStatus.addEventListener('click', board_status);
+        btnPostBook.addEventListener('click', do_book);
+        btnPostThreads.addEventListener('click', do_threads);
+        btnPostReplies.addEventListener('click', do_replies);
+
+	if(bible_create_all) {
+	    do_book();
+	} else {
+	    board_status();
+        }
+    }
+
+    if (nextChapter && bibleTitleChoose) {
+	nextChapter.addEventListener('click',  () => {
+    	    let currentIndex = bibleTitleChoose.selectedIndex;
+    	    let nextIndex = currentIndex + 1;
+
+    	    while (nextIndex < bibleTitleChoose.options.length) {
+    	        let option = bibleTitleChoose.options[nextIndex];
+    	        if (option.style.display !== 'none') {
+    	            bibleTitleChoose.selectedIndex = nextIndex;
+    	            const event = new Event('change', { bubbles: true });
+                    bibleTitleChoose.dispatchEvent(event);
+                    console.log('Selected book:', bibleTitleChoose.value);
+                    break;
+    	        }
+    	        nextIndex++;
+    	    }
+	});
+    }
 });
 </script>

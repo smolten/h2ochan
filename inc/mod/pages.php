@@ -883,8 +883,8 @@ function mod_all_boards_status(Context $ctx)
 
     header('Content-Type: application/json; charset=utf-8');
 
-    // Get all boards (regular and bible)
-    $boards = listBoards(true);
+    // Get all boards (regular and bible) - pass false to get full board objects
+    $boards = listBoards(false);
     $result = [];
 
     foreach ($boards as $board) {
