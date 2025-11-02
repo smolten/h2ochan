@@ -1051,6 +1051,18 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
 
         $errors = [];  // Array to collate all DB errors
 
+    // Build mapping of chapter numbers to thread IDs
+    // This handles books that don't start at chapter 1 (EpJer starts at 6, EsthGr at 10)
+    $chapterToThreadId = [];
+    $query = query(sprintf(
+        "SELECT `id`, `time` FROM ``posts_%s`` WHERE `thread` IS NULL ORDER BY `time` DESC",
+        $bookURI
+    ));
+    while ($row = $query->fetch(PDO::FETCH_ASSOC)) {
+        $chapterNum = 1000 - (int)$row['time'];  // Reverse the faketime calculation
+        $chapterToThreadId[$chapterNum] = (int)$row['id'];
+    }
+
     // Iterate chapters in reverse if needed (latest chapters first)
     // Use array_keys to get actual chapter numbers (handles books starting at chapter 6 or 10)
     $chapterNumbers = array_keys($chapters);
@@ -1063,6 +1075,17 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
         if (!is_array($verses) || empty($verses)) {
             continue;
         }
+
+        // Get the actual thread ID for this chapter
+        if (!isset($chapterToThreadId[$chapter])) {
+            $errors[] = [
+                'chapter' => $chapter,
+                'verse' => 'N/A',
+                'message' => "Thread not found for chapter $chapter"
+            ];
+            continue;
+        }
+        $threadId = $chapterToThreadId[$chapter];
 
         // Skip Verse 1 because it's already the thread
         for ($verse = 2; $verse <= count($verses); $verse++) {
@@ -1084,7 +1107,7 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
                      NULL, 0, NULL, SUBSTRING(MD5(RAND()),1,12), :ip, 0, 0, 0, 0, NULL, :slug)
                 ");
 
-                $query->bindValue(':thread', $chapter);
+                $query->bindValue(':thread', $threadId);
                 $query->bindValue(':body', $body);
                 $query->bindValue(':body_nomarkup', $body_nomarkup);
                 $query->bindValue(':faketime', 1000-$chapter);
@@ -1244,9 +1267,14 @@ function parseBibleBookText(string $bookURI, string $biblePath): array {
                         }
                         break;
 
+                    case 'l':
+                    case 'p':
+                        // Line and paragraph tags - just containers, process their children
+                        break;
+
                     default:
-                        //throw new Exception("Unknown tag <$tag> encountered in $bookURI parsing");
-                        echo "Unknown tag <$tag> encountered in $bookURI parsing\n\n";
+                        // Silently ignore unknown tags instead of echoing
+                        break;
                 }
 
             } elseif ($node->nodeType === XML_TEXT_NODE && $collecting) {
