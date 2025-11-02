@@ -1150,7 +1150,7 @@ function parseBibleBookText(string $bookURI, string $biblePath): array {
                             // Normalize whitespace inside <i> tags
                             $text = preg_replace('/\s+/', ' ', $node->textContent);
                             if ($currentText !== '') $currentText .= ' ';
-                            $currentText .= '<i>' . trim($text) . '</i>';
+                            $currentText .= '<b><i>' . trim($text) . '</i></b>';
                         }
                         break;
 
