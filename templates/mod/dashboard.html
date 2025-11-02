@@ -7,7 +7,7 @@
 	<ul>
 		{% for board in boards %}
 			<li>
-				<span class="board-status" data-uri="{{ board.uri }}" style="display:inline-block;min-width:350px;font-family:monospace;"></span>
+				<span class="board-status" data-uri="{{ board.uri }}"></span>
 				<a href="?/{{ config.board_path|sprintf(board.uri) }}{{ config.file_index }}">{{ config.board_abbreviation|sprintf(board.uri) }}</a>
 					 - 
 				{{ board.title|e }}
@@ -39,7 +39,7 @@
 				<li>Bible boards:</li>
 		{% for board in boards_bible %}
                         <li>
-                                <span class="board-status" data-uri="{{ board.uri }}" style="display:inline-block;min-width:350px;font-family:monospace;"></span>
+                                <span class="board-status" data-uri="{{ board.uri }}"></span>
                                 <a href="?/{{ config.board_path|sprintf(board.uri) }}{{ config.file_index }}">{{ config.board_abbreviation|sprintf(board.
 uri) }}</a>
                                          -
@@ -229,7 +229,6 @@ document.addEventListener('DOMContentLoaded', function() {
             getAllStatusBtn.disabled = true;
             getAllStatusBtn.textContent = 'Loading...';
 
-            // Clear all status spans
             var statusSpans = document.querySelectorAll('.board-status');
             statusSpans.forEach(function(span) {
                 span.textContent = '';
@@ -246,7 +245,6 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
-                // Update each board's status
                 statusSpans.forEach(function(span) {
                     var uri = span.getAttribute('data-uri');
                     if (data[uri]) {
@@ -257,12 +255,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             var replies = data[uri].replies;
                             var total = data[uri].total;
 
-                            // Format: "Num Threads: X    Num Replies: Y    Total: Z"
                             var threadsStr = 'Num Threads: ' + threads;
                             var repliesStr = 'Num Replies: ' + replies;
                             var totalStr = 'Total: ' + total;
 
-                            // Pad to fixed width
                             span.textContent = threadsStr.padEnd(20) + repliesStr.padEnd(20) + totalStr;
                         }
                     }
