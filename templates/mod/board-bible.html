@@ -179,10 +179,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	bibleTitleChoose.addEventListener('change', function() {
 	        var opt = bibleTitleChoose.options[bibleTitleChoose.selectedIndex];
-	        uri.value = opt.dataset.uri || '';
-		uriValue = uri.value;
-	        title.value = opt.dataset.title || '';
-	        subtitle.value = opt.dataset.subtitle || '';
+	        if (uri) {
+	            uri.value = opt.dataset.uri || '';
+		    uriValue = uri.value;
+	        }
+	        if (title) title.value = opt.dataset.title || '';
+	        if (subtitle) subtitle.value = opt.dataset.subtitle || '';
 		if (output && output.dataset.default) {
 		    output.textContent = output.dataset.default;
 		}
