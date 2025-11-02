@@ -218,10 +218,30 @@ document.addEventListener('DOMContentLoaded', function() {
     var status = document.getElementById('posts_status');
     var nextChapter = document.getElementById('next_chapter');
     if(status) {
-        document.getElementById('get_status').addEventListener('click', board_status);	/*doesn't exist on NEW page*/
-        document.getElementById('do_post_book').addEventListener('click', do_book);
-        document.getElementById('do_post_threads').addEventListener('click', do_threads);
-        document.getElementById('do_post_replies').addEventListener('click', do_replies);
+        var btnGetStatus = document.getElementById('get_status');
+        var btnPostBook = document.getElementById('do_post_book');
+        var btnPostThreads = document.getElementById('do_post_threads');
+        var btnPostReplies = document.getElementById('do_post_replies');
+
+        btnGetStatus.addEventListener('click', board_status);
+        btnPostBook.addEventListener('click', do_book);
+        btnPostThreads.addEventListener('click', do_threads);
+        btnPostReplies.addEventListener('click', do_replies);
+
+        // Helper functions to enable/disable all buttons
+        function disableAllButtons() {
+            btnGetStatus.disabled = true;
+            btnPostBook.disabled = true;
+            btnPostThreads.disabled = true;
+            btnPostReplies.disabled = true;
+        }
+
+        function enableAllButtons() {
+            btnGetStatus.disabled = false;
+            btnPostBook.disabled = false;
+            btnPostThreads.disabled = false;
+            btnPostReplies.disabled = false;
+        }
 
 	if(bible_create_all) {
 	    do_book();
@@ -241,7 +261,9 @@ document.addEventListener('DOMContentLoaded', function() {
     	    let bible_title_choose = bibleTitleChoose.value;
     	    console.log('Selected book:', bible_title_choose);
 	});
-    function board_status() {	
+    function board_status() {
+        disableAllButtons();
+        status.style.color = '';
         var tokenStatus = document.querySelector('input[name="token_board_status"]');
         var params = new URLSearchParams();
         params.append('uri', uriValue);
@@ -253,15 +275,29 @@ document.addEventListener('DOMContentLoaded', function() {
             body: params.toString(),
             credentials: 'same-origin'
         })
-        .then(response => response.text())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('HTTP ' + response.status);
+            }
+            return response.text();
+        })
         .then(text => {
             status.textContent = text || '(no response)';
+            // Check for error in response
+            if (text && (text.includes('ERROR:') || text.includes('Error:'))) {
+                status.style.color = 'red';
+            }
+            enableAllButtons();
         })
         .catch(err => {
             status.textContent = 'Error: ' + err;
+            status.style.color = 'red';
+            enableAllButtons();
         });
     };
     function do_book() {
+	disableAllButtons();
+	status.style.color = '';
 	status.textContent = "Writing Book....";
         var tokenBook = document.querySelector('input[name="token_post_book"]');
 	var params = new URLSearchParams();
@@ -275,12 +311,32 @@ document.addEventListener('DOMContentLoaded', function() {
 	    body: params.toString(),
 	    credentials: 'same-origin'
 	})
-	.then(() => board_status())
+	.then(response => {
+	    if (!response.ok) {
+		throw new Error('HTTP ' + response.status);
+	    }
+	    return response.text();
+	})
+	.then(text => {
+	    // Check if there was an error in the response
+	    if (text && (text.includes('ERROR:') || text.includes('Error:'))) {
+		status.textContent = text;
+		status.style.color = 'red';
+		enableAllButtons();
+	    } else {
+		// Success, get updated status
+		board_status();
+	    }
+	})
 	.catch(err => {
 	    status.textContent = 'Error: ' + err;
+	    status.style.color = 'red';
+	    enableAllButtons();
 	});
     };
     function do_threads() {
+	disableAllButtons();
+	status.style.color = '';
 	status.textContent = "Writing Chapters-Only....";
     	var tokenThreads = document.querySelector('input[name="token_post_threads"]');
 	var params = new URLSearchParams();
@@ -294,12 +350,32 @@ document.addEventListener('DOMContentLoaded', function() {
 	    body: params.toString(),
 	    credentials: 'same-origin'
 	})
-	.then(() => board_status())
+	.then(response => {
+	    if (!response.ok) {
+		throw new Error('HTTP ' + response.status);
+	    }
+	    return response.text();
+	})
+	.then(text => {
+	    // Check if there was an error in the response
+	    if (text && (text.includes('ERROR:') || text.includes('Error:'))) {
+		status.textContent = text;
+		status.style.color = 'red';
+		enableAllButtons();
+	    } else {
+		// Success, get updated status
+		board_status();
+	    }
+	})
 	.catch(err => {
 	    status.textContent = 'Error: ' + err;
+	    status.style.color = 'red';
+	    enableAllButtons();
 	});
     };
     function do_replies() {
+	disableAllButtons();
+	status.style.color = '';
 	status.textContent = "Writing Verses-Only....";
     	var tokenReplies = document.querySelector('input[name="token_post_replies"]');
 	var params = new URLSearchParams();
@@ -312,9 +388,27 @@ document.addEventListener('DOMContentLoaded', function() {
 	    body: params.toString(),
 	    credentials: 'same-origin'
 	})
-	.then(() => board_status())
+	.then(response => {
+	    if (!response.ok) {
+		throw new Error('HTTP ' + response.status);
+	    }
+	    return response.text();
+	})
+	.then(text => {
+	    // Check if there was an error in the response
+	    if (text && (text.includes('ERROR:') || text.includes('Error:'))) {
+		status.textContent = text;
+		status.style.color = 'red';
+		enableAllButtons();
+	    } else {
+		// Success, get updated status
+		board_status();
+	    }
+	})
 	.catch(err => {
 	    status.textContent = 'Error: ' + err;
+	    status.style.color = 'red';
+	    enableAllButtons();
 	});
     };
 });
