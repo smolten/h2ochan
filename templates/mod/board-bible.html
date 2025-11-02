@@ -237,11 +237,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     var status = document.getElementById('posts_status');
     var nextChapter = document.getElementById('next_chapter');
+    var btnGetStatus, btnPostBook, btnPostThreads, btnPostReplies;
     if(status) {
-        document.getElementById('get_status').addEventListener('click', board_status);	/*doesn't exist on NEW page*/
-        document.getElementById('do_post_book').addEventListener('click', do_book);
-        document.getElementById('do_post_threads').addEventListener('click', do_threads);
-        document.getElementById('do_post_replies').addEventListener('click', do_replies);
+        btnGetStatus = document.getElementById('get_status');
+        btnPostBook = document.getElementById('do_post_book');
+        btnPostThreads = document.getElementById('do_post_threads');
+        btnPostReplies = document.getElementById('do_post_replies');
+
+        btnGetStatus.addEventListener('click', board_status);
+        btnPostBook.addEventListener('click', do_book);
+        btnPostThreads.addEventListener('click', do_threads);
+        btnPostReplies.addEventListener('click', do_replies);
 
 	if(bible_create_all) {
 	    do_book();
@@ -265,7 +271,15 @@ document.addEventListener('DOMContentLoaded', function() {
     	    }
 	});
     }
-    function board_status() {	
+    function board_status() {
+        if (btnGetStatus) {
+            btnGetStatus.disabled = true;
+            if (btnPostBook) btnPostBook.disabled = true;
+            if (btnPostThreads) btnPostThreads.disabled = true;
+            if (btnPostReplies) btnPostReplies.disabled = true;
+        }
+        if (status) status.style.color = '';
+
         var tokenStatus = document.querySelector('input[name="token_board_status"]');
         var params = new URLSearchParams();
         params.append('uri', uriValue);
@@ -279,14 +293,44 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.text())
         .then(text => {
-            status.textContent = text || '(no response)';
+            if (status) {
+                status.textContent = text || '(no response)';
+                if (text && (text.includes('ERROR:') || text.includes('Error:'))) {
+                    status.style.color = 'red';
+                }
+            }
+            if (btnGetStatus) {
+                btnGetStatus.disabled = false;
+                if (btnPostBook) btnPostBook.disabled = false;
+                if (btnPostThreads) btnPostThreads.disabled = false;
+                if (btnPostReplies) btnPostReplies.disabled = false;
+            }
         })
         .catch(err => {
-            status.textContent = 'Error: ' + err;
+            if (status) {
+                status.textContent = 'Error: ' + err;
+                status.style.color = 'red';
+            }
+            if (btnGetStatus) {
+                btnGetStatus.disabled = false;
+                if (btnPostBook) btnPostBook.disabled = false;
+                if (btnPostThreads) btnPostThreads.disabled = false;
+                if (btnPostReplies) btnPostReplies.disabled = false;
+            }
         });
     };
     function do_book() {
-	status.textContent = "Writing Book....";
+        if (status) {
+            status.textContent = "Writing Book....";
+            status.style.color = '';
+        }
+        if (btnPostBook) {
+            btnPostBook.disabled = true;
+            if (btnGetStatus) btnGetStatus.disabled = true;
+            if (btnPostThreads) btnPostThreads.disabled = true;
+            if (btnPostReplies) btnPostReplies.disabled = true;
+        }
+
         var tokenBook = document.querySelector('input[name="token_post_book"]');
 	var params = new URLSearchParams();
 	params.append('uri', uriValue);
@@ -299,13 +343,48 @@ document.addEventListener('DOMContentLoaded', function() {
 	    body: params.toString(),
 	    credentials: 'same-origin'
 	})
-	.then(() => board_status())
+	.then(response => response.text())
+	.then(text => {
+	    if (text && (text.includes('ERROR:') || text.includes('Error:'))) {
+	        if (status) {
+	            status.textContent = text;
+	            status.style.color = 'red';
+	        }
+	        if (btnPostBook) {
+	            btnPostBook.disabled = false;
+	            if (btnGetStatus) btnGetStatus.disabled = false;
+	            if (btnPostThreads) btnPostThreads.disabled = false;
+	            if (btnPostReplies) btnPostReplies.disabled = false;
+	        }
+	    } else {
+	        board_status();
+	    }
+	})
 	.catch(err => {
-	    status.textContent = 'Error: ' + err;
+	    if (status) {
+	        status.textContent = 'Error: ' + err;
+	        status.style.color = 'red';
+	    }
+	    if (btnPostBook) {
+	        btnPostBook.disabled = false;
+	        if (btnGetStatus) btnGetStatus.disabled = false;
+	        if (btnPostThreads) btnPostThreads.disabled = false;
+	        if (btnPostReplies) btnPostReplies.disabled = false;
+	    }
 	});
     };
     function do_threads() {
-	status.textContent = "Writing Chapters-Only....";
+        if (status) {
+            status.textContent = "Writing Chapters-Only....";
+            status.style.color = '';
+        }
+        if (btnPostThreads) {
+            btnPostThreads.disabled = true;
+            if (btnGetStatus) btnGetStatus.disabled = true;
+            if (btnPostBook) btnPostBook.disabled = true;
+            if (btnPostReplies) btnPostReplies.disabled = true;
+        }
+
     	var tokenThreads = document.querySelector('input[name="token_post_threads"]');
 	var params = new URLSearchParams();
 	params.append('uri', uriValue);
@@ -318,13 +397,48 @@ document.addEventListener('DOMContentLoaded', function() {
 	    body: params.toString(),
 	    credentials: 'same-origin'
 	})
-	.then(() => board_status())
+	.then(response => response.text())
+	.then(text => {
+	    if (text && (text.includes('ERROR:') || text.includes('Error:'))) {
+	        if (status) {
+	            status.textContent = text;
+	            status.style.color = 'red';
+	        }
+	        if (btnPostThreads) {
+	            btnPostThreads.disabled = false;
+	            if (btnGetStatus) btnGetStatus.disabled = false;
+	            if (btnPostBook) btnPostBook.disabled = false;
+	            if (btnPostReplies) btnPostReplies.disabled = false;
+	        }
+	    } else {
+	        board_status();
+	    }
+	})
 	.catch(err => {
-	    status.textContent = 'Error: ' + err;
+	    if (status) {
+	        status.textContent = 'Error: ' + err;
+	        status.style.color = 'red';
+	    }
+	    if (btnPostThreads) {
+	        btnPostThreads.disabled = false;
+	        if (btnGetStatus) btnGetStatus.disabled = false;
+	        if (btnPostBook) btnPostBook.disabled = false;
+	        if (btnPostReplies) btnPostReplies.disabled = false;
+	    }
 	});
     };
     function do_replies() {
-	status.textContent = "Writing Verses-Only....";
+        if (status) {
+            status.textContent = "Writing Verses-Only....";
+            status.style.color = '';
+        }
+        if (btnPostReplies) {
+            btnPostReplies.disabled = true;
+            if (btnGetStatus) btnGetStatus.disabled = true;
+            if (btnPostBook) btnPostBook.disabled = true;
+            if (btnPostThreads) btnPostThreads.disabled = true;
+        }
+
     	var tokenReplies = document.querySelector('input[name="token_post_replies"]');
 	var params = new URLSearchParams();
 	params.append('uri', uriValue);
@@ -336,9 +450,34 @@ document.addEventListener('DOMContentLoaded', function() {
 	    body: params.toString(),
 	    credentials: 'same-origin'
 	})
-	.then(() => board_status())
+	.then(response => response.text())
+	.then(text => {
+	    if (text && (text.includes('ERROR:') || text.includes('Error:'))) {
+	        if (status) {
+	            status.textContent = text;
+	            status.style.color = 'red';
+	        }
+	        if (btnPostReplies) {
+	            btnPostReplies.disabled = false;
+	            if (btnGetStatus) btnGetStatus.disabled = false;
+	            if (btnPostBook) btnPostBook.disabled = false;
+	            if (btnPostThreads) btnPostThreads.disabled = false;
+	        }
+	    } else {
+	        board_status();
+	    }
+	})
 	.catch(err => {
-	    status.textContent = 'Error: ' + err;
+	    if (status) {
+	        status.textContent = 'Error: ' + err;
+	        status.style.color = 'red';
+	    }
+	    if (btnPostReplies) {
+	        btnPostReplies.disabled = false;
+	        if (btnGetStatus) btnGetStatus.disabled = false;
+	        if (btnPostBook) btnPostBook.disabled = false;
+	        if (btnPostThreads) btnPostThreads.disabled = false;
+	    }
 	});
     };
 });
