@@ -1161,17 +1161,21 @@ function mod_bible_parse_test(Context $ctx) {
         }
 
         if (!isset($chapters[$chapter])) {
-            $availableChapters = implode(', ', array_keys($chapters));
-            echo "ERROR: Chapter $chapter does not exist. Available chapters: $availableChapters\n";
+            $chapterKeys = array_keys($chapters);
+            $availableChapters = implode(', ', $chapterKeys);
+            $chapterLabel = count($chapterKeys) === 1 ? 'chapter' : 'chapters';
+            echo "ERROR: Chapter $chapter does not exist. Available $chapterLabel: $availableChapters\n";
             modLog("ERROR for $bookURI: Chapter $chapter does not exist. Available: $availableChapters");
             return;
         }
 
         for ($vNum = $verse; $vNum < $verse + $count; $vNum++) {
             if (!isset($chapters[$chapter][$vNum])) {
-                $maxVerse = max(array_keys($chapters[$chapter]));
-                echo "ERROR: Verse $vNum does not exist in chapter $chapter. Max verse: $maxVerse\n";
-                modLog("ERROR for $bookURI: Verse $vNum does not exist in chapter $chapter. Max: $maxVerse");
+                $verseKeys = array_keys($chapters[$chapter]);
+                $minVerse = min($verseKeys);
+                $maxVerse = max($verseKeys);
+                echo "ERROR: Verse $vNum does not exist in chapter $chapter. Available verses: $minVerse-$maxVerse\n";
+                modLog("ERROR for $bookURI: Verse $vNum does not exist in chapter $chapter. Available: $minVerse-$maxVerse");
                 return;
             }
             echo "$vNum " . $chapters[$chapter][$vNum] . "\n";
