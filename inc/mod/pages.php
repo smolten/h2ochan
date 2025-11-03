@@ -3100,15 +3100,16 @@ function mod_rebuild_fast(Context $ctx) {
         error($config['error']['noaccess']);
 
     // Construct POST array like the normal rebuild form
+    // FAST mode rebuilds cache/js/index/threads/themes AND user boards (NOT Bible boards)
     $_POST = [
         'rebuild' => true,
-	'fast' => true,       // but FAST
+	'fast' => true,       // but FAST - redirects back to dashboard
         'rebuild_cache' => true,
         'rebuild_themes' => true,
         'rebuild_javascript' => true,
         'rebuild_index' => true,
         'rebuild_thread' => true,
-        'boards_all' => true,
+        'boards_user' => true,  // Only user boards, NOT bible boards
         'token' => make_secure_link_token('rebuild')
     ];
 
@@ -3117,7 +3118,32 @@ function mod_rebuild_fast(Context $ctx) {
     exit;
 }
 
+function mod_rebuild_all(Context $ctx) {
+    $config = $ctx->get('config');
+    $cache = $ctx->get(CacheDriver::class);
 
+    if (!hasPermission($config['mod']['rebuild']))
+        error($config['error']['noaccess']);
+
+    // Construct POST array like the normal rebuild form
+    // ALL mode rebuilds EVERYTHING including Bible boards
+    $_POST = [
+        'rebuild' => true,
+	'fast' => true,       // Redirect back to dashboard when done
+        'rebuild_cache' => true,
+        'rebuild_themes' => true,
+        'rebuild_javascript' => true,
+        'rebuild_index' => true,
+        'rebuild_thread' => true,
+        'boards_user' => true,   // User boards
+        'boards_bible' => true,  // AND Bible boards
+        'token' => make_secure_link_token('rebuild')
+    ];
+
+    // Call the normal rebuild function
+    mod_rebuild($ctx);
+    exit;
+}
 
 function mod_rebuild(Context $ctx) {
 	global $twig, $mod;
@@ -3160,7 +3186,16 @@ function mod_rebuild(Context $ctx) {
 		}
 
 		foreach ($boards as $board) {
-			if (!(isset($_POST['boards_all']) || isset($_POST['board_' . $board['uri']])))
+			// Check if this board should be rebuilt
+			// Either individual board checkbox is set, OR the group checkbox (boards_user/boards_bible) is set
+			$board_conf = loadBoardConfig($board['uri']);
+			$is_bible = isset($board_conf['isbible']) && $board_conf['isbible'];
+
+			$should_rebuild = isset($_POST['board_' . $board['uri']]) ||
+			                  ($is_bible && isset($_POST['boards_bible'])) ||
+			                  (!$is_bible && isset($_POST['boards_user']));
+
+			if (!$should_rebuild)
 				continue;
 
 			openBoard($board['uri']);
@@ -3202,11 +3237,26 @@ function mod_rebuild(Context $ctx) {
 		return;
 	}
 
+	// Separate boards into user boards and bible boards
+	$all_boards = listBoards(false);
+	$user_boards = [];
+	$bible_boards = [];
+
+	foreach ($all_boards as $board) {
+		$board_conf = loadBoardConfig($board['uri']);
+		if (isset($board_conf['isbible']) && $board_conf['isbible']) {
+			$bible_boards[] = $board;
+		} else {
+			$user_boards[] = $board;
+		}
+	}
+
 	mod_page(
 		_('Rebuild'),
 		$config['file_mod_rebuild'],
 		[
-			'boards' => listBoards(),
+			'user_boards' => $user_boards,
+			'bible_boards' => $bible_boards,
 			'token' => make_secure_link_token('rebuild')
 		],
 		$mod

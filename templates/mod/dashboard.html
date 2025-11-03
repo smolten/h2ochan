@@ -151,7 +151,8 @@ uri) }}</a>
 		{% if mod|hasPermission(config.mod.rebuild) %}
 			<li>
 				<a href="?/rebuild">{% trans 'Rebuild' %}</a>
-				<a href="?/rebuild-fast"> (FAST)</a>
+				<a href="?/rebuild-fast">(Fast)</a>
+				<a href="?/rebuild-all">(All)</a>
 			</li>
 		{% endif %}
 		{% if mod|hasPermission(config.mod.edit_config) %}
