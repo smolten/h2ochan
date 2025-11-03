@@ -72,7 +72,8 @@ $pages = [
 	'/unlock_all' => 'secure_POST unlock_all',
 
 	'/rebuild'				=> 'secure_POST rebuild',	// rebuild static files
-	'/rebuild-fast'				=> 'secure_POST rebuild_fast',  // rebuild without confirmation
+	'/rebuild-fast'				=> 'secure_POST rebuild_fast',  // rebuild user boards only
+	'/rebuild-all'				=> 'secure_POST rebuild_all',   // rebuild everything including bible boards
 	'/reports'				=> 'reports',			// report queue
 	'/reports/(\d+)/dismiss(&all|&post)?'		=> 'secure report_dismiss',	// dismiss a report
 
