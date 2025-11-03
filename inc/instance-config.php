@@ -8,7 +8,7 @@
  *  You can copy values from config.php (defaults) and paste them here.
  */
 	// site icon
-	$config['url_favicon'] = '/templates/themes/index/h2ofavicon.png';
+	$config['url_favicon'] = '/favicon.png';
 	// show boardlist at top
 	$config['boards'] = array(
 		array('home' => 'http://h2ochan.org'),
