@@ -193,6 +193,7 @@ function mod_dashboard(Context $ctx) {
 	}
 
 	$args['logout_token'] = make_secure_link_token('logout');
+	$args['token_all_boards_status'] = make_secure_link_token('all-boards-status');
 
 	mod_page(_('Dashboard'), $config['file_mod_dashboard'], $args, $mod);
 }
@@ -778,15 +779,25 @@ function mod_new_board_bible(Context $ctx) {
 	$bible_path_full = $config['bible']['path_full'];
 	$bible_path_index = $config['bible']['path_index'];
 	$bible_index = [];
+
+	// Get all existing board URIs
+	$existing_boards = [];
+	$query = query("SELECT `uri` FROM ``boards``") or error(db_error());
+	while ($row = $query->fetch(PDO::FETCH_ASSOC)) {
+		$existing_boards[] = $row['uri'];
+	}
+
 	if (file_exists($bible_path_index)) // Convert <title> elements into an array of arrays with osisID/short/text
 	{
 	    $xml = simplexml_load_file($bible_path_index);
 	    foreach ($xml->title as $t)
 	    {
+		$osisID = (string)$t['osisID'];
 		$bible_index[] = [
-			'osisID' => (string)$t['osisID'],
+			'osisID' => $osisID,
 			'short' => (string)$t['short'],
-			'text' => (string)$t
+			'text' => (string)$t,
+			'exists' => in_array($osisID, $existing_boards)
 		];
 	    }
 	}
@@ -865,6 +876,55 @@ function mod_board_status(Context $ctx)
     exit;
 }
 
+function mod_all_boards_status(Context $ctx)
+{
+    global $mod;
+    $config = $ctx->get('config');
+
+    header('Content-Type: application/json; charset=utf-8');
+
+    // Get all boards (regular and bible) - pass false to get full board objects
+    $boards = listBoards(false);
+    $result = [];
+
+    foreach ($boards as $board) {
+        $boardURI = preg_replace('/[^a-zA-Z0-9]/', '', $board['uri']);
+
+        try {
+            // Count threads
+            $query = query(sprintf(
+                "SELECT COUNT(*) AS c FROM ``posts_%s`` WHERE `thread` IS NULL",
+                $boardURI
+            ));
+            $row = $query->fetch(PDO::FETCH_ASSOC);
+            $threads = $row ? (int)$row['c'] : 0;
+
+            // Count replies
+            $query = query(sprintf(
+                "SELECT COUNT(*) AS c FROM ``posts_%s`` WHERE `thread` IS NOT NULL",
+                $boardURI
+            ));
+            $row = $query->fetch(PDO::FETCH_ASSOC);
+            $replies = $row ? (int)$row['c'] : 0;
+
+            $total = $threads + $replies;
+
+            $result[$board['uri']] = [
+                'threads' => $threads,
+                'replies' => $replies,
+                'total' => $total
+            ];
+        } catch (Exception $e) {
+            $result[$board['uri']] = [
+                'error' => 'Board not found or error: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    echo json_encode($result);
+    exit;
+}
+
 function mod_bible_post_book(Context $ctx) {
   global $mod, $board;
   mod_bible_post_threads($ctx, false);
@@ -910,7 +970,16 @@ function mod_bible_post_threads(Context $ctx, bool $log=true) {
 
     $errors = [];  // Array to collect DB errors
 
-    for ($chapter = 1; $chapter <= count($chapters); $chapter++) {
+    // Use array_keys to get actual chapter numbers (handles books starting at chapter 6 or 10)
+    $chapterNumbers = array_keys($chapters);
+    sort($chapterNumbers); // Sort in ascending order
+
+    foreach ($chapterNumbers as $chapter) {
+        // Skip if this chapter doesn't exist in the array
+        if (!isset($chapters[$chapter]) || !is_array($chapters[$chapter])) {
+            continue;
+        }
+
         $verses = $chapters[$chapter];           // array of verses for this chapter
         if (!isset($verses[1])) {       // error if Verse 1 not present
             $errors[] = [
@@ -982,9 +1051,41 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
 
         $errors = [];  // Array to collate all DB errors
 
+    // Build mapping of chapter numbers to thread IDs
+    // This handles books that don't start at chapter 1 (EpJer starts at 6, EsthGr at 10)
+    $chapterToThreadId = [];
+    $query = query(sprintf(
+        "SELECT `id`, `time` FROM ``posts_%s`` WHERE `thread` IS NULL ORDER BY `time` DESC",
+        $bookURI
+    ));
+    while ($row = $query->fetch(PDO::FETCH_ASSOC)) {
+        $chapterNum = 1000 - (int)$row['time'];  // Reverse the faketime calculation
+        $chapterToThreadId[$chapterNum] = (int)$row['id'];
+    }
+
     // Iterate chapters in reverse if needed (latest chapters first)
-    for ($chapter = count($chapters); $chapter >= 1; $chapter--) {
+    // Use array_keys to get actual chapter numbers (handles books starting at chapter 6 or 10)
+    $chapterNumbers = array_keys($chapters);
+    rsort($chapterNumbers); // Sort in descending order
+
+    foreach ($chapterNumbers as $chapter) {
         $verses = $chapters[$chapter];
+
+        // Skip if verses is not an array (shouldn't happen, but safety check)
+        if (!is_array($verses) || empty($verses)) {
+            continue;
+        }
+
+        // Get the actual thread ID for this chapter
+        if (!isset($chapterToThreadId[$chapter])) {
+            $errors[] = [
+                'chapter' => $chapter,
+                'verse' => 'N/A',
+                'message' => "Thread not found for chapter $chapter"
+            ];
+            continue;
+        }
+        $threadId = $chapterToThreadId[$chapter];
 
         // Skip Verse 1 because it's already the thread
         for ($verse = 2; $verse <= count($verses); $verse++) {
@@ -1006,7 +1107,7 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
                      NULL, 0, NULL, SUBSTRING(MD5(RAND()),1,12), :ip, 0, 0, 0, 0, NULL, :slug)
                 ");
 
-                $query->bindValue(':thread', $chapter);
+                $query->bindValue(':thread', $threadId);
                 $query->bindValue(':body', $body);
                 $query->bindValue(':body_nomarkup', $body_nomarkup);
                 $query->bindValue(':faketime', 1000-$chapter);
@@ -1059,16 +1160,22 @@ function mod_bible_parse_test(Context $ctx) {
             throw new TypeError('parseBibleBookText did not return an array');
         }
 
-        if ($chapter > count($chapters)) {
-            echo "ERROR: Chapter $chapter > " . count($chapters) . "\n";
-            modLog("ERROR for $bookURI: Chapter $chapter > " . count($chapters));
+        if (!isset($chapters[$chapter])) {
+            $chapterKeys = array_keys($chapters);
+            $availableChapters = implode(', ', $chapterKeys);
+            $chapterLabel = count($chapterKeys) === 1 ? 'chapter' : 'chapters';
+            echo "ERROR: Chapter $chapter does not exist. Available $chapterLabel: $availableChapters\n";
+            modLog("ERROR for $bookURI: Chapter $chapter does not exist. Available: $availableChapters");
             return;
         }
 
         for ($vNum = $verse; $vNum < $verse + $count; $vNum++) {
             if (!isset($chapters[$chapter][$vNum])) {
-                echo "ERROR: Verse $vNum > " . count($chapters[$chapter]) . "\n";
-                modLog("ERROR for $bookURI: Verse $vNum > " . count($chapters[$chapter]));
+                $verseKeys = array_keys($chapters[$chapter]);
+                $minVerse = min($verseKeys);
+                $maxVerse = max($verseKeys);
+                echo "ERROR: Verse $vNum does not exist in chapter $chapter. Available verses: $minVerse-$maxVerse\n";
+                modLog("ERROR for $bookURI: Verse $vNum does not exist in chapter $chapter. Available: $minVerse-$maxVerse");
                 return;
             }
             echo "$vNum " . $chapters[$chapter][$vNum] . "\n";
@@ -1081,8 +1188,9 @@ function mod_bible_parse_test(Context $ctx) {
     }
 }
 
-// Genesis-only. Mileage may vary.
-// Certainly breaks on Psalms <lg> and <l> tags.
+// Parse Bible book text from OSIS XML
+// Handles both <p> tags (most books) and <lg>/<l> tags (Psalms)
+// Handles books that start at non-1 chapters (e.g., EsthGr starts at chapter 10)
 function parseBibleBookText(string $bookURI, string $biblePath): array {
     if (!file_exists($biblePath)) throw new Exception("Bible XML not found at $biblePath");
 
@@ -1106,13 +1214,22 @@ function parseBibleBookText(string $bookURI, string $biblePath): array {
 
     $chapters = [];
 
-    foreach ($xpath->query('.//p', $bookNode) as $p) {
+    // Query for both <p> and <lg> (line group) and <l> (line) tags
+    // Psalms use <lg>/<l> structure, most others use <p>
+    $containers = $xpath->query('.//p | .//lg | .//l', $bookNode);
+
+    foreach ($containers as $container) {
         $currentChapter = null;
         $currentVerse = null;
         $currentText = '';
         $collecting = false;
 
-        foreach ($p->childNodes as $node) {
+        // Skip <p type="x-ms"> tags (these are titles/headers in Psalms)
+        if ($container->nodeName === 'p' && $container->getAttribute('type') === 'x-ms') {
+            continue;
+        }
+
+        foreach ($container->childNodes as $node) {
             if ($node->nodeType === XML_ELEMENT_NODE) {
                 $tag = $node->nodeName;
 
@@ -1154,9 +1271,14 @@ function parseBibleBookText(string $bookURI, string $biblePath): array {
                         }
                         break;
 
+                    case 'l':
+                    case 'p':
+                        // Line and paragraph tags - just containers, process their children
+                        break;
+
                     default:
-                        //throw new Exception("Unknown tag <$tag> encountered in $bookURI parsing");
-                        echo "Unknown tag <$tag> encountered in $bookURI parsing\n\n";
+                        // Silently ignore unknown tags instead of echoing
+                        break;
                 }
 
             } elseif ($node->nodeType === XML_TEXT_NODE && $collecting) {
@@ -2978,15 +3100,16 @@ function mod_rebuild_fast(Context $ctx) {
         error($config['error']['noaccess']);
 
     // Construct POST array like the normal rebuild form
+    // FAST mode rebuilds cache/js/index/threads/themes AND user boards (NOT Bible boards)
     $_POST = [
         'rebuild' => true,
-	'fast' => true,       // but FAST
+	'fast' => true,       // but FAST - redirects back to dashboard
         'rebuild_cache' => true,
         'rebuild_themes' => true,
         'rebuild_javascript' => true,
         'rebuild_index' => true,
         'rebuild_thread' => true,
-        'boards_all' => true,
+        'boards_user' => true,  // Only user boards, NOT bible boards
         'token' => make_secure_link_token('rebuild')
     ];
 
@@ -2995,7 +3118,32 @@ function mod_rebuild_fast(Context $ctx) {
     exit;
 }
 
+function mod_rebuild_all(Context $ctx) {
+    $config = $ctx->get('config');
+    $cache = $ctx->get(CacheDriver::class);
 
+    if (!hasPermission($config['mod']['rebuild']))
+        error($config['error']['noaccess']);
+
+    // Construct POST array like the normal rebuild form
+    // ALL mode rebuilds EVERYTHING including Bible boards
+    $_POST = [
+        'rebuild' => true,
+	'fast' => true,       // Redirect back to dashboard when done
+        'rebuild_cache' => true,
+        'rebuild_themes' => true,
+        'rebuild_javascript' => true,
+        'rebuild_index' => true,
+        'rebuild_thread' => true,
+        'boards_user' => true,   // User boards
+        'boards_bible' => true,  // AND Bible boards
+        'token' => make_secure_link_token('rebuild')
+    ];
+
+    // Call the normal rebuild function
+    mod_rebuild($ctx);
+    exit;
+}
 
 function mod_rebuild(Context $ctx) {
 	global $twig, $mod;
@@ -3038,7 +3186,16 @@ function mod_rebuild(Context $ctx) {
 		}
 
 		foreach ($boards as $board) {
-			if (!(isset($_POST['boards_all']) || isset($_POST['board_' . $board['uri']])))
+			// Check if this board should be rebuilt
+			// Either individual board checkbox is set, OR the group checkbox (boards_user/boards_bible) is set
+			$board_conf = loadBoardConfig($board['uri']);
+			$is_bible = isset($board_conf['isbible']) && $board_conf['isbible'];
+
+			$should_rebuild = isset($_POST['board_' . $board['uri']]) ||
+			                  ($is_bible && isset($_POST['boards_bible'])) ||
+			                  (!$is_bible && isset($_POST['boards_user']));
+
+			if (!$should_rebuild)
 				continue;
 
 			openBoard($board['uri']);
@@ -3080,11 +3237,26 @@ function mod_rebuild(Context $ctx) {
 		return;
 	}
 
+	// Separate boards into user boards and bible boards
+	$all_boards = listBoards(false);
+	$user_boards = [];
+	$bible_boards = [];
+
+	foreach ($all_boards as $board) {
+		$board_conf = loadBoardConfig($board['uri']);
+		if (isset($board_conf['isbible']) && $board_conf['isbible']) {
+			$bible_boards[] = $board;
+		} else {
+			$user_boards[] = $board;
+		}
+	}
+
 	mod_page(
 		_('Rebuild'),
 		$config['file_mod_rebuild'],
 		[
-			'boards' => listBoards(),
+			'user_boards' => $user_boards,
+			'bible_boards' => $bible_boards,
 			'token' => make_secure_link_token('rebuild')
 		],
 		$mod

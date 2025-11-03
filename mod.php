@@ -62,6 +62,7 @@ $pages = [
 	'/bible-parse-test'			=> 'secure_POST bible_parse_test',
 	'/edit_bible/(\%b)'			=> 'secure_POST edit_board_bible',
 	'/board-status'                         => 'secure_POST board_status',
+	'/all-boards-status'                    => 'secure_POST all_boards_status',
 	'/bible-post-threads'                   => 'secure_POST bible_post_threads',
 	'/bible-post-replies'			=> 'secure_POST bible_post_replies',
 	'/bible-post-book'			=> 'secure_POST bible_post_book',
@@ -71,7 +72,8 @@ $pages = [
 	'/unlock_all' => 'secure_POST unlock_all',
 
 	'/rebuild'				=> 'secure_POST rebuild',	// rebuild static files
-	'/rebuild-fast'				=> 'secure_POST rebuild_fast',  // rebuild without confirmation
+	'/rebuild-fast'				=> 'secure_POST rebuild_fast',  // rebuild user boards only
+	'/rebuild-all'				=> 'secure_POST rebuild_all',   // rebuild everything including bible boards
 	'/reports'				=> 'reports',			// report queue
 	'/reports/(\d+)/dismiss(&all|&post)?'		=> 'secure report_dismiss',	// dismiss a report
 
