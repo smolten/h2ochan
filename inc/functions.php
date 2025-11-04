@@ -2321,11 +2321,11 @@ function markup(&$body, $track_cites = false, $op = false) {
 		}
 	}
 
-	// Bible reference linking (e.g., "Genesis 1:4" or "Gen 5:4" or "1 John 2:3")
+	// Bible reference linking (e.g., "Genesis 1:4" or "Matt. 4:10" or "1 John 2:3")
 	if (isset($config['bible']['path_index']) && file_exists($config['bible']['path_index'])) {
 		$bibleLookup = buildBibleBookLookup($config['bible']['path_index']);
 
-		if (!empty($bibleLookup) && preg_match_all('/(^|[\s(])([1-3]?[A-Za-z]+(?:\s+[A-Za-z]+(?:\s+[A-Za-z]+)?)?)\s+(\d+):(\d+)((?=[\s,.)?!])|$)/um', $body, $bibleRefs, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
+		if (!empty($bibleLookup) && preg_match_all('/(^|[\s(])([1-3]?[A-Za-z]+(?:\s+[A-Za-z]+(?:\s+[A-Za-z]+)?)?)\.?\s+(\d+):(\d+)((?=[\s,.)?!])|$)/um', $body, $bibleRefs, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
 			$skip_chars = 0;
 			$body_tmp = $body;
 
@@ -2336,9 +2336,9 @@ function markup(&$body, $track_cites = false, $op = false) {
 				$verse = $matches[4][0];
 				$suffix = $matches[5][0];
 
-				// Normalize book name and look up osisID
-				$bookNameNormalized = strtolower(preg_replace('/\s+/', ' ', $bookName));
-				$bookNameNoSpace = strtolower(str_replace(' ', '', $bookName));
+				// Normalize book name and look up osisID (strip periods and normalize spaces)
+				$bookNameNormalized = strtolower(preg_replace('/\s+/', ' ', rtrim($bookName, '.')));
+				$bookNameNoSpace = strtolower(str_replace([' ', '.'], '', $bookName));
 
 				$osisID = null;
 				if (isset($bibleLookup[$bookNameNormalized])) {
