@@ -771,6 +771,67 @@ function sortBoardsByBibleOrder($boards, $just_uri, $bible_path_index) {
     return $boards;
 }
 
+/**
+ * Get previous and next Bible book navigation info for a given board URI
+ *
+ * @param string $current_uri The current board URI (e.g., "Exod")
+ * @param string $bible_path_index Path to the Bible index XML file
+ * @return array Associative array with keys: linkPrev, linkNext, titlePrev, titleNext
+ */
+function getBibleBookNavigation($current_uri, $bible_path_index) {
+    $result = array(
+        'linkPrev' => null,
+        'linkNext' => null,
+        'titlePrev' => null,
+        'titleNext' => null
+    );
+
+    if (!file_exists($bible_path_index)) {
+        return $result;
+    }
+
+    $xml = simplexml_load_file($bible_path_index);
+    if (!$xml) {
+        return $result;
+    }
+
+    // Build array of all books in order
+    $books = array();
+    foreach ($xml->title as $title) {
+        $books[] = array(
+            'uri' => (string)$title['osisID'],
+            'short' => (string)$title['short']
+        );
+    }
+
+    // Find current book's position
+    $currentIndex = -1;
+    for ($i = 0; $i < count($books); $i++) {
+        if ($books[$i]['uri'] === $current_uri) {
+            $currentIndex = $i;
+            break;
+        }
+    }
+
+    if ($currentIndex === -1) {
+        return $result; // Current board not found in Bible index
+    }
+
+    // Set previous book if not first
+    if ($currentIndex > 0) {
+        $result['linkPrev'] = '/' . $books[$currentIndex - 1]['uri'] . '/';
+        $result['titlePrev'] = $books[$currentIndex - 1]['short'];
+    }
+
+    // Set next book if not last
+    if ($currentIndex < count($books) - 1) {
+        $result['linkNext'] = '/' . $books[$currentIndex + 1]['uri'] . '/';
+        $result['titleNext'] = $books[$currentIndex + 1]['short'];
+    }
+
+    return $result;
+}
+
 
 /**
  * Return board-specific overrides only.
@@ -1753,6 +1814,15 @@ function buildIndex($global_api = "yes") {
 			$content['btn'] = getPageButtons($content['pages']);
 			if ($mod) {
 				$content['pm'] = create_pm_header();
+			}
+
+			// Add Bible book navigation if this is a Bible board
+			if (isset($config['isbible']) && $config['isbible'] && isset($config['bible']['path_index'])) {
+				$bibleNav = getBibleBookNavigation($board['uri'], $config['bible']['path_index']);
+				$content['board']['linkPrev'] = $bibleNav['linkPrev'];
+				$content['board']['linkNext'] = $bibleNav['linkNext'];
+				$content['board']['titlePrev'] = $bibleNav['titlePrev'];
+				$content['board']['titleNext'] = $bibleNav['titleNext'];
 			}
 
 			file_write($filename, Element($config['file_board_index'], $content));
