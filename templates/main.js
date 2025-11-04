@@ -384,6 +384,22 @@ function citeVerse(chapter, verse, event) {
 	let externalUrl = window.location.origin + '/' + boardUri + '/' + chapter + '/' + verse;
 	let internalRef = boardUri + ' ' + chapter + ':' + verse;
 
+	// Find the parent post container
+	let postContainer = null;
+	if (event && event.target) {
+		postContainer = event.target.closest('.post, .reply');
+	}
+
+	if (!postContainer) {
+		return false; // Can't find post container
+	}
+
+	// Make post container position:relative if it isn't already
+	let originalPosition = window.getComputedStyle(postContainer).position;
+	if (originalPosition === 'static') {
+		postContainer.style.position = 'relative';
+	}
+
 	// Create popup
 	let popup = document.createElement('div');
 	popup.id = 'verse-cite-popup';
@@ -405,16 +421,8 @@ function citeVerse(chapter, verse, event) {
 		</div>
 	`;
 
-	// Position popup near the clicked element
-	if (event && event.target) {
-		let rect = event.target.getBoundingClientRect();
-		popup.style.position = 'absolute';
-		popup.style.left = rect.left + 'px';
-		popup.style.top = (rect.bottom + window.scrollY + 5) + 'px';
-		popup.style.zIndex = '10000';
-	}
-
-	document.body.appendChild(popup);
+	// Insert popup inside the post container
+	postContainer.appendChild(popup);
 
 	// Close on outside click
 	setTimeout(() => {
