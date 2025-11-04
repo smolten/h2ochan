@@ -21,11 +21,13 @@ CREATE TABLE IF NOT EXISTS ``posts_{{ board }}`` (
    `sage` int(1) NOT NULL,
    `embed` text,
    `slug` varchar(256) DEFAULT NULL,
+   `verse` int(11) DEFAULT NULL,
    UNIQUE KEY `id` (`id`),
    KEY `thread_id` (`thread`,`id`),
    KEY `filehash` (`filehash`(40)),
    KEY `time` (`time`),
    KEY `ip` (`ip`),
-   KEY `list_threads` (`thread`, `sticky`, `bump`)
+   KEY `list_threads` (`thread`, `sticky`, `bump`),
+   KEY `verse` (`verse`)
  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;
  

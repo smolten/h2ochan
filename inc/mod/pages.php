@@ -990,8 +990,8 @@ function mod_bible_post_threads(Context $ctx, bool $log=true) {
             continue; // skip to next chapter
         }
 
-        $prepend = '<a class="post_no" onclick="citeReply(' . $chapter . ')" ' .
-            'href="/' . $bookURI . '/res/' . $chapter . '.html#q1" ' .
+        $prepend = '<a class="post_no chapter" id="v1" onclick="citeVerse(' . $chapter . ', 1)" ' .
+            'href="/' . $bookURI . '/res/' . $chapter . '.html#v1" ' .
             'style="margin-right:0.3em; font-size: 2em;float: left;font-family: \"Garamond\", serif;">' . $chapter . '</a>';
         $body = $prepend .' '. $verses[1];                      // Chapter 1 Verse 1 (with BIG chapter num)
         $body_nomarkup = strip_tags($body);      // remove HTML tags
@@ -1001,16 +1001,17 @@ function mod_bible_post_threads(Context $ctx, bool $log=true) {
         try {
             $query = prepare('INSERT INTO ``posts_' . $bookURI . '``
                 (thread, subject, email, name, trip, capcode, body, body_nomarkup, time, bump,
-                    files, num_files, filehash, password, ip, sticky, locked, cycle, sage, embed, slug)
+                    files, num_files, filehash, password, ip, sticky, locked, cycle, sage, embed, slug, verse)
                 VALUES
                 (NULL, NULL, NULL, NULL, NULL, NULL, :body, :body_nomarkup, :faketime, :faketime,
-                    NULL, 0, NULL, SUBSTRING(MD5(RAND()),1,12), :ip, 0, 0, 0, 0, NULL, :slug)');
+                    NULL, 0, NULL, SUBSTRING(MD5(RAND()),1,12), :ip, 0, 0, 0, 0, NULL, :slug, :verse)');
 
             $query->bindValue(':body', $body);
             $query->bindValue(':body_nomarkup', $body_nomarkup);
             $query->bindValue(':faketime', 1000-$chapter);
             $query->bindValue(':ip', '127.0.0.1');
             $query->bindValue(':slug', $slug);
+            $query->bindValue(':verse', 1);
 
             $query->execute();
 
@@ -1089,8 +1090,8 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
 
         // Skip Verse 1 because it's already the thread
         for ($verse = 2; $verse <= count($verses); $verse++) {
-            $prepend = '<a class="post_no" onclick="citeReply(1)" ' .
-                'href="/' . $bookURI . '/res/' . $chapter . '.html#q' . $verse . '" ' .
+            $prepend = '<a class="post_no verse" id="v' . $verse . '" onclick="citeVerse(' . $chapter . ', ' . $verse . ')" ' .
+                'href="/' . $bookURI . '/res/' . $chapter . '.html#v' . $verse . '" ' .
                 'style="margin-right: 0.3em; transform: translateY(-0.15em); float: left;">'.$verse.'</a>';
             $body = $prepend .' '. $verses[$verse];
             $body_nomarkup = preg_replace('/<[^>]+>/', '', $body);          // strip HTML
@@ -1101,10 +1102,10 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
                 $query = prepare("
                     INSERT INTO ``posts_{$bookURI}``
                     (thread, subject, email, name, trip, capcode, body, body_nomarkup, time, bump,
-                     files, num_files, filehash, password, ip, sticky, locked, cycle, sage, embed, slug)
+                     files, num_files, filehash, password, ip, sticky, locked, cycle, sage, embed, slug, verse)
                     VALUES
                     (:thread, NULL, NULL, NULL, NULL, NULL, :body, :body_nomarkup, :faketime, :faketime,
-                     NULL, 0, NULL, SUBSTRING(MD5(RAND()),1,12), :ip, 0, 0, 0, 0, NULL, :slug)
+                     NULL, 0, NULL, SUBSTRING(MD5(RAND()),1,12), :ip, 0, 0, 0, 0, NULL, :slug, :verse)
                 ");
 
                 $query->bindValue(':thread', $threadId);
@@ -1113,6 +1114,7 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
                 $query->bindValue(':faketime', 1000-$chapter);
                 $query->bindValue(':ip', '127.0.0.1');
                 $query->bindValue(':slug', $slug);
+                $query->bindValue(':verse', $verse);
 
                 $query->execute();
 
