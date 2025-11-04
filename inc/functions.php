@@ -2348,9 +2348,9 @@ function markup(&$body, $track_cites = false, $op = false) {
 				}
 
 				if ($osisID) {
-					// Create link to Bible verse
-					$link = $config['root'] . $osisID . '/res/' . $chapter . '.html#v' . $verse;
-					$replacement = '<a href="' . $link . '" class="bible-ref">' . htmlspecialchars($bookName . ' ' . $chapter . ':' . $verse) . '</a>';
+					// Create link to Bible verse using short URL format (redirects via .htaccess)
+					$link = $config['root'] . $osisID . '/' . $chapter . '/' . $verse;
+					$replacement = '<a href="' . $link . '">' . htmlspecialchars($bookName . ' ' . $chapter . ':' . $verse) . '</a>';
 
 					// Calculate position (preg_match_all is not multibyte-safe)
 					$pos = mb_strlen(substr($body_tmp, 0, $matches[0][1]));
