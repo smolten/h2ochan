@@ -437,6 +437,25 @@ function copyToClipboard(elementId) {
 	}
 }
 
+function scrollToVerseAnchor() {
+	// Handle verse anchors (#v1, #v2, etc.) in multi-column layouts
+	if (window.location.hash && window.location.hash.match(/^#v\d+$/)) {
+		let targetId = window.location.hash.substring(1); // Remove #
+		let target = document.getElementById(targetId);
+
+		if (target) {
+			// Use scrollIntoView with options for better multi-column support
+			setTimeout(() => {
+				target.scrollIntoView({
+					behavior: 'smooth',
+					block: 'nearest',
+					inline: 'center'
+				});
+			}, 100);
+		}
+	}
+}
+
 function rememberStuff() {
 	if (document.forms.post) {
 		if (document.forms.post.password) {
@@ -506,6 +525,12 @@ function init() {
 
 	if (window.location.hash.indexOf('q') != 1 && window.location.hash.substring(1))
 		highlightReply(window.location.hash.substring(1));
+
+	// Scroll to verse anchor for Bible boards
+	scrollToVerseAnchor();
+
+	// Also handle hash changes (clicking verse links on same page)
+	window.addEventListener('hashchange', scrollToVerseAnchor);
 }
 
 var RecaptchaOptions = {
