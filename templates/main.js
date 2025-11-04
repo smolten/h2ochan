@@ -361,7 +361,13 @@ function citeReply(id, with_link) {
 	return false;
 }
 
-function citeVerse(chapter, verse) {
+function citeVerse(chapter, verse, event) {
+	// Prevent default link behavior and stop propagation
+	if (event) {
+		event.preventDefault();
+		event.stopPropagation();
+	}
+
 	// Remove any existing popup
 	let existingPopup = document.getElementById('verse-cite-popup');
 	if (existingPopup) {
@@ -374,7 +380,7 @@ function citeVerse(chapter, verse) {
 		return false;
 	}
 
-	// Build URLs
+	// Build URLs - use SHORT format for external
 	let externalUrl = window.location.origin + '/' + boardUri + '/' + chapter + '/' + verse;
 	let internalRef = boardUri + ' ' + chapter + ':' + verse;
 
@@ -384,20 +390,29 @@ function citeVerse(chapter, verse) {
 	popup.className = 'verse-cite-popup';
 	popup.innerHTML = `
 		<div class="verse-cite-content">
-			<button class="verse-cite-close" onclick="document.getElementById('verse-cite-popup').remove();">&times;</button>
+			<button class="verse-cite-close" onclick="document.getElementById('verse-cite-popup').remove(); event.stopPropagation();">&times;</button>
 			<h3>Cite This Verse</h3>
 			<div class="verse-cite-option">
 				<label>External URL:</label>
-				<input type="text" readonly value="${externalUrl}" id="verse-url-external" onclick="this.select();" />
-				<button onclick="copyToClipboard('verse-url-external');">Copy</button>
+				<input type="text" readonly value="${externalUrl}" id="verse-url-external" onclick="this.select(); event.stopPropagation();" />
+				<button onclick="copyToClipboard('verse-url-external'); event.stopPropagation();">Copy</button>
 			</div>
 			<div class="verse-cite-option">
 				<label>Internal Reference:</label>
-				<input type="text" readonly value="${internalRef}" id="verse-url-internal" onclick="this.select();" />
-				<button onclick="copyToClipboard('verse-url-internal');">Copy</button>
+				<input type="text" readonly value="${internalRef}" id="verse-url-internal" onclick="this.select(); event.stopPropagation();" />
+				<button onclick="copyToClipboard('verse-url-internal'); event.stopPropagation();">Copy</button>
 			</div>
 		</div>
 	`;
+
+	// Position popup near the clicked element
+	if (event && event.target) {
+		let rect = event.target.getBoundingClientRect();
+		popup.style.position = 'absolute';
+		popup.style.left = rect.left + 'px';
+		popup.style.top = (rect.bottom + window.scrollY + 5) + 'px';
+		popup.style.zIndex = '10000';
+	}
 
 	document.body.appendChild(popup);
 
