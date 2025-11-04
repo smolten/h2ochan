@@ -990,7 +990,7 @@ function mod_bible_post_threads(Context $ctx, bool $log=true) {
             continue; // skip to next chapter
         }
 
-        $prepend = '<a class="post_no chapter" id="v1" onclick="citeVerse(' . $chapter . ', 1)" ' .
+        $prepend = '<a class="post_no chapter" id="v1" onclick="citeVerse(' . $chapter . ', 1, event)" ' .
             'href="/' . $bookURI . '/res/' . $chapter . '.html#v1">' . $chapter . '</a>';
         $body = $prepend .' '. $verses[1];                      // Chapter 1 Verse 1 (with BIG chapter num)
         $body_nomarkup = strip_tags($body);      // remove HTML tags
@@ -1089,7 +1089,7 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
 
         // Skip Verse 1 because it's already the thread
         for ($verse = 2; $verse <= count($verses); $verse++) {
-            $prepend = '<a class="post_no verse" id="v' . $verse . '" onclick="citeVerse(' . $chapter . ', ' . $verse . ')" ' .
+            $prepend = '<a class="post_no verse" id="v' . $verse . '" onclick="citeVerse(' . $chapter . ', ' . $verse . ', event)" ' .
                 'href="/' . $bookURI . '/res/' . $chapter . '.html#v' . $verse . '">'.$verse.'</a>';
             $body = $prepend .' '. $verses[$verse];
             $body_nomarkup = preg_replace('/<[^>]+>/', '', $body);          // strip HTML
