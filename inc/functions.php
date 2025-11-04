@@ -832,6 +832,52 @@ function getBibleBookNavigation($current_uri, $bible_path_index) {
     return $result;
 }
 
+/**
+ * Build a lookup table for Bible book names to osisID
+ * Supports: osisID (Gen, 1John), full names (Genesis, 1 John, 2 Thessalonians)
+ *
+ * @param string $bible_path_index Path to the Bible index XML file
+ * @return array Associative array mapping book names/abbreviations to osisID
+ */
+function buildBibleBookLookup($bible_path_index) {
+    static $lookup = null;
+
+    // Cache the lookup table
+    if ($lookup !== null) {
+        return $lookup;
+    }
+
+    $lookup = array();
+
+    if (!file_exists($bible_path_index)) {
+        return $lookup;
+    }
+
+    $xml = simplexml_load_file($bible_path_index);
+    if (!$xml) {
+        return $lookup;
+    }
+
+    foreach ($xml->title as $title) {
+        $osisID = (string)$title['osisID'];
+        $short = (string)$title['short'];
+
+        // Map osisID (Gen, Exod, 1John, 2Thess) - case insensitive
+        $lookup[strtolower($osisID)] = $osisID;
+
+        // Map short name (Genesis, Exodus, 1 John, 2 Thessalonians) - case insensitive
+        $lookup[strtolower($short)] = $osisID;
+
+        // Also map without spaces for numbered books (1john, 2thessalonians)
+        $shortNoSpace = str_replace(' ', '', $short);
+        if ($shortNoSpace !== $short) {
+            $lookup[strtolower($shortNoSpace)] = $osisID;
+        }
+    }
+
+    return $lookup;
+}
+
 
 /**
  * Return board-specific overrides only.
@@ -2271,6 +2317,47 @@ function markup(&$body, $track_cites = false, $op = false) {
 						'</a>';
 				$body = mb_substr_replace($body, $matches[1][0] . $replacement . $matches[4][0], $matches[0][1] + $skip_chars, mb_strlen($matches[0][0]));
 				$skip_chars += mb_strlen($matches[1][0] . $replacement . $matches[4][0]) - mb_strlen($matches[0][0]);
+			}
+		}
+	}
+
+	// Bible reference linking (e.g., "Genesis 1:4" or "Gen 5:4" or "1 John 2:3")
+	if (isset($config['bible']['path_index']) && file_exists($config['bible']['path_index'])) {
+		$bibleLookup = buildBibleBookLookup($config['bible']['path_index']);
+
+		if (!empty($bibleLookup) && preg_match_all('/(^|[\s(])([1-3]?[A-Za-z]+(?:\s+[A-Za-z]+(?:\s+[A-Za-z]+)?)?)\s+(\d+):(\d+)((?=[\s,.)?!])|$)/um', $body, $bibleRefs, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
+			$skip_chars = 0;
+			$body_tmp = $body;
+
+			foreach ($bibleRefs as $matches) {
+				$prefix = $matches[1][0];
+				$bookName = trim($matches[2][0]);
+				$chapter = $matches[3][0];
+				$verse = $matches[4][0];
+				$suffix = $matches[5][0];
+
+				// Normalize book name and look up osisID
+				$bookNameNormalized = strtolower(preg_replace('/\s+/', ' ', $bookName));
+				$bookNameNoSpace = strtolower(str_replace(' ', '', $bookName));
+
+				$osisID = null;
+				if (isset($bibleLookup[$bookNameNormalized])) {
+					$osisID = $bibleLookup[$bookNameNormalized];
+				} elseif (isset($bibleLookup[$bookNameNoSpace])) {
+					$osisID = $bibleLookup[$bookNameNoSpace];
+				}
+
+				if ($osisID) {
+					// Create link to Bible verse
+					$link = $config['root'] . $osisID . '/res/' . $chapter . '.html#v' . $verse;
+					$replacement = '<a href="' . $link . '" class="bible-ref">' . htmlspecialchars($bookName . ' ' . $chapter . ':' . $verse) . '</a>';
+
+					// Calculate position (preg_match_all is not multibyte-safe)
+					$pos = mb_strlen(substr($body_tmp, 0, $matches[0][1]));
+
+					$body = mb_substr_replace($body, $prefix . $replacement . $suffix, $pos + $skip_chars, mb_strlen($matches[0][0]));
+					$skip_chars += mb_strlen($prefix . $replacement . $suffix) - mb_strlen($matches[0][0]);
+				}
 			}
 		}
 	}

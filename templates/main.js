@@ -361,6 +361,82 @@ function citeReply(id, with_link) {
 	return false;
 }
 
+function citeVerse(chapter, verse) {
+	// Remove any existing popup
+	let existingPopup = document.getElementById('verse-cite-popup');
+	if (existingPopup) {
+		existingPopup.remove();
+	}
+
+	// Get board URI from the page
+	let boardUri = board_name || '';
+	if (!boardUri) {
+		return false;
+	}
+
+	// Build URLs
+	let externalUrl = window.location.origin + '/' + boardUri + '/' + chapter + '/' + verse;
+	let internalRef = boardUri + ' ' + chapter + ':' + verse;
+
+	// Create popup
+	let popup = document.createElement('div');
+	popup.id = 'verse-cite-popup';
+	popup.className = 'verse-cite-popup';
+	popup.innerHTML = `
+		<div class="verse-cite-content">
+			<button class="verse-cite-close" onclick="document.getElementById('verse-cite-popup').remove();">&times;</button>
+			<h3>Cite This Verse</h3>
+			<div class="verse-cite-option">
+				<label>External URL:</label>
+				<input type="text" readonly value="${externalUrl}" id="verse-url-external" onclick="this.select();" />
+				<button onclick="copyToClipboard('verse-url-external');">Copy</button>
+			</div>
+			<div class="verse-cite-option">
+				<label>Internal Reference:</label>
+				<input type="text" readonly value="${internalRef}" id="verse-url-internal" onclick="this.select();" />
+				<button onclick="copyToClipboard('verse-url-internal');">Copy</button>
+			</div>
+		</div>
+	`;
+
+	document.body.appendChild(popup);
+
+	// Close on outside click
+	setTimeout(() => {
+		document.addEventListener('click', function closePopup(e) {
+			if (!popup.contains(e.target) && !e.target.classList.contains('post_no')) {
+				popup.remove();
+				document.removeEventListener('click', closePopup);
+			}
+		});
+	}, 100);
+
+	return false;
+}
+
+function copyToClipboard(elementId) {
+	let input = document.getElementById(elementId);
+	if (input) {
+		input.select();
+		input.setSelectionRange(0, 99999); // For mobile
+
+		try {
+			document.execCommand('copy');
+			// Visual feedback
+			let button = input.nextElementSibling;
+			let originalText = button.textContent;
+			button.textContent = 'Copied!';
+			button.style.background = '#4CAF50';
+			setTimeout(() => {
+				button.textContent = originalText;
+				button.style.background = '';
+			}, 1500);
+		} catch (err) {
+			console.error('Failed to copy:', err);
+		}
+	}
+}
+
 function rememberStuff() {
 	if (document.forms.post) {
 		if (document.forms.post.password) {
