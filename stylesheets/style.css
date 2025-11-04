@@ -1255,10 +1255,17 @@ div.mix {
 a.post_no.chapter {
   font-weight: bold;
   cursor: pointer;
+  margin-right: 0.3em;
+  font-size: 2em;
+  float: left;
+  font-family: "Garamond", serif;
 }
 
 a.post_no.verse {
   cursor: pointer;
+  margin-right: 0.3em;
+  transform: translateY(-0.15em);
+  float: left;
 }
 
 a.bible-ref {
