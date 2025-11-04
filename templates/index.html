@@ -48,9 +48,10 @@
 					{{ board.subtitle|e }}
 				{% endif %}
 			{% endif %}
+                        {% if true %}<a style="float:left"><< Book to The Left</a>{% endif %}
+                        {% if true %}<a style="float:right">Book to The Right >></a>{% endif %}
 			{% if mod %}
-			<p>
-			<a href="?/">{% trans %}Return to dashboard{% endtrans %}</a></p>
+			<p><a href="?/">{% trans %}Return to dashboard{% endtrans %}</a></p>
 	    		<a href="?/unlock_all" onclick="return confirm('Unlock all boards?');">{% trans %}UNLOCK ALL{% endtrans %}</a>
 			 | 
 			<a href="?/lock_all" onclick="return confirm('Lock all boards?');">{% trans %}LOCK ALL{% endtrans %}</a>
