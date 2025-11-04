@@ -1282,8 +1282,6 @@ a.post_no.verse {
 
 .verse-cite-content {
   background: rgba(255, 255, 255, 0.98);
-  padding: 20px;
-  border-radius: 8px;
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
   border: 2px solid #34345C;
   width: 100%;
@@ -1296,17 +1294,12 @@ a.post_no.verse {
 
 .verse-cite-close {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 0;
+  right: 0;
   background: none;
   border: none;
-  font-size: 24px;
   cursor: pointer;
   color: #666;
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  line-height: 30px;
 }
 
 .verse-cite-close:hover {
@@ -1314,39 +1307,25 @@ a.post_no.verse {
 }
 
 .verse-cite-content h3 {
-  margin-top: 0;
-  margin-bottom: 15px;
   color: #333;
-}
-
-.verse-cite-option {
-  margin-bottom: 15px;
 }
 
 .verse-cite-option label {
   display: block;
   font-weight: bold;
-  margin-bottom: 5px;
   color: #555;
 }
 
 .verse-cite-option input {
-  width: calc(100% - 80px);
-  padding: 8px;
+  width: calc(100% - 50px);
   border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 14px;
-  margin-right: 5px;
 }
 
 .verse-cite-option button {
-  padding: 8px 15px;
   background: #34345C;
   color: white;
   border: none;
-  border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
   transition: background 0.3s;
 }
 
