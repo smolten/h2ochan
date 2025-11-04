@@ -1810,6 +1810,14 @@ function buildIndex($global_api = "yes") {
 				$pages = getPages();
 			}
 			$content['pages'] = $pages;
+
+			// Special case: EsthGr has chapters 11-16, so adjust page numbers
+			if ($board['uri'] === 'EsthGr') {
+				foreach ($content['pages'] as $key => $pageData) {
+					$content['pages'][$key]['num'] = $pageData['num'] + 10;
+				}
+			}
+
 			$content['pages'][$page-1]['selected'] = true;
 			$content['btn'] = getPageButtons($content['pages']);
 			if ($mod) {
