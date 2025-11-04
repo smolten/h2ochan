@@ -64,14 +64,14 @@
 	{{ config.ad.top }}
 
 	{% if not no_post_form %}
-	    {% if not config.board_locked %}
+	    {% if not config.board_locked and not config.isbible %}
 		{% include 'post_form.html' %}
 	    {% endif %}
 	{% else %}
 		{% include 'boardlist.html' %}
 	{% endif %}
 
-	{% if config.page_nav_top %}
+	{% if config.page_nav_top %} {% if config.catalog_link or pages|length > 1 %}
 		<div class="pages top">
                  {{ btn.prev }} {% for page in pages %}
                   [<a {% if page.selected %}class="selected"{% endif %}{% if not page.selected %}href="{{ page.link }}"{% endif %}>{{ page.num }}</a>]{% if loop.last %}{% endif %}
@@ -80,7 +80,7 @@
                           | <a href="{{ config.root }}{% if mod %}{{ config.file_mod }}?/{% endif %}{{ board.dir }}{{ config.catalog_link }}">{% trans %}Catalog{% endtrans %}</a>
                  {% endif %}
 		</div>
-	{% endif %}
+	{% endif %} {% endif %}
 
 
 	{% if config.global_message %}<hr /><div class="blotter">{{ config.global_message }}</div>{% endif %}
@@ -108,6 +108,7 @@
 	{% endif %}
 	</form>
 
+	{% if config.catalog_link or pages|length > 1 %}
 	<div class="pages">
                  {{ btn.prev }} {% for page in pages %}
                   [<a {% if page.selected %}class="selected"{% endif %}{% if not page.selected %}href="{{ page.link }}"{% endif %}>{{ page.num }}</a>]{% if loop.last %}
@@ -117,6 +118,7 @@
                           | <a href="{{ config.root }}{% if mod %}{{ config.file_mod }}?/{% endif %}{{ board.dir }}{{ config.catalog_link }}">{% trans %}Catalog{% endtrans %}</a>
                  {% endif %}
 	</div>
+	{% endif %}
 
 	{{ boardlist.bottom }}
 
