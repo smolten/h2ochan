@@ -2325,7 +2325,8 @@ function markup(&$body, $track_cites = false, $op = false) {
 	if (isset($config['bible']['path_index']) && file_exists($config['bible']['path_index'])) {
 		$bibleLookup = buildBibleBookLookup($config['bible']['path_index']);
 
-		if (!empty($bibleLookup) && preg_match_all('/(^|[\s(])([1-3]?[A-Za-z]+(?:\s+[A-Za-z]+(?:\s+[A-Za-z]+)?)?)\.?\s+(\d+):(\d+)((?=[\s,.)?!])|$)/um', $body, $bibleRefs, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
+		// Fixed regex: lookahead doesn't capture, so suffix handling is cleaner
+		if (!empty($bibleLookup) && preg_match_all('/(^|[\s(])([1-3]?[A-Za-z]+(?:\s+[A-Za-z]+(?:\s+[A-Za-z]+)?)?)\.?\s+(\d+):(\d+)(?=[\s,.)?!\r\n]|$)/um', $body, $bibleRefs, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
 			$skip_chars = 0;
 			$body_tmp = $body;
 
@@ -2334,7 +2335,6 @@ function markup(&$body, $track_cites = false, $op = false) {
 				$bookName = trim($matches[2][0]);
 				$chapter = $matches[3][0];
 				$verse = $matches[4][0];
-				$suffix = $matches[5][0];
 
 				// Normalize book name and look up osisID (strip periods and normalize spaces)
 				$bookNameNormalized = strtolower(preg_replace('/\s+/', ' ', rtrim($bookName, '.')));
@@ -2355,8 +2355,8 @@ function markup(&$body, $track_cites = false, $op = false) {
 					// Calculate position (preg_match_all is not multibyte-safe)
 					$pos = mb_strlen(substr($body_tmp, 0, $matches[0][1]));
 
-					$body = mb_substr_replace($body, $prefix . $replacement . $suffix, $pos + $skip_chars, mb_strlen($matches[0][0]));
-					$skip_chars += mb_strlen($prefix . $replacement . $suffix) - mb_strlen($matches[0][0]);
+					$body = mb_substr_replace($body, $prefix . $replacement, $pos + $skip_chars, mb_strlen($matches[0][0]));
+					$skip_chars += mb_strlen($prefix . $replacement) - mb_strlen($matches[0][0]);
 				}
 			}
 		}
