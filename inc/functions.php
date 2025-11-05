@@ -2382,8 +2382,9 @@ function markup(&$body, $track_cites = false, $op = false) {
 						continue; // Skip invalid verse
 					}
 
-					// Valid reference - create link using short URL format (redirects via .htaccess)
-					$link = $config['root'] . $osisID . '/' . $chapter . '/' . $verse;
+					// Valid reference - create absolute link (starting with /) for .htaccess redirect
+					// Use absolute path instead of $config['root'] to work from both normal and mod pages
+					$link = '/' . $osisID . '/' . $chapter . '/' . $verse;
 					$replacement = '<a href="' . $link . '">' . htmlspecialchars($bookName . ' ' . $chapter . ':' . $verse) . '</a>';
 
 					// Calculate position (preg_match_all is not multibyte-safe)
