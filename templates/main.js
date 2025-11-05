@@ -361,6 +361,124 @@ function citeReply(id, with_link) {
 	return false;
 }
 
+function citeVerse(chapter, verse, event) {
+	// Prevent default link behavior and stop propagation
+	if (event) {
+		event.preventDefault();
+		event.stopPropagation();
+	}
+
+	// Remove any existing popup
+	let existingPopup = document.getElementById('verse-cite-popup');
+	if (existingPopup) {
+		existingPopup.remove();
+	}
+
+	// Get board URI from the page
+	let boardUri = board_name || '';
+	if (!boardUri) {
+		return false;
+	}
+
+	// Build URLs - use SHORT format for external
+	let externalUrl = window.location.origin + '/' + boardUri + '/' + chapter + '/' + verse;
+	let internalRef = boardUri + ' ' + chapter + ':' + verse;
+
+	// Find the parent post container
+	let postContainer = null;
+	if (event && event.target) {
+		postContainer = event.target.closest('.post, .reply');
+	}
+
+	if (!postContainer) {
+		return false; // Can't find post container
+	}
+
+	// Make post container position:relative if it isn't already
+	let originalPosition = window.getComputedStyle(postContainer).position;
+	if (originalPosition === 'static') {
+		postContainer.style.position = 'relative';
+	}
+
+	// Create popup
+	let popup = document.createElement('div');
+	popup.id = 'verse-cite-popup';
+	popup.className = 'verse-cite-popup';
+	popup.innerHTML = `
+		<div class="verse-cite-content">
+			<button class="verse-cite-close" onclick="document.getElementById('verse-cite-popup').remove(); event.stopPropagation();">&times;</button>
+			<h3>Cite This Verse</h3>
+			<div class="verse-cite-option">
+				<label>External URL:</label>
+				<input type="text" readonly value="${externalUrl}" id="verse-url-external" onclick="this.select(); event.stopPropagation();" />
+				<button onclick="copyToClipboard('verse-url-external'); event.stopPropagation();">Copy</button>
+			</div>
+			<div class="verse-cite-option">
+				<label>Internal Reference:</label>
+				<input type="text" readonly value="${internalRef}" id="verse-url-internal" onclick="this.select(); event.stopPropagation();" />
+				<button onclick="copyToClipboard('verse-url-internal'); event.stopPropagation();">Copy</button>
+			</div>
+		</div>
+	`;
+
+	// Insert popup inside the post container
+	postContainer.appendChild(popup);
+
+	// Close on outside click
+	setTimeout(() => {
+		document.addEventListener('click', function closePopup(e) {
+			if (!popup.contains(e.target) && !e.target.classList.contains('post_no')) {
+				popup.remove();
+				document.removeEventListener('click', closePopup);
+			}
+		});
+	}, 100);
+
+	return false;
+}
+
+function copyToClipboard(elementId) {
+	let input = document.getElementById(elementId);
+	if (input) {
+		input.select();
+		input.setSelectionRange(0, 99999); // For mobile
+
+		try {
+			document.execCommand('copy');
+			// Visual feedback
+			let button = input.nextElementSibling;
+			let originalText = button.textContent;
+			button.textContent = 'Copied!';
+			button.style.background = '#4CAF50';
+			setTimeout(() => {
+				button.textContent = originalText;
+				button.style.background = '';
+			}, 1500);
+		} catch (err) {
+			console.error('Failed to copy:', err);
+		}
+	}
+}
+
+function scrollToVerseAnchor() {
+	// Handle verse anchors (#v1, #v2, etc.) in multi-column layouts
+	if (window.location.hash && window.location.hash.match(/^#v\d+$/)) {
+		let targetId = window.location.hash.substring(1); // Remove #
+		let target = document.getElementById(targetId);
+
+		if (target) {
+			// Use scrollIntoView with options for better multi-column support
+			setTimeout(() => {
+				target.scrollIntoView({
+					behavior: 'smooth',
+					block: 'nearest',
+					inline: 'center'
+				});
+			}, 100);
+		}
+	}
+}
+
 function rememberStuff() {
 	if (document.forms.post) {
 		if (document.forms.post.password) {
@@ -430,6 +548,12 @@ function init() {
 
 	if (window.location.hash.indexOf('q') != 1 && window.location.hash.substring(1))
 		highlightReply(window.location.hash.substring(1));
+
+	// Scroll to verse anchor for Bible boards
+	scrollToVerseAnchor();
+
+	// Also handle hash changes (clicking verse links on same page)
+	window.addEventListener('hashchange', scrollToVerseAnchor);
 }
 
 var RecaptchaOptions = {

@@ -771,6 +771,113 @@ function sortBoardsByBibleOrder($boards, $just_uri, $bible_path_index) {
     return $boards;
 }
 
+/**
+ * Get previous and next Bible book navigation info for a given board URI
+ *
+ * @param string $current_uri The current board URI (e.g., "Exod")
+ * @param string $bible_path_index Path to the Bible index XML file
+ * @return array Associative array with keys: linkPrev, linkNext, titlePrev, titleNext
+ */
+function getBibleBookNavigation($current_uri, $bible_path_index) {
+    $result = array(
+        'linkPrev' => null,
+        'linkNext' => null,
+        'titlePrev' => null,
+        'titleNext' => null
+    );
+
+    if (!file_exists($bible_path_index)) {
+        return $result;
+    }
+
+    $xml = simplexml_load_file($bible_path_index);
+    if (!$xml) {
+        return $result;
+    }
+
+    // Build array of all books in order
+    $books = array();
+    foreach ($xml->title as $title) {
+        $books[] = array(
+            'uri' => (string)$title['osisID'],
+            'short' => (string)$title['short']
+        );
+    }
+
+    // Find current book's position
+    $currentIndex = -1;
+    for ($i = 0; $i < count($books); $i++) {
+        if ($books[$i]['uri'] === $current_uri) {
+            $currentIndex = $i;
+            break;
+        }
+    }
+
+    if ($currentIndex === -1) {
+        return $result; // Current board not found in Bible index
+    }
+
+    // Set previous book if not first
+    if ($currentIndex > 0) {
+        $result['linkPrev'] = '/' . $books[$currentIndex - 1]['uri'] . '/';
+        $result['titlePrev'] = $books[$currentIndex - 1]['short'];
+    }
+
+    // Set next book if not last
+    if ($currentIndex < count($books) - 1) {
+        $result['linkNext'] = '/' . $books[$currentIndex + 1]['uri'] . '/';
+        $result['titleNext'] = $books[$currentIndex + 1]['short'];
+    }
+
+    return $result;
+}
+
+/**
+ * Build a lookup table for Bible book names to osisID
+ * Supports: osisID (Gen, 1John), full names (Genesis, 1 John, 2 Thessalonians)
+ *
+ * @param string $bible_path_index Path to the Bible index XML file
+ * @return array Associative array mapping book names/abbreviations to osisID
+ */
+function buildBibleBookLookup($bible_path_index) {
+    static $lookup = null;
+
+    // Cache the lookup table
+    if ($lookup !== null) {
+        return $lookup;
+    }
+
+    $lookup = array();
+
+    if (!file_exists($bible_path_index)) {
+        return $lookup;
+    }
+
+    $xml = simplexml_load_file($bible_path_index);
+    if (!$xml) {
+        return $lookup;
+    }
+
+    foreach ($xml->title as $title) {
+        $osisID = (string)$title['osisID'];
+        $short = (string)$title['short'];
+
+        // Map osisID (Gen, Exod, 1John, 2Thess) - case insensitive
+        $lookup[strtolower($osisID)] = $osisID;
+
+        // Map short name (Genesis, Exodus, 1 John, 2 Thessalonians) - case insensitive
+        $lookup[strtolower($short)] = $osisID;
+
+        // Also map without spaces for numbered books (1john, 2thessalonians)
+        $shortNoSpace = str_replace(' ', '', $short);
+        if ($shortNoSpace !== $short) {
+            $lookup[strtolower($shortNoSpace)] = $osisID;
+        }
+    }
+
+    return $lookup;
+}
+
 
 /**
  * Return board-specific overrides only.
@@ -1749,10 +1856,27 @@ function buildIndex($global_api = "yes") {
 				$pages = getPages();
 			}
 			$content['pages'] = $pages;
+
+			// Special case: EsthGr has chapters 11-16, so adjust page numbers
+			if ($board['uri'] === 'EsthGr') {
+				foreach ($content['pages'] as $key => $pageData) {
+					$content['pages'][$key]['num'] = $pageData['num'] + 10;
+				}
+			}
+
 			$content['pages'][$page-1]['selected'] = true;
 			$content['btn'] = getPageButtons($content['pages']);
 			if ($mod) {
 				$content['pm'] = create_pm_header();
+			}
+
+			// Add Bible book navigation if this is a Bible board
+			if (isset($config['isbible']) && $config['isbible'] && isset($config['bible']['path_index'])) {
+				$bibleNav = getBibleBookNavigation($board['uri'], $config['bible']['path_index']);
+				$content['board']['linkPrev'] = $bibleNav['linkPrev'];
+				$content['board']['linkNext'] = $bibleNav['linkNext'];
+				$content['board']['titlePrev'] = $bibleNav['titlePrev'];
+				$content['board']['titleNext'] = $bibleNav['titleNext'];
 			}
 
 			file_write($filename, Element($config['file_board_index'], $content));
@@ -2193,6 +2317,47 @@ function markup(&$body, $track_cites = false, $op = false) {
 						'</a>';
 				$body = mb_substr_replace($body, $matches[1][0] . $replacement . $matches[4][0], $matches[0][1] + $skip_chars, mb_strlen($matches[0][0]));
 				$skip_chars += mb_strlen($matches[1][0] . $replacement . $matches[4][0]) - mb_strlen($matches[0][0]);
+			}
+		}
+	}
+
+	// Bible reference linking (e.g., "Genesis 1:4" or "Matt. 4:10" or "1 John 2:3")
+	if (isset($config['bible']['path_index']) && file_exists($config['bible']['path_index'])) {
+		$bibleLookup = buildBibleBookLookup($config['bible']['path_index']);
+
+		if (!empty($bibleLookup) && preg_match_all('/(^|[\s(])([1-3]?[A-Za-z]+(?:\s+[A-Za-z]+(?:\s+[A-Za-z]+)?)?)\.?\s+(\d+):(\d+)((?=[\s,.)?!])|$)/um', $body, $bibleRefs, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
+			$skip_chars = 0;
+			$body_tmp = $body;
+
+			foreach ($bibleRefs as $matches) {
+				$prefix = $matches[1][0];
+				$bookName = trim($matches[2][0]);
+				$chapter = $matches[3][0];
+				$verse = $matches[4][0];
+				$suffix = $matches[5][0];
+
+				// Normalize book name and look up osisID (strip periods and normalize spaces)
+				$bookNameNormalized = strtolower(preg_replace('/\s+/', ' ', rtrim($bookName, '.')));
+				$bookNameNoSpace = strtolower(str_replace([' ', '.'], '', $bookName));
+
+				$osisID = null;
+				if (isset($bibleLookup[$bookNameNormalized])) {
+					$osisID = $bibleLookup[$bookNameNormalized];
+				} elseif (isset($bibleLookup[$bookNameNoSpace])) {
+					$osisID = $bibleLookup[$bookNameNoSpace];
+				}
+
+				if ($osisID) {
+					// Create link to Bible verse using short URL format (redirects via .htaccess)
+					$link = $config['root'] . $osisID . '/' . $chapter . '/' . $verse;
+					$replacement = '<a href="' . $link . '">' . htmlspecialchars($bookName . ' ' . $chapter . ':' . $verse) . '</a>';
+
+					// Calculate position (preg_match_all is not multibyte-safe)
+					$pos = mb_strlen(substr($body_tmp, 0, $matches[0][1]));
+
+					$body = mb_substr_replace($body, $prefix . $replacement . $suffix, $pos + $skip_chars, mb_strlen($matches[0][0]));
+					$skip_chars += mb_strlen($prefix . $replacement . $suffix) - mb_strlen($matches[0][0]);
+				}
 			}
 		}
 	}

@@ -48,8 +48,8 @@
 					{{ board.subtitle|e }}
 				{% endif %}
 			{% endif %}
-                        {% if true %}<a style="float:left"><< Book to The Left</a>{% endif %}
-                        {% if true %}<a style="float:right">Book to The Right >></a>{% endif %}
+                        {% if board.linkPrev %}<a href="{{ board.linkPrev }}" style="float:left">&lt;&lt; {{ board.titlePrev }}</a>{% endif %}
+                        {% if board.linkNext %}<a href="{{ board.linkNext }}" style="float:right">{{ board.titleNext }} &gt;&gt;</a>{% endif %}
 			{% if mod %}
 			<p><a href="?/">{% trans %}Return to dashboard{% endtrans %}</a></p>
 	    		<a href="?/unlock_all" onclick="return confirm('Unlock all boards?');">{% trans %}UNLOCK ALL{% endtrans %}</a>
@@ -64,14 +64,14 @@
 	{{ config.ad.top }}
 
 	{% if not no_post_form %}
-	    {% if not config.board_locked %}
+	    {% if not config.board_locked and not config.isbible %}
 		{% include 'post_form.html' %}
 	    {% endif %}
 	{% else %}
 		{% include 'boardlist.html' %}
 	{% endif %}
 
-	{% if config.page_nav_top %}
+	{% if config.page_nav_top %} {% if config.catalog_link or pages|length > 1 %}
 		<div class="pages top">
                  {{ btn.prev }} {% for page in pages %}
                   [<a {% if page.selected %}class="selected"{% endif %}{% if not page.selected %}href="{{ page.link }}"{% endif %}>{{ page.num }}</a>]{% if loop.last %}{% endif %}
@@ -80,7 +80,7 @@
                           | <a href="{{ config.root }}{% if mod %}{{ config.file_mod }}?/{% endif %}{{ board.dir }}{{ config.catalog_link }}">{% trans %}Catalog{% endtrans %}</a>
                  {% endif %}
 		</div>
-	{% endif %}
+	{% endif %} {% endif %}
 
 
 	{% if config.global_message %}<hr /><div class="blotter">{{ config.global_message }}</div>{% endif %}
@@ -108,6 +108,7 @@
 	{% endif %}
 	</form>
 
+	{% if config.catalog_link or pages|length > 1 %}
 	<div class="pages">
                  {{ btn.prev }} {% for page in pages %}
                   [<a {% if page.selected %}class="selected"{% endif %}{% if not page.selected %}href="{{ page.link }}"{% endif %}>{{ page.num }}</a>]{% if loop.last %}
@@ -117,6 +118,7 @@
                           | <a href="{{ config.root }}{% if mod %}{{ config.file_mod }}?/{% endif %}{{ board.dir }}{{ config.catalog_link }}">{% trans %}Catalog{% endtrans %}</a>
                  {% endif %}
 	</div>
+	{% endif %}
 
 	{{ boardlist.bottom }}
 
