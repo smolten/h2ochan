@@ -1333,3 +1333,12 @@ a.post_no.verse {
 .verse-cite-option input {
     flex: 1;              /* makes input take remaining space */
 }
+
+/* Bible board infinite scroll styling */
+.thread.bible {
+    overflow-x: auto;
+    text-align: justify;
+    height: calc(80vh);
+    column-width: 13em;
+    column-fill: auto;
+}

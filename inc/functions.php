@@ -897,6 +897,32 @@ function buildBibleBookLookup($bible_path_index) {
     return $cached;
 }
 
+/**
+ * Get the full name of a Bible book from the index
+ *
+ * @param string $osisID The OSIS ID of the book (e.g., "Gen", "Ps", "Matt")
+ * @param string $bible_path_index Path to the Bible index XML file
+ * @return string The full book name, or empty string if not found
+ */
+function getBibleBookFullName($osisID, $bible_path_index) {
+    if (!file_exists($bible_path_index)) {
+        return '';
+    }
+
+    $xml = simplexml_load_file($bible_path_index);
+    if (!$xml) {
+        return '';
+    }
+
+    foreach ($xml->title as $title) {
+        if ((string)$title['osisID'] === $osisID) {
+            return (string)$title->fullName;
+        }
+    }
+
+    return '';
+}
+
 
 /**
  * Return board-specific overrides only.

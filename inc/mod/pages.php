@@ -961,74 +961,53 @@ function mod_bible_post_threads(Context $ctx, bool $log=true) {
     if (!hasPermission($config['mod']['manageboards'], $board['uri']))
         error($config['error']['noaccess']);
 
-    $bookURI = isset($_POST['uri']) ? preg_replace('/[^a-zA-Z0-9]/', '', $_POST['uri']) : '';   
+    $bookURI = isset($_POST['uri']) ? preg_replace('/[^a-zA-Z0-9]/', '', $_POST['uri']) : '';
     if (!$bookURI)
         error("Missing or invalid book URI.");
 
-    // Parse the full text of the book into chapters (array of chapters, each is array of verses)
-    $chapters = parseBibleBookText($bookURI, $config['bible']['path_full']);
+    // Get the full book title from the Bible index
+    $fullName = getBibleBookFullName($bookURI, $config['bible']['path_index']);
+    if (empty($fullName)) {
+        $fullName = "THE BOOK OF " . strtoupper($bookURI);
+    }
 
     $errors = [];  // Array to collect DB errors
 
-    // Use array_keys to get actual chapter numbers (handles books starting at chapter 6 or 10)
-    $chapterNumbers = array_keys($chapters);
-    sort($chapterNumbers); // Sort in ascending order
+    // Create a single thread OP with the book title
+    $body = '<h2 style="text-align: center;">' . htmlspecialchars($fullName) . '</h2>';
+    $body_nomarkup = strip_tags($body);
+    $slug = preg_replace('/[^a-zA-Z0-9]/', '', $body_nomarkup);
+    $slug = substr($slug, 0, 256); // db char limit
 
-    foreach ($chapterNumbers as $chapter) {
-        // Skip if this chapter doesn't exist in the array
-        if (!isset($chapters[$chapter]) || !is_array($chapters[$chapter])) {
-            continue;
-        }
+    try {
+        $query = prepare('INSERT INTO ``posts_' . $bookURI . '``
+            (thread, subject, email, name, trip, capcode, body, body_nomarkup, time, bump,
+                files, num_files, filehash, password, ip, sticky, locked, cycle, sage, embed, slug, verse)
+            VALUES
+            (NULL, NULL, NULL, NULL, NULL, NULL, :body, :body_nomarkup, :faketime, :faketime,
+                NULL, 0, NULL, SUBSTRING(MD5(RAND()),1,12), :ip, 0, 0, 0, 0, NULL, :slug, 0)');
 
-        $verses = $chapters[$chapter];           // array of verses for this chapter
-        if (!isset($verses[1])) {       // error if Verse 1 not present
-            $errors[] = [
-                'chapter' => $chapter,
-                'verse' => 1,
-                'message' => "Verse 1 doesn't exist"
-            ];
-            continue; // skip to next chapter
-        }
+        $query->bindValue(':body', $body);
+        $query->bindValue(':body_nomarkup', $body_nomarkup);
+        $query->bindValue(':faketime', 1000);  // High faketime so it appears first
+        $query->bindValue(':ip', '127.0.0.1');
+        $query->bindValue(':slug', $slug);
 
-        $prepend = '<a class="post_no chapter" id="v1" onclick="citeVerse(' . $chapter . ', 1, event)" ' .
-            'href="/' . $bookURI . '/res/' . $chapter . '.html#v1">' . $chapter . '</a>';
-        $body = $prepend . $verses[1];                      // Chapter 1 Verse 1 (with BIG chapter num)
-        $body_nomarkup = strip_tags($body);      // remove HTML tags
-        $slug = preg_replace('/[^a-zA-Z0-9]/', '', $body_nomarkup); // simple alpha-numeric slug
-        $slug = substr($slug, 0, 256); // db char limit
+        $query->execute();
 
-        try {
-            $query = prepare('INSERT INTO ``posts_' . $bookURI . '``
-                (thread, subject, email, name, trip, capcode, body, body_nomarkup, time, bump,
-                    files, num_files, filehash, password, ip, sticky, locked, cycle, sage, embed, slug, verse)
-                VALUES
-                (NULL, NULL, NULL, NULL, NULL, NULL, :body, :body_nomarkup, :faketime, :faketime,
-                    NULL, 0, NULL, SUBSTRING(MD5(RAND()),1,12), :ip, 0, 0, 0, 0, NULL, :slug, :verse)');
-
-            $query->bindValue(':body', $body);
-            $query->bindValue(':body_nomarkup', $body_nomarkup);
-            $query->bindValue(':faketime', 1000-$chapter);
-            $query->bindValue(':ip', '127.0.0.1');
-            $query->bindValue(':slug', $slug);
-            $query->bindValue(':verse', 1);
-
-            $query->execute();
-
-        } catch (PDOException $e) {
-            $errors[] = [
-                'chapter' => $chapter,
-                'verse' => 1,
-                'message' => $e->getMessage()
-            ];
-        }
+    } catch (PDOException $e) {
+        $errors[] = [
+            'type' => 'book_title',
+            'message' => $e->getMessage()
+        ];
     }
 
     // Log summary including errors
-    $note = "Posted chapter threads for book $bookURI";
+    $note = "Posted book title thread OP for $bookURI: $fullName";
     if (!empty($errors)) {
         $note .= " -- ERROR(S):\n";
         foreach ($errors as $err) {
-            $note .= "Chapter {$err['chapter']}, Verse {$err['verse']}: {$err['message']}\n";
+            $note .= "Error: {$err['message']}\n";
         }
     }
 
@@ -1049,24 +1028,24 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
     $bookURI = isset($_POST['uri']) ? preg_replace('/[^a-zA-Z0-9]/', '', $_POST['uri']) : '';
     $chapters = parseBibleBookText($bookURI, $config['bible']['path_full']);
 
-        $errors = [];  // Array to collate all DB errors
+    $errors = [];  // Array to collate all DB errors
 
-    // Build mapping of chapter numbers to thread IDs
-    // This handles books that don't start at chapter 1 (EpJer starts at 6, EsthGr at 10)
-    $chapterToThreadId = [];
+    // Get the single book thread ID (the thread with verse = 0)
     $query = query(sprintf(
-        "SELECT `id`, `time` FROM ``posts_%s`` WHERE `thread` IS NULL ORDER BY `time` DESC",
+        "SELECT `id` FROM ``posts_%s`` WHERE `thread` IS NULL AND `verse` = 0 LIMIT 1",
         $bookURI
     ));
-    while ($row = $query->fetch(PDO::FETCH_ASSOC)) {
-        $chapterNum = 1000 - (int)$row['time'];  // Reverse the faketime calculation
-        $chapterToThreadId[$chapterNum] = (int)$row['id'];
+    $row = $query->fetch(PDO::FETCH_ASSOC);
+
+    if (!$row) {
+        error("Book thread OP not found for $bookURI. Please run 'Post Threads' first.");
     }
 
-    // Iterate chapters in reverse if needed (latest chapters first)
-    // Use array_keys to get actual chapter numbers (handles books starting at chapter 6 or 10)
+    $threadId = (int)$row['id'];
+
+    // Iterate chapters in ascending order
     $chapterNumbers = array_keys($chapters);
-    rsort($chapterNumbers); // Sort in descending order
+    sort($chapterNumbers);
 
     foreach ($chapterNumbers as $chapter) {
         $verses = $chapters[$chapter];
@@ -1076,25 +1055,26 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
             continue;
         }
 
-        // Get the actual thread ID for this chapter
-        if (!isset($chapterToThreadId[$chapter])) {
-            $errors[] = [
-                'chapter' => $chapter,
-                'verse' => 'N/A',
-                'message' => "Thread not found for chapter $chapter"
-            ];
-            continue;
-        }
-        $threadId = $chapterToThreadId[$chapter];
+        // Post ALL verses (including verse 1) as replies
+        for ($verse = 1; $verse <= count($verses); $verse++) {
+            if (!isset($verses[$verse])) {
+                continue; // Skip if this verse doesn't exist
+            }
 
-        // Skip Verse 1 because it's already the thread
-        for ($verse = 2; $verse <= count($verses); $verse++) {
-            $prepend = '<a class="post_no verse" id="v' . $verse . '" onclick="citeVerse(' . $chapter . ', ' . $verse . ', event)" ' .
-                'href="/' . $bookURI . '/res/' . $chapter . '.html#v' . $verse . '">'.$verse.'</a>';
+            // Add verse number link with chapter:verse format
+            if ($verse == 1) {
+                // Verse 1 gets the chapter number as well
+                $prepend = '<a class="post_no chapter" id="v' . $verse . '" onclick="citeVerse(' . $chapter . ', ' . $verse . ', event)" ' .
+                    'href="/' . $bookURI . '/res/' . $chapter . '.html#v' . $verse . '">' . $chapter . '</a>';
+            } else {
+                $prepend = '<a class="post_no verse" id="v' . $verse . '" onclick="citeVerse(' . $chapter . ', ' . $verse . ', event)" ' .
+                    'href="/' . $bookURI . '/res/' . $chapter . '.html#v' . $verse . '">' . $verse . '</a>';
+            }
+
             $body = $prepend . $verses[$verse];
-            $body_nomarkup = preg_replace('/<[^>]+>/', '', $body);          // strip HTML
-            $slug = preg_replace('/[^a-zA-Z0-9]/', '', $body_nomarkup);     // alpha-numeric slug
-	    $slug = substr($slug, 0, 256); // db char limit
+            $body_nomarkup = preg_replace('/<[^>]+>/', '', $body);
+            $slug = preg_replace('/[^a-zA-Z0-9]/', '', $body_nomarkup);
+            $slug = substr($slug, 0, 256); // db char limit
 
             try {
                 $query = prepare("
@@ -1109,7 +1089,7 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
                 $query->bindValue(':thread', $threadId);
                 $query->bindValue(':body', $body);
                 $query->bindValue(':body_nomarkup', $body_nomarkup);
-                $query->bindValue(':faketime', 1000-$chapter);
+                $query->bindValue(':faketime', 1000 - $chapter - ($verse / 1000)); // Order by chapter then verse
                 $query->bindValue(':ip', '127.0.0.1');
                 $query->bindValue(':slug', $slug);
                 $query->bindValue(':verse', $verse);
@@ -1128,7 +1108,7 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
     }
 
     // Log summary including errors
-    $note = "Posted all verse replies for {$bookURI}";
+    $note = "Posted all verse replies for {$bookURI} (including Chapter 1 Verse 1)";
     if (!empty($errors)) {
         $note .= " -- Errors encountered:\n";
         foreach ($errors as $err) {
