@@ -2346,8 +2346,8 @@ function markup(&$body, $track_cites = false, $op = false) {
 		$bibleLookup = $bibleData['lookup'];
 		$verseCounts = $bibleData['verseCounts'];
 
-		// Fixed regex: lookahead doesn't capture, so suffix handling is cleaner
-		if (!empty($bibleLookup) && preg_match_all('/(^|[\s(])([1-3]?[A-Za-z]+(?:\s+[A-Za-z]+(?:\s+[A-Za-z]+)?)?)\.?\s+(\d+):(\d+)(?=[\s,.)?!\r\n]|$)/um', $body, $bibleRefs, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
+		// Fixed regex: use [ \t] instead of \s in book name to prevent matching across newlines
+		if (!empty($bibleLookup) && preg_match_all('/(^|[\s(])([1-3]?[A-Za-z]+(?:[ \t]+[A-Za-z]+(?:[ \t]+[A-Za-z]+)?)?)\\.?[ \t]+(\d+):(\d+)(?=[\s,.)?!\r\n]|$)/um', $body, $bibleRefs, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
 			$skip_chars = 0;
 			$body_tmp = $body;
 
