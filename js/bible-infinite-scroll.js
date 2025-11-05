@@ -66,7 +66,7 @@
             return null;
         }
 
-        const url = `/${boardURI}/res/${chapterNum}.html`;
+        const url = `/${boardURI}/${chapterNum}.html`;
         console.log(`Fetching chapter ${chapterNum} from ${url}`);
 
         try {
