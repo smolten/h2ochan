@@ -9,13 +9,8 @@
 (function() {
     'use strict';
 
-    // Only run on Bible boards
-    if (!document.querySelector('.thread.bible')) {
-        return;
-    }
-
-    const thread = document.querySelector('.thread.bible');
-    const boardURI = thread.dataset.board;
+    let thread = null;
+    let boardURI = null;
 
     // Configuration
     const config = {
@@ -258,6 +253,19 @@
      * Initialize infinite scroll
      */
     function init() {
+        // Only run on Bible boards
+        thread = document.querySelector('.thread.bible');
+        if (!thread) {
+            console.log('Not a Bible board, skipping infinite scroll');
+            return;
+        }
+
+        boardURI = thread.dataset.board;
+        if (!boardURI) {
+            console.warn('Bible board missing data-board attribute');
+            return;
+        }
+
         // Get initial chapter from URL or thread ID
         const match = window.location.pathname.match(/\/([A-Za-z0-9]+)\/(\d+)\//);
         if (match) {
