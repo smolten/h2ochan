@@ -55,6 +55,58 @@
         };
     }
 
+    // Track which chapters have been loaded
+    const loadedChapters = new Set();
+    let minLoadedChapter = currentChapter;
+    let maxLoadedChapter = currentChapter;
+
+    /**
+     * Load a specific chapter and extract its posts
+     */
+    async function loadChapter(chapterNum) {
+        if (loadedChapters.has(chapterNum)) {
+            console.log(`Chapter ${chapterNum} already loaded`);
+            return null;
+        }
+
+        const url = `/${boardURI}/res/${chapterNum}.html`;
+        console.log(`Fetching chapter ${chapterNum} from ${url}`);
+
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                console.warn(`Chapter ${chapterNum} not found (${response.status})`);
+                return null;
+            }
+
+            const html = await response.text();
+
+            // Parse HTML to extract posts
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const chapterThread = doc.querySelector('.thread.bible');
+
+            if (!chapterThread) {
+                console.warn(`No .thread.bible found in chapter ${chapterNum}`);
+                return null;
+            }
+
+            // Extract all posts (both OP and replies)
+            const posts = chapterThread.querySelectorAll('.post.bible');
+            const postsHTML = Array.from(posts).map(post => post.outerHTML + '<br>').join('');
+
+            loadedChapters.add(chapterNum);
+
+            if (chapterNum < minLoadedChapter) minLoadedChapter = chapterNum;
+            if (chapterNum > maxLoadedChapter) maxLoadedChapter = chapterNum;
+
+            return postsHTML;
+        } catch (error) {
+            console.error(`Error fetching chapter ${chapterNum}:`, error);
+            return null;
+        }
+    }
+
     /**
      * Load additional chapters
      * @param {string} direction - 'before' or 'after'
@@ -64,19 +116,53 @@
         loading = true;
 
         try {
-            // TODO: Implement AJAX loading of chapters
-            // For now, this is a placeholder
-            console.log(`Loading more chapters ${direction}...`);
+            const chaptersToLoad = [];
 
-            // Example AJAX call (to be implemented):
-            // const response = await fetch(`/bible/load/${boardURI}/${direction}/${currentChapter}`);
-            // const html = await response.text();
-            //
-            // if (direction === 'before') {
-            //     thread.insertAdjacentHTML('afterbegin', html);
-            // } else {
-            //     thread.insertAdjacentHTML('beforeend', html);
-            // }
+            if (direction === 'before') {
+                // Load previous chapters (don't go below 1)
+                for (let i = 1; i <= config.columnsToLoad; i++) {
+                    const chapterNum = minLoadedChapter - i;
+                    if (chapterNum >= 1 && !loadedChapters.has(chapterNum)) {
+                        chaptersToLoad.push(chapterNum);
+                    }
+                }
+                chaptersToLoad.sort((a, b) => a - b); // Ascending order
+            } else {
+                // Load next chapters
+                for (let i = 1; i <= config.columnsToLoad; i++) {
+                    const chapterNum = maxLoadedChapter + i;
+                    if (!loadedChapters.has(chapterNum)) {
+                        chaptersToLoad.push(chapterNum);
+                    }
+                }
+            }
+
+            if (chaptersToLoad.length === 0) {
+                console.log('No more chapters to load in this direction');
+                return;
+            }
+
+            console.log(`Loading chapters ${direction}:`, chaptersToLoad);
+
+            // Get the reference element for insertion
+            const referenceElement = thread.querySelector('.post.bible:last-child');
+            const firstElement = thread.querySelector('.post.bible:first-child');
+
+            for (const chapterNum of chaptersToLoad) {
+                const postsHTML = await loadChapter(chapterNum);
+                if (postsHTML) {
+                    if (direction === 'before' && firstElement) {
+                        // Insert before first post
+                        firstElement.insertAdjacentHTML('beforebegin', postsHTML);
+                    } else if (referenceElement) {
+                        // Insert after last post
+                        referenceElement.insertAdjacentHTML('afterend', postsHTML);
+                    } else {
+                        // Fallback: append to thread
+                        thread.insertAdjacentHTML('beforeend', postsHTML);
+                    }
+                }
+            }
 
         } catch (error) {
             console.error('Error loading chapters:', error);
@@ -172,18 +258,28 @@
      * Initialize infinite scroll
      */
     function init() {
-        // Add scroll listener
-        thread.addEventListener('scroll', onScroll);
-
-        // Get initial chapter from URL
+        // Get initial chapter from URL or thread ID
         const match = window.location.pathname.match(/\/([A-Za-z0-9]+)\/(\d+)\//);
         if (match) {
             currentChapter = parseInt(match[2]);
-            // Scroll to this chapter if needed
-            setTimeout(() => scrollToChapter(currentChapter), 100);
+        } else {
+            // Try to get from thread ID
+            const threadId = thread.id;
+            const threadMatch = threadId.match(/thread_(\d+)/);
+            if (threadMatch) {
+                currentChapter = parseInt(threadMatch[1]);
+            }
         }
 
-        console.log('Bible infinite scroll initialized');
+        // Mark initial chapter as loaded
+        loadedChapters.add(currentChapter);
+        minLoadedChapter = currentChapter;
+        maxLoadedChapter = currentChapter;
+
+        // Add scroll listener
+        thread.addEventListener('scroll', onScroll);
+
+        console.log(`Bible infinite scroll initialized on ${boardURI}, chapter ${currentChapter}`);
     }
 
     // Initialize when DOM is ready
