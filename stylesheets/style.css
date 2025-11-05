@@ -1342,3 +1342,8 @@ a.post_no.verse {
     column-width: 13em;
     column-fill: auto;
 }
+
+/* Hide Chapter 2+ placeholder OPs */
+.post.op.bible:has(.chapter-placeholder) {
+    display: none;
+}

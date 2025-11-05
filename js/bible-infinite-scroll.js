@@ -11,6 +11,7 @@
 
     let thread = null;
     let boardURI = null;
+    let bibleNav = null;  // Bible navigation data from XML
 
     // Configuration
     const config = {
@@ -115,28 +116,84 @@
 
         try {
             const chaptersToLoad = [];
+            let crossBook = null;
 
             if (direction === 'before') {
-                // Load previous chapters (don't go below 1)
-                for (let i = 1; i <= config.columnsToLoad; i++) {
-                    const chapterNum = minLoadedChapter - i;
-                    if (chapterNum >= 1 && !loadedChapters.has(chapterNum)) {
-                        chaptersToLoad.push(chapterNum);
+                // Check if we can go back
+                if (minLoadedChapter > 1) {
+                    // Load previous chapters in current book
+                    for (let i = 1; i <= config.columnsToLoad; i++) {
+                        const chapterNum = minLoadedChapter - i;
+                        if (chapterNum >= 1 && !loadedChapters.has(chapterNum)) {
+                            chaptersToLoad.push(chapterNum);
+                        }
                     }
+                    chaptersToLoad.sort((a, b) => a - b); // Ascending order
+                } else if (bibleNav && bibleNav.previous) {
+                    // At chapter 1, try to load previous book's last chapter
+                    console.log(`Reached beginning of ${boardURI}, loading previous book: ${bibleNav.previous.osisID}`);
+                    crossBook = {
+                        uri: bibleNav.previous.osisID,
+                        chapter: bibleNav.previous.chapters
+                    };
                 }
-                chaptersToLoad.sort((a, b) => a - b); // Ascending order
             } else {
-                // Load next chapters
-                for (let i = 1; i <= config.columnsToLoad; i++) {
-                    const chapterNum = maxLoadedChapter + i;
-                    if (!loadedChapters.has(chapterNum)) {
-                        chaptersToLoad.push(chapterNum);
+                // Check if we've reached the end of current book
+                const maxChapter = bibleNav ? bibleNav.current.chapters : Infinity;
+
+                if (maxLoadedChapter < maxChapter) {
+                    // Load next chapters in current book
+                    for (let i = 1; i <= config.columnsToLoad; i++) {
+                        const chapterNum = maxLoadedChapter + i;
+                        if (chapterNum <= maxChapter && !loadedChapters.has(chapterNum)) {
+                            chaptersToLoad.push(chapterNum);
+                        }
                     }
+                } else if (bibleNav && bibleNav.next) {
+                    // Reached end of book, try to load next book's first chapter
+                    console.log(`Reached end of ${boardURI}, loading next book: ${bibleNav.next.osisID}`);
+                    crossBook = {
+                        uri: bibleNav.next.osisID,
+                        chapter: 1
+                    };
                 }
             }
 
-            if (chaptersToLoad.length === 0) {
+            if (chaptersToLoad.length === 0 && !crossBook) {
                 console.log('No more chapters to load in this direction');
+                return;
+            }
+
+            if (crossBook) {
+                console.log(`Loading cross-book: ${crossBook.uri} chapter ${crossBook.chapter}`);
+                // For cross-book, we'll load the chapter but not track it (different book)
+                const url = `/${crossBook.uri}/${crossBook.chapter}.html`;
+                try {
+                    const response = await fetch(url);
+                    if (response.ok) {
+                        const html = await response.text();
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const chapterThread = doc.querySelector('.thread.bible');
+
+                        if (chapterThread) {
+                            const posts = chapterThread.querySelectorAll('.post.bible');
+                            const postsHTML = Array.from(posts).map(post => post.outerHTML + '<br>').join('');
+
+                            const referenceElement = thread.querySelector('.post.bible:last-child');
+                            const firstElement = thread.querySelector('.post.bible:first-child');
+
+                            if (direction === 'before' && firstElement) {
+                                firstElement.insertAdjacentHTML('beforebegin', postsHTML);
+                            } else if (referenceElement) {
+                                referenceElement.insertAdjacentHTML('afterend', postsHTML);
+                            }
+                            console.log(`Loaded ${crossBook.uri} chapter ${crossBook.chapter}`);
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error loading cross-book chapter:`, error);
+                }
                 return;
             }
 
@@ -300,6 +357,16 @@
             return;
         }
 
+        // Parse Bible navigation data
+        if (thread.dataset.bibleNav) {
+            try {
+                bibleNav = JSON.parse(thread.dataset.bibleNav);
+                console.log('Bible navigation:', bibleNav);
+            } catch (e) {
+                console.warn('Failed to parse Bible navigation data:', e);
+            }
+        }
+
         // Get initial chapter from URL or thread ID
         const match = window.location.pathname.match(/\/([A-Za-z0-9]+)\/(\d+)\//);
         if (match) {
@@ -322,6 +389,23 @@
         thread.addEventListener('scroll', onScroll);
 
         console.log(`Bible infinite scroll initialized on ${boardURI}, chapter ${currentChapter}`);
+
+        // After a short delay, check if we need to fill empty columns
+        setTimeout(function() {
+            const scrollWidth = thread.scrollWidth;
+            const clientWidth = thread.clientWidth;
+            const columnWidth = getColumnWidth();
+
+            // If content doesn't fill even 2 screens worth, load more
+            if (scrollWidth < clientWidth * 1.5 && bibleNav) {
+                const maxChapter = bibleNav.current.chapters;
+                if (currentChapter < maxChapter) {
+                    console.log('Initial content is short, loading next chapter to fill columns');
+                    loadingEnabled = true;  // Enable loading temporarily
+                    loadMoreChapters('after');
+                }
+            }
+        }, 500);
     }
 
     // Initialize when DOM is ready

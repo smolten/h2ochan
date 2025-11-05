@@ -923,6 +923,52 @@ function getBibleBookFullName($osisID, $bible_path_index) {
     return '';
 }
 
+/**
+ * Get Bible book navigation data for infinite scroll
+ *
+ * @param string $currentOsisID Current book's osisID (e.g., "Gen")
+ * @param string $bible_path_index Path to the XML index file
+ * @return array Structure with current book info, previous book, and next book
+ */
+function getBibleBookNavigation($currentOsisID, $bible_path_index) {
+    if (!file_exists($bible_path_index)) {
+        return null;
+    }
+
+    $xml = simplexml_load_file($bible_path_index);
+    if (!$xml) {
+        return null;
+    }
+
+    $books = [];
+    foreach ($xml->title as $title) {
+        $books[] = [
+            'osisID' => (string)$title['osisID'],
+            'short' => (string)$title['short'],
+            'chapters' => (int)$title['chapters']
+        ];
+    }
+
+    // Find current book index
+    $currentIndex = -1;
+    for ($i = 0; $i < count($books); $i++) {
+        if ($books[$i]['osisID'] === $currentOsisID) {
+            $currentIndex = $i;
+            break;
+        }
+    }
+
+    if ($currentIndex === -1) {
+        return null;
+    }
+
+    return [
+        'current' => $books[$currentIndex],
+        'previous' => $currentIndex > 0 ? $books[$currentIndex - 1] : null,
+        'next' => $currentIndex < count($books) - 1 ? $books[$currentIndex + 1] : null
+    ];
+}
+
 
 /**
  * Return board-specific overrides only.
@@ -2575,6 +2621,14 @@ function buildThread($id, $return = false, $mod = false) {
 		];
 		if ($mod) {
 			$options['pm'] = create_pm_header();
+		}
+
+		// Add Bible navigation data if this is a Bible board
+		if (isset($config['isbible']) && $config['isbible']) {
+			$bibleNav = getBibleBookNavigation($board['uri'], $config['bible']['path_index']);
+			if ($bibleNav) {
+				$options['bible_navigation'] = $bibleNav;
+			}
 		}
 
 		$body = Element($config['file_thread'], $options);
