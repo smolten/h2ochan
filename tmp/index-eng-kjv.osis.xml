@@ -1,327 +1,327 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <books>
-  <title osisID="Gen" short="Genesis" testament="old" chapters="100">
+  <title osisID="Gen" short="Genesis" testament="old" chapters="50">
     <fullName>The First Book of Moses, called Genesis</fullName>
-    <verses>62,0,50,0,48,0,52,0,64,0,44,0,48,0,44,0,58,0,64,0,64,0,40,0,36,0,48,0,42,0,32,0,54,0,66,0,76,0,36,0,68,0,48,0,40,0,134,0,68,0,70,0,92,0,44,0,70,0,86,0,110,0,64,0,40,0,62,0,58,0,86,0,72,0,60,0,46,0,46,0,114,0,76,0,68,0,68,0,56,0,68,0,62,0,44,0,66,0,52,0</verses>
+    <verses>31,25,24,26,32,22,24,22,29,32,32,20,18,24,21,16,27,33,38,18,34,24,20,67,34,35,46,22,35,43,55,32,20,31,29,43,36,30,23,23,57,38,34,34,28,34,31,22,33,26</verses>
   </title>
-  <title osisID="Exod" short="Exodus" testament="old" chapters="80">
+  <title osisID="Exod" short="Exodus" testament="old" chapters="40">
     <fullName>The Second Book of Moses, called Exodus</fullName>
-    <verses>44,0,50,0,44,0,62,0,46,0,60,0,50,0,64,0,70,0,58,0,20,0,102,0,44,0,62,0,54,0,72,0,32,0,54,0,50,0,52,0,72,0,62,0,66,0,36,0,80,0,74,0,42,0,86,0,92,0,76,0,36,0,70,0,46,0,70,0,70,0,76,0,58,0,62,0,86,0,76,0</verses>
+    <verses>22,25,22,31,23,30,25,32,35,29,10,51,22,31,27,36,16,27,25,26,36,31,33,18,40,37,21,43,46,38,18,35,23,35,35,38,29,31,43,38</verses>
   </title>
-  <title osisID="Lev" short="Leviticus" testament="old" chapters="54">
+  <title osisID="Lev" short="Leviticus" testament="old" chapters="27">
     <fullName>The Third Book of Moses, called Leviticus</fullName>
-    <verses>34,0,32,0,34,0,70,0,38,0,60,0,76,0,72,0,48,0,40,0,94,0,16,0,118,0,114,0,66,0,68,0,32,0,60,0,74,0,54,0,48,0,66,0,88,0,46,0,110,0,92,0,68,0</verses>
+    <verses>17,16,17,35,19,30,38,36,24,20,47,8,59,57,33,34,16,30,37,27,24,33,44,23,55,46,34</verses>
   </title>
-  <title osisID="Num" short="Numbers" testament="old" chapters="72">
+  <title osisID="Num" short="Numbers" testament="old" chapters="36">
     <fullName>The Fourth Book of Moses, called Numbers</fullName>
-    <verses>108,0,68,0,102,0,98,0,62,0,54,0,178,0,52,0,46,0,72,0,70,0,32,0,66,0,90,0,82,0,100,0,26,0,64,0,44,0,58,0,70,0,82,0,60,0,50,0,36,0,130,0,46,0,62,0,80,0,32,0,108,0,84,0,112,0,58,0,68,0,26,0</verses>
+    <verses>54,34,51,49,31,27,89,26,23,36,35,16,33,45,41,50,13,32,22,29,35,41,30,25,18,65,23,31,40,16,54,42,56,29,34,13</verses>
   </title>
-  <title osisID="Deut" short="Deuteronomy" testament="old" chapters="68">
+  <title osisID="Deut" short="Deuteronomy" testament="old" chapters="34">
     <fullName>The Fifth Book of Moses, called Deuteronomy</fullName>
-    <verses>92,0,74,0,58,0,98,0,66,0,50,0,52,0,40,0,58,0,44,0,64,0,64,0,36,0,58,0,46,0,44,0,40,0,44,0,42,0,40,0,46,0,60,0,50,0,44,0,38,0,38,0,52,0,136,0,58,0,40,0,60,0,104,0,58,0,24,0</verses>
+    <verses>46,37,29,49,33,25,26,20,29,22,32,32,18,29,23,22,20,22,21,20,23,30,25,22,19,19,26,68,29,20,30,52,29,12</verses>
   </title>
-  <title osisID="Josh" short="Joshua" testament="old" chapters="48">
+  <title osisID="Josh" short="Joshua" testament="old" chapters="24">
     <fullName>The Book of Joshua</fullName>
-    <verses>36,0,48,0,34,0,48,0,30,0,54,0,52,0,70,0,54,0,86,0,46,0,48,0,66,0,30,0,126,0,20,0,36,0,56,0,102,0,18,0,90,0,68,0,32,0,66,0</verses>
+    <verses>18,24,17,24,15,27,26,35,27,43,23,24,33,15,63,10,18,28,51,9,45,34,16,33</verses>
   </title>
-  <title osisID="Judg" short="Judges" testament="old" chapters="42">
+  <title osisID="Judg" short="Judges" testament="old" chapters="21">
     <fullName>The Book of Judges</fullName>
-    <verses>72,0,46,0,62,0,48,0,62,0,80,0,50,0,70,0,114,0,36,0,80,0,30,0,50,0,40,0,40,0,62,0,26,0,62,0,60,0,96,0,50,0</verses>
+    <verses>36,23,31,24,31,40,25,35,57,18,40,15,25,20,20,31,13,31,30,48,25</verses>
   </title>
-  <title osisID="Ruth" short="Ruth" testament="old" chapters="8">
+  <title osisID="Ruth" short="Ruth" testament="old" chapters="4">
     <fullName>The Book of Ruth</fullName>
-    <verses>44,0,46,0,36,0,44,0</verses>
+    <verses>22,23,18,22</verses>
   </title>
-  <title osisID="1Sam" short="1 Samuel" testament="old" chapters="62">
+  <title osisID="1Sam" short="1 Samuel" testament="old" chapters="31">
     <fullName>The First Book of Samuel Otherwise Called the First Book of the Kings</fullName>
-    <verses>56,0,72,0,42,0,44,0,24,0,42,0,34,0,44,0,54,0,54,0,30,0,50,0,46,0,104,0,70,0,46,0,116,0,60,0,48,0,84,0,30,0,46,0,58,0,44,0,88,0,50,0,24,0,50,0,22,0,62,0,26,0</verses>
+    <verses>28,36,21,22,12,21,17,22,27,27,15,25,23,52,35,23,58,30,24,42,15,23,29,22,44,25,12,25,11,31,13</verses>
   </title>
-  <title osisID="2Sam" short="2 Samuel" testament="old" chapters="48">
+  <title osisID="2Sam" short="2 Samuel" testament="old" chapters="24">
     <fullName>The Second Book of Samuel Otherwise Called the Second Book of the Kings</fullName>
-    <verses>54,0,64,0,78,0,24,0,50,0,46,0,58,0,36,0,26,0,38,0,54,0,62,0,78,0,66,0,74,0,46,0,58,0,66,0,86,0,52,0,44,0,102,0,78,0,50,0</verses>
+    <verses>27,32,39,12,25,23,29,18,13,19,27,31,39,33,37,23,29,33,43,26,22,51,39,25</verses>
   </title>
-  <title osisID="1Kgs" short="1 Kings" testament="old" chapters="44">
+  <title osisID="1Kgs" short="1 Kings" testament="old" chapters="22">
     <fullName>The First Book of the Kings Commonly Called the Third Book of the Kings</fullName>
-    <verses>106,0,92,0,56,0,68,0,36,0,76,0,102,0,132,0,56,0,58,0,86,0,66,0,68,0,62,0,68,0,68,0,48,0,92,0,42,0,86,0,58,0,106,0</verses>
+    <verses>53,46,28,34,18,38,51,66,28,29,43,33,34,31,34,34,24,46,21,43,29,53</verses>
   </title>
-  <title osisID="2Kgs" short="2 Kings" testament="old" chapters="50">
+  <title osisID="2Kgs" short="2 Kings" testament="old" chapters="25">
     <fullName>The Second Book of the Kings Commonly Called the Fourth Book of the Kings</fullName>
-    <verses>36,0,50,0,54,0,88,0,54,0,66,0,40,0,58,0,74,0,72,0,42,0,42,0,50,0,58,0,76,0,40,0,82,0,74,0,74,0,42,0,52,0,40,0,74,0,40,0,60,0</verses>
+    <verses>18,25,27,44,27,33,20,29,37,36,21,21,25,29,38,20,41,37,37,21,26,20,37,20,30</verses>
   </title>
-  <title osisID="1Chr" short="1 Chronicles" testament="old" chapters="58">
+  <title osisID="1Chr" short="1 Chronicles" testament="old" chapters="29">
     <fullName>The First Book of the Chronicles</fullName>
-    <verses>108,0,110,0,48,0,86,0,52,0,162,0,80,0,80,0,88,0,28,0,94,0,80,0,28,0,34,0,58,0,86,0,54,0,34,0,38,0,16,0,60,0,38,0,64,0,62,0,62,0,64,0,68,0,42,0,60,0</verses>
+    <verses>54,55,24,43,26,81,40,40,44,14,47,40,14,17,29,43,27,17,19,8,30,19,32,31,31,32,34,21,30</verses>
   </title>
-  <title osisID="2Chr" short="2 Chronicles" testament="old" chapters="72">
+  <title osisID="2Chr" short="2 Chronicles" testament="old" chapters="36">
     <fullName>The Second Book of the Chronicles</fullName>
-    <verses>34,0,36,0,34,0,44,0,28,0,84,0,44,0,36,0,62,0,38,0,46,0,32,0,44,0,30,0,38,0,28,0,38,0,68,0,22,0,74,0,40,0,24,0,42,0,54,0,56,0,46,0,18,0,54,0,72,0,54,0,42,0,66,0,50,0,66,0,54,0,46,0</verses>
+    <verses>17,18,17,22,14,42,22,18,31,19,23,16,22,15,19,14,19,34,11,37,20,12,21,27,28,23,9,27,36,27,21,33,25,33,27,23</verses>
   </title>
-  <title osisID="Ezra" short="Ezra" testament="old" chapters="20">
+  <title osisID="Ezra" short="Ezra" testament="old" chapters="10">
     <fullName>Ezra</fullName>
-    <verses>22,0,140,0,26,0,48,0,34,0,44,0,56,0,72,0,30,0,88,0</verses>
+    <verses>11,70,13,24,17,22,28,36,15,44</verses>
   </title>
-  <title osisID="Neh" short="Nehemiah" testament="old" chapters="26">
+  <title osisID="Neh" short="Nehemiah" testament="old" chapters="13">
     <fullName>The Book of Nehemiah</fullName>
-    <verses>22,0,40,0,64,0,46,0,38,0,38,0,146,0,36,0,76,0,78,0,72,0,94,0,62,0</verses>
+    <verses>11,20,32,23,19,19,73,18,38,39,36,47,31</verses>
   </title>
-  <title osisID="Esth" short="Esther" testament="old" chapters="20">
+  <title osisID="Esth" short="Esther" testament="old" chapters="10">
     <fullName>The Book of Esther</fullName>
-    <verses>44,0,46,0,30,0,34,0,28,0,28,0,20,0,34,0,64,0,6,0</verses>
+    <verses>22,23,15,17,14,14,10,17,32,3</verses>
   </title>
-  <title osisID="Job" short="Job" testament="old" chapters="84">
+  <title osisID="Job" short="Job" testament="old" chapters="42">
     <fullName>The Book of Job</fullName>
-    <verses>44,0,26,0,52,0,42,0,54,0,60,0,42,0,44,0,70,0,44,0,40,0,50,0,56,0,44,0,70,0,44,0,32,0,42,0,58,0,58,0,68,0,60,0,34,0,50,0,12,0,28,0,46,0,56,0,50,0,62,0,80,0,44,0,66,0,74,0,32,0,66,0,48,0,82,0,60,0,48,0,68,0,34,0</verses>
+    <verses>22,13,26,21,27,30,21,22,35,22,20,25,28,22,35,22,16,21,29,29,34,30,17,25,6,14,23,28,25,31,40,22,33,37,16,33,24,41,30,24,34,17</verses>
   </title>
-  <title osisID="Ps" short="Psalms" testament="old" chapters="300">
+  <title osisID="Ps" short="Psalms" testament="old" chapters="150">
     <fullName>The Book of Psalms</fullName>
-    <verses>12,0,24,0,16,0,16,0,24,0,20,0,34,0,18,0,40,0,36,0,14,0,16,0,12,0,14,0,10,0,22,0,30,0,100,0,28,0,18,0,26,0,62,0,12,0,20,0,44,0,24,0,28,0,18,0,22,0,24,0,48,0,22,0,44,0,44,0,56,0,24,0,80,0,44,0,26,0,34,0,26,0,22,0,10,0,52,0,34,0,22,0,18,0,28,0,40,0,46,0,38,0,18,0,12,0,14,0,46,0,26,0,22,0,22,0,34,0,24,0,16,0,24,0,22,0,20,0,26,0,40,0,14,0,70,0,72,0,10,0,48,0,40,0,56,0,46,0,20,0,24,0,40,0,144,0,26,0,38,0,32,0,16,0,36,0,24,0,26,0,34,0,14,0,36,0,104,0,34,0,32,0,30,0,10,0,46,0,22,0,26,0,24,0,18,0,18,0,10,0,16,0,56,0,44,0,70,0,90,0,96,0,86,0,26,0,62,0,14,0,20,0,20,0,18,0,16,0,36,0,38,0,4,0,58,0,352,0,14,0,16,0,18,0,8,0,16,0,10,0,12,0,10,0,12,0,16,0,16,0,6,0,36,0,6,0,6,0,42,0,52,0,18,0,16,0,48,0,26,0,20,0,14,0,24,0,30,0,42,0,20,0,40,0,28,0,18,0,12,0</verses>
+    <verses>6,12,8,8,12,10,17,9,20,18,7,8,6,7,5,11,15,50,14,9,13,31,6,10,22,12,14,9,11,12,24,11,22,22,28,12,40,22,13,17,13,11,5,26,17,11,9,14,20,23,19,9,6,7,23,13,11,11,17,12,8,12,11,10,13,20,7,35,36,5,24,20,28,23,10,12,20,72,13,19,16,8,18,12,13,17,7,18,52,17,16,15,5,23,11,13,12,9,9,5,8,28,22,35,45,48,43,13,31,7,10,10,9,8,18,19,2,29,176,7,8,9,4,8,5,6,5,6,8,8,3,18,3,3,21,26,9,8,24,13,10,7,12,15,21,10,20,14,9,6</verses>
   </title>
-  <title osisID="Prov" short="Proverbs" testament="old" chapters="62">
+  <title osisID="Prov" short="Proverbs" testament="old" chapters="31">
     <fullName>The Proverbs</fullName>
-    <verses>66,0,44,0,70,0,54,0,46,0,70,0,54,0,72,0,36,0,64,0,62,0,56,0,50,0,70,0,66,0,66,0,56,0,48,0,58,0,60,0,62,0,58,0,70,0,68,0,56,0,56,0,54,0,56,0,54,0,66,0,62,0</verses>
+    <verses>33,22,35,27,23,35,27,36,18,32,31,28,25,35,33,33,28,24,29,30,31,29,35,34,28,28,27,28,27,33,31</verses>
   </title>
-  <title osisID="Eccl" short="Ecclesiastes" testament="old" chapters="24">
+  <title osisID="Eccl" short="Ecclesiastes" testament="old" chapters="12">
     <fullName>Ecclesiastes or, the Preacher</fullName>
-    <verses>36,0,52,0,44,0,32,0,40,0,24,0,58,0,34,0,36,0,40,0,20,0,28,0</verses>
+    <verses>18,26,22,16,20,12,29,17,18,20,10,14</verses>
   </title>
-  <title osisID="Song" short="Song of Solomon" testament="old" chapters="16">
+  <title osisID="Song" short="Song of Solomon" testament="old" chapters="8">
     <fullName>The Song of Solomon</fullName>
-    <verses>34,0,34,0,22,0,32,0,32,0,26,0,26,0,28,0</verses>
+    <verses>17,17,11,16,16,13,13,14</verses>
   </title>
-  <title osisID="Isa" short="Isaiah" testament="old" chapters="132">
+  <title osisID="Isa" short="Isaiah" testament="old" chapters="66">
     <fullName>The Book of the Prophet Isaiah</fullName>
-    <verses>62,0,44,0,52,0,12,0,60,0,26,0,50,0,44,0,42,0,68,0,32,0,12,0,44,0,64,0,18,0,28,0,28,0,14,0,50,0,12,0,34,0,50,0,36,0,46,0,24,0,42,0,26,0,58,0,48,0,66,0,18,0,40,0,48,0,34,0,20,0,44,0,76,0,44,0,16,0,62,0,58,0,50,0,56,0,56,0,50,0,26,0,30,0,44,0,52,0,22,0,46,0,30,0,24,0,34,0,26,0,24,0,42,0,28,0,42,0,44,0,22,0,24,0,38,0,24,0,50,0,48,0</verses>
+    <verses>31,22,26,6,30,13,25,22,21,34,16,6,22,32,9,14,14,7,25,6,17,25,18,23,12,21,13,29,24,33,9,20,24,17,10,22,38,22,8,31,29,25,28,28,25,13,15,22,26,11,23,15,12,17,13,12,21,14,21,22,11,12,19,12,25,24</verses>
   </title>
-  <title osisID="Jer" short="Jeremiah" testament="old" chapters="104">
+  <title osisID="Jer" short="Jeremiah" testament="old" chapters="52">
     <fullName>The Book of the Prophet Jeremiah</fullName>
-    <verses>38,0,74,0,50,0,62,0,62,0,60,0,68,0,44,0,52,0,50,0,46,0,34,0,54,0,44,0,42,0,42,0,54,0,46,0,30,0,36,0,28,0,60,0,80,0,20,0,76,0,48,0,44,0,34,0,64,0,48,0,80,0,88,0,52,0,44,0,38,0,64,0,42,0,56,0,36,0,32,0,36,0,44,0,26,0,60,0,10,0,56,0,14,0,94,0,78,0,92,0,128,0,68,0</verses>
+    <verses>19,37,25,31,31,30,34,22,26,25,23,17,27,22,21,21,27,23,15,18,14,30,40,10,38,24,22,17,32,24,40,44,26,22,19,32,21,28,18,16,18,22,13,30,5,28,7,47,39,46,64,34</verses>
   </title>
-  <title osisID="Lam" short="Lamentations" testament="old" chapters="10">
+  <title osisID="Lam" short="Lamentations" testament="old" chapters="5">
     <fullName>The Lamentations of Jeremiah</fullName>
-    <verses>44,0,44,0,132,0,44,0,44,0</verses>
+    <verses>22,22,66,22,22</verses>
   </title>
-  <title osisID="Ezek" short="Ezekiel" testament="old" chapters="96">
+  <title osisID="Ezek" short="Ezekiel" testament="old" chapters="48">
     <fullName>The Book of the Prophet Ezekiel</fullName>
-    <verses>56,0,20,0,54,0,34,0,34,0,28,0,54,0,36,0,22,0,44,0,50,0,56,0,46,0,46,0,16,0,126,0,48,0,64,0,28,0,98,0,64,0,62,0,98,0,54,0,34,0,42,0,72,0,52,0,42,0,52,0,36,0,64,0,66,0,62,0,30,0,76,0,56,0,46,0,58,0,98,0,52,0,40,0,54,0,62,0,50,0,48,0,46,0,70,0</verses>
+    <verses>28,10,27,17,17,14,27,18,11,22,25,28,23,23,8,63,24,32,14,49,32,31,49,27,17,21,36,26,21,26,18,32,33,31,15,38,28,23,29,49,26,20,27,31,25,24,23,35</verses>
   </title>
-  <title osisID="Dan" short="Daniel" testament="old" chapters="24">
+  <title osisID="Dan" short="Daniel" testament="old" chapters="12">
     <fullName>The Book of Daniel</fullName>
-    <verses>42,0,98,0,60,0,74,0,62,0,56,0,56,0,54,0,54,0,42,0,90,0,26,0</verses>
+    <verses>21,49,30,37,31,28,28,27,27,21,45,13</verses>
   </title>
-  <title osisID="Hos" short="Hosea" testament="old" chapters="28">
+  <title osisID="Hos" short="Hosea" testament="old" chapters="14">
     <fullName>Hosea</fullName>
-    <verses>22,0,46,0,10,0,38,0,30,0,22,0,32,0,28,0,34,0,30,0,24,0,28,0,32,0,18,0</verses>
+    <verses>11,23,5,19,15,11,16,14,17,15,12,14,16,9</verses>
   </title>
-  <title osisID="Joel" short="Joel" testament="old" chapters="6">
+  <title osisID="Joel" short="Joel" testament="old" chapters="3">
     <fullName>Joel</fullName>
-    <verses>40,0,64,0,42,0</verses>
+    <verses>20,32,21</verses>
   </title>
-  <title osisID="Amos" short="Amos" testament="old" chapters="18">
+  <title osisID="Amos" short="Amos" testament="old" chapters="9">
     <fullName>Amos</fullName>
-    <verses>30,0,32,0,30,0,26,0,54,0,28,0,34,0,28,0,30,0</verses>
+    <verses>15,16,15,13,27,14,17,14,15</verses>
   </title>
-  <title osisID="Obad" short="Obadiah" testament="old" chapters="2">
+  <title osisID="Obad" short="Obadiah" testament="old" chapters="1">
     <fullName>Obadiah</fullName>
-    <verses>42,0</verses>
+    <verses>21</verses>
   </title>
-  <title osisID="Jonah" short="Jonah" testament="old" chapters="8">
+  <title osisID="Jonah" short="Jonah" testament="old" chapters="4">
     <fullName>Jonah</fullName>
-    <verses>34,0,20,0,20,0,22,0</verses>
+    <verses>17,10,10,11</verses>
   </title>
-  <title osisID="Mic" short="Micah" testament="old" chapters="14">
+  <title osisID="Mic" short="Micah" testament="old" chapters="7">
     <fullName>Micah</fullName>
-    <verses>32,0,26,0,24,0,26,0,30,0,32,0,40,0</verses>
+    <verses>16,13,12,13,15,16,20</verses>
   </title>
-  <title osisID="Nah" short="Nahum" testament="old" chapters="6">
+  <title osisID="Nah" short="Nahum" testament="old" chapters="3">
     <fullName>Nahum</fullName>
-    <verses>30,0,26,0,38,0</verses>
+    <verses>15,13,19</verses>
   </title>
-  <title osisID="Hab" short="Habakkuk" testament="old" chapters="6">
+  <title osisID="Hab" short="Habakkuk" testament="old" chapters="3">
     <fullName>Habakkuk</fullName>
-    <verses>34,0,40,0,38,0</verses>
+    <verses>17,20,19</verses>
   </title>
-  <title osisID="Zeph" short="Zephaniah" testament="old" chapters="6">
+  <title osisID="Zeph" short="Zephaniah" testament="old" chapters="3">
     <fullName>Zephaniah</fullName>
-    <verses>36,0,30,0,40,0</verses>
+    <verses>18,15,20</verses>
   </title>
-  <title osisID="Hag" short="Haggai" testament="old" chapters="4">
+  <title osisID="Hag" short="Haggai" testament="old" chapters="2">
     <fullName>Haggai</fullName>
-    <verses>30,0,46,0</verses>
+    <verses>15,23</verses>
   </title>
-  <title osisID="Zech" short="Zechariah" testament="old" chapters="28">
+  <title osisID="Zech" short="Zechariah" testament="old" chapters="14">
     <fullName>Zechariah</fullName>
-    <verses>42,0,26,0,20,0,28,0,22,0,30,0,28,0,46,0,34,0,24,0,34,0,28,0,18,0,42,0</verses>
+    <verses>21,13,10,14,11,15,14,23,17,12,17,14,9,21</verses>
   </title>
-  <title osisID="Mal" short="Malachi" testament="old" chapters="8">
+  <title osisID="Mal" short="Malachi" testament="old" chapters="4">
     <fullName>Malachi</fullName>
-    <verses>28,0,34,0,36,0,12,0</verses>
+    <verses>14,17,18,6</verses>
   </title>
-  <title osisID="Tob" short="Tobit" testament="apo" chapters="28">
+  <title osisID="Tob" short="Tobit" testament="apo" chapters="14">
     <fullName>The Book of Tobit</fullName>
-    <verses>44,0,28,0,34,0,42,0,44,0,34,0,36,0,42,0,12,0,24,0,38,0,44,0,36,0,30,0</verses>
+    <verses>22,14,17,21,22,17,18,21,6,12,19,22,18,15</verses>
   </title>
-  <title osisID="Jdt" short="Judith" testament="apo" chapters="32">
+  <title osisID="Jdt" short="Judith" testament="apo" chapters="16">
     <fullName>The Book of Judith</fullName>
-    <verses>32,0,56,0,20,0,30,0,48,0,42,0,64,0,72,0,28,0,46,0,46,0,40,0,40,0,38,0,26,0,50,0</verses>
+    <verses>16,28,10,15,24,21,32,36,14,23,23,20,20,19,13,25</verses>
   </title>
-  <title osisID="EsthGr" short="Esther (Greek)" testament="apo" chapters="14">
+  <title osisID="EsthGr" short="Esther (Greek)" testament="apo" chapters="7">
     <fullName>The Rest of the Chapters of the Book of Esther</fullName>
-    <verses>20,0,24,0,12,0,36,0,38,0,32,0,48,0</verses>
+    <verses>10,12,6,18,19,16,24</verses>
   </title>
-  <title osisID="Wis" short="Wisdom" testament="apo" chapters="38">
+  <title osisID="Wis" short="Wisdom" testament="apo" chapters="19">
     <fullName>The Book of Wisdom or The Wisdom of Solomon</fullName>
-    <verses>32,0,48,0,38,0,40,0,46,0,50,0,60,0,42,0,36,0,42,0,52,0,54,0,38,0,62,0,38,0,58,0,42,0,50,0,44,0</verses>
+    <verses>16,24,19,20,23,25,30,21,18,21,26,27,19,31,19,29,21,25,22</verses>
   </title>
-  <title osisID="Sir" short="Sirach" testament="apo" chapters="102">
+  <title osisID="Sir" short="Sirach" testament="apo" chapters="51">
     <fullName>The Wisdom of Jesus the Son of Sirach, or Ecclesiasticus</fullName>
-    <verses>60,0,36,0,62,0,62,0,30,0,74,0,72,0,38,0,36,0,62,0,68,0,36,0,52,0,54,0,40,0,60,0,64,0,66,0,60,0,64,0,56,0,54,0,56,0,68,0,52,0,58,0,60,0,52,0,56,0,50,0,62,0,48,0,62,0,52,0,40,0,52,0,62,0,68,0,70,0,60,0,48,0,50,0,66,0,44,0,52,0,40,0,50,0,50,0,32,0,58,0,60,0</verses>
+    <verses>30,18,31,31,15,37,36,19,18,31,34,18,26,27,20,30,32,33,30,32,28,27,28,34,26,29,30,26,28,25,31,24,31,26,20,26,31,34,35,30,24,25,33,22,26,20,25,25,16,29,30</verses>
   </title>
-  <title osisID="Bar" short="Baruch" testament="apo" chapters="10">
+  <title osisID="Bar" short="Baruch" testament="apo" chapters="5">
     <fullName>The Book of Baruch</fullName>
-    <verses>44,0,70,0,74,0,74,0,18,0</verses>
+    <verses>22,35,37,37,9</verses>
   </title>
-  <title osisID="EpJer" short="Letter of Jeremiah" testament="apo" chapters="2">
+  <title osisID="EpJer" short="Letter of Jeremiah" testament="apo" chapters="1">
     <fullName>The Epistle [or Letter] of Jeremiah [Jeremy]</fullName>
-    <verses>146,0</verses>
+    <verses>73</verses>
   </title>
-  <title osisID="PrAzar" short="Azariah" testament="apo" chapters="2">
+  <title osisID="PrAzar" short="Azariah" testament="apo" chapters="1">
     <fullName>The Prayer of Azariah</fullName>
-    <verses>136,0</verses>
+    <verses>68</verses>
   </title>
-  <title osisID="Sus" short="Susanna" testament="apo" chapters="2">
+  <title osisID="Sus" short="Susanna" testament="apo" chapters="1">
     <fullName>The History of Susanna [in Daniel]</fullName>
-    <verses>128,0</verses>
+    <verses>64</verses>
   </title>
-  <title osisID="Bel" short="Bel" testament="apo" chapters="2">
+  <title osisID="Bel" short="Bel" testament="apo" chapters="1">
     <fullName>The Book of Bel and the Dragon [in Daniel]</fullName>
-    <verses>84,0</verses>
+    <verses>42</verses>
   </title>
-  <title osisID="1Macc" short="1 Maccabees" testament="apo" chapters="32">
+  <title osisID="1Macc" short="1 Maccabees" testament="apo" chapters="16">
     <fullName>The First Book of the Maccabees</fullName>
-    <verses>128,0,140,0,120,0,122,0,136,0,126,0,100,0,64,0,146,0,178,0,148,0,106,0,106,0,98,0,82,0,48,0</verses>
+    <verses>64,70,60,61,68,63,50,32,73,89,74,53,53,49,41,24</verses>
   </title>
-  <title osisID="2Macc" short="2 Maccabees" testament="apo" chapters="30">
+  <title osisID="2Macc" short="2 Maccabees" testament="apo" chapters="15">
     <fullName>The Second Book of the Maccabees</fullName>
-    <verses>72,0,64,0,80,0,100,0,54,0,62,0,84,0,72,0,58,0,76,0,76,0,90,0,52,0,92,0,78,0</verses>
+    <verses>36,32,40,50,27,31,42,36,29,38,38,45,26,46,39</verses>
   </title>
-  <title osisID="1Esd" short="1 Esdras" testament="apo" chapters="18">
+  <title osisID="1Esd" short="1 Esdras" testament="apo" chapters="9">
     <fullName>The First Book of Esdras</fullName>
-    <verses>116,0,60,0,48,0,126,0,146,0,68,0,30,0,192,0,110,0</verses>
+    <verses>58,30,24,63,73,34,15,96,55</verses>
   </title>
-  <title osisID="PrMan" short="Manasseh" testament="apo" chapters="2">
+  <title osisID="PrMan" short="Manasseh" testament="apo" chapters="1">
     <fullName>The Prayer of Manasseh, or, The Prayer of Manasses King of Judah</fullName>
-    <verses>28,0</verses>
+    <verses>14</verses>
   </title>
-  <title osisID="2Esd" short="2 Esdras" testament="apo" chapters="32">
+  <title osisID="2Esd" short="2 Esdras" testament="apo" chapters="16">
     <fullName>The Second Book of Esdras</fullName>
-    <verses>80,0,96,0,72,0,104,0,112,0,118,0,140,0,126,0,94,0,118,0,92,0,102,0,116,0,96,0,126,0,156,0</verses>
+    <verses>40,48,36,52,56,59,70,63,47,59,46,51,58,48,63,78</verses>
   </title>
-  <title osisID="Matt" short="Matthew" testament="new" chapters="56">
+  <title osisID="Matt" short="Matthew" testament="new" chapters="28">
     <fullName>The Gospel According to St. Matthew</fullName>
-    <verses>50,0,46,0,34,0,50,0,96,0,68,0,58,0,68,0,76,0,84,0,60,0,100,0,116,0,72,0,78,0,56,0,54,0,70,0,60,0,68,0,92,0,92,0,78,0,102,0,92,0,150,0,132,0,40,0</verses>
+    <verses>25,23,17,25,48,34,29,34,38,42,30,50,58,36,39,28,27,35,30,34,46,46,39,51,46,75,66,20</verses>
   </title>
-  <title osisID="Mark" short="Mark" testament="new" chapters="32">
+  <title osisID="Mark" short="Mark" testament="new" chapters="16">
     <fullName>The Gospel According to St. Mark</fullName>
-    <verses>90,0,56,0,70,0,82,0,86,0,112,0,74,0,76,0,100,0,104,0,66,0,88,0,74,0,144,0,94,0,40,0</verses>
+    <verses>45,28,35,41,43,56,37,38,50,52,33,44,37,72,47,20</verses>
   </title>
-  <title osisID="Luke" short="Luke" testament="new" chapters="48">
+  <title osisID="Luke" short="Luke" testament="new" chapters="24">
     <fullName>The Gospel According to St. Luke</fullName>
-    <verses>160,0,104,0,76,0,88,0,78,0,98,0,100,0,112,0,124,0,84,0,108,0,118,0,70,0,70,0,64,0,62,0,74,0,86,0,96,0,94,0,76,0,142,0,112,0,106,0</verses>
+    <verses>80,52,38,44,39,49,50,56,62,42,54,59,35,35,32,31,37,43,48,47,38,71,56,53</verses>
   </title>
-  <title osisID="John" short="John" testament="new" chapters="42">
+  <title osisID="John" short="John" testament="new" chapters="21">
     <fullName>The Gospel According to St. John</fullName>
-    <verses>102,0,50,0,72,0,108,0,94,0,142,0,106,0,118,0,82,0,84,0,114,0,100,0,76,0,62,0,54,0,66,0,52,0,80,0,84,0,62,0,50,0</verses>
+    <verses>51,25,36,54,47,71,53,59,41,42,57,50,38,31,27,33,26,40,42,31,25</verses>
   </title>
-  <title osisID="Acts" short="Acts" testament="new" chapters="56">
+  <title osisID="Acts" short="Acts" testament="new" chapters="28">
     <fullName>The Acts of the Apostles</fullName>
-    <verses>52,0,94,0,52,0,74,0,84,0,30,0,120,0,80,0,86,0,96,0,60,0,50,0,104,0,56,0,82,0,80,0,68,0,56,0,82,0,76,0,80,0,60,0,70,0,54,0,54,0,64,0,88,0,62,0</verses>
+    <verses>26,47,26,37,42,15,60,40,43,48,30,25,52,28,41,40,34,28,41,38,40,30,35,27,27,32,44,31</verses>
   </title>
-  <title osisID="Rom" short="Romans" testament="new" chapters="32">
+  <title osisID="Rom" short="Romans" testament="new" chapters="16">
     <fullName>The Epistle of Paul the Apostle to the Romans</fullName>
-    <verses>64,0,58,0,62,0,50,0,42,0,46,0,50,0,78,0,66,0,42,0,72,0,42,0,28,0,46,0,66,0,54,0</verses>
+    <verses>32,29,31,25,21,23,25,39,33,21,36,21,14,23,33,27</verses>
   </title>
-  <title osisID="1Cor" short="1 Corinthians" testament="new" chapters="32">
+  <title osisID="1Cor" short="1 Corinthians" testament="new" chapters="16">
     <fullName>The First Epistle of Paul the Apostle to the Corinthians</fullName>
-    <verses>62,0,32,0,46,0,42,0,26,0,40,0,80,0,26,0,54,0,66,0,68,0,62,0,26,0,80,0,116,0,48,0</verses>
+    <verses>31,16,23,21,13,20,40,13,27,33,34,31,13,40,58,24</verses>
   </title>
-  <title osisID="2Cor" short="2 Corinthians" testament="new" chapters="26">
+  <title osisID="2Cor" short="2 Corinthians" testament="new" chapters="13">
     <fullName>The Second Epistle of Paul the Apostle to the Corinthians</fullName>
-    <verses>48,0,34,0,36,0,36,0,42,0,36,0,32,0,48,0,30,0,36,0,66,0,42,0,28,0</verses>
+    <verses>24,17,18,18,21,18,16,24,15,18,33,21,14</verses>
   </title>
-  <title osisID="Gal" short="Galatians" testament="new" chapters="12">
+  <title osisID="Gal" short="Galatians" testament="new" chapters="6">
     <fullName>The Epistle of Paul the Apostle to the Galatians</fullName>
-    <verses>48,0,42,0,58,0,62,0,52,0,36,0</verses>
+    <verses>24,21,29,31,26,18</verses>
   </title>
-  <title osisID="Eph" short="Ephesians" testament="new" chapters="12">
+  <title osisID="Eph" short="Ephesians" testament="new" chapters="6">
     <fullName>The Epistle of Paul the Apostle to the Ephesians</fullName>
-    <verses>46,0,44,0,42,0,64,0,66,0,48,0</verses>
+    <verses>23,22,21,32,33,24</verses>
   </title>
-  <title osisID="Phil" short="Philippians" testament="new" chapters="8">
+  <title osisID="Phil" short="Philippians" testament="new" chapters="4">
     <fullName>The Epistle of Paul the Apostle to the Philippians</fullName>
-    <verses>60,0,60,0,42,0,46,0</verses>
+    <verses>30,30,21,23</verses>
   </title>
-  <title osisID="Col" short="Colossians" testament="new" chapters="8">
+  <title osisID="Col" short="Colossians" testament="new" chapters="4">
     <fullName>The Epistle of Paul the Apostle to the Colossians</fullName>
-    <verses>58,0,46,0,50,0,36,0</verses>
+    <verses>29,23,25,18</verses>
   </title>
-  <title osisID="1Thess" short="1 Thessalonians" testament="new" chapters="10">
+  <title osisID="1Thess" short="1 Thessalonians" testament="new" chapters="5">
     <fullName>The First Epistle of Paul to the Thessalonians</fullName>
-    <verses>20,0,40,0,26,0,36,0,56,0</verses>
+    <verses>10,20,13,18,28</verses>
   </title>
-  <title osisID="2Thess" short="2 Thessalonians" testament="new" chapters="6">
+  <title osisID="2Thess" short="2 Thessalonians" testament="new" chapters="3">
     <fullName>The Second Epistle of Paul the Apostle to the Thessalonians</fullName>
-    <verses>24,0,34,0,36,0</verses>
+    <verses>12,17,18</verses>
   </title>
-  <title osisID="1Tim" short="1 Timothy" testament="new" chapters="12">
+  <title osisID="1Tim" short="1 Timothy" testament="new" chapters="6">
     <fullName>The First Epistle of Paul the Apostle to Timothy</fullName>
-    <verses>40,0,30,0,32,0,32,0,50,0,42,0</verses>
+    <verses>20,15,16,16,25,21</verses>
   </title>
-  <title osisID="2Tim" short="2 Timothy" testament="new" chapters="8">
+  <title osisID="2Tim" short="2 Timothy" testament="new" chapters="4">
     <fullName>The Second Epistle of Paul the Apostle to Timothy</fullName>
-    <verses>36,0,52,0,34,0,44,0</verses>
+    <verses>18,26,17,22</verses>
   </title>
-  <title osisID="Titus" short="Titus" testament="new" chapters="6">
+  <title osisID="Titus" short="Titus" testament="new" chapters="3">
     <fullName>The Epistle of Paul to Titus</fullName>
-    <verses>32,0,30,0,30,0</verses>
+    <verses>16,15,15</verses>
   </title>
-  <title osisID="Phlm" short="Philemon" testament="new" chapters="2">
+  <title osisID="Phlm" short="Philemon" testament="new" chapters="1">
     <fullName>The Epistle of Paul to Philemon</fullName>
-    <verses>50,0</verses>
+    <verses>25</verses>
   </title>
-  <title osisID="Heb" short="Hebrews" testament="new" chapters="26">
+  <title osisID="Heb" short="Hebrews" testament="new" chapters="13">
     <fullName>The Epistle to the Hebrews</fullName>
-    <verses>28,0,36,0,38,0,32,0,28,0,40,0,56,0,26,0,56,0,78,0,80,0,58,0,50,0</verses>
+    <verses>14,18,19,16,14,20,28,13,28,39,40,29,25</verses>
   </title>
-  <title osisID="Jas" short="James" testament="new" chapters="10">
+  <title osisID="Jas" short="James" testament="new" chapters="5">
     <fullName>The General Epistle of James</fullName>
-    <verses>54,0,52,0,36,0,34,0,40,0</verses>
+    <verses>27,26,18,17,20</verses>
   </title>
-  <title osisID="1Pet" short="1 Peter" testament="new" chapters="10">
+  <title osisID="1Pet" short="1 Peter" testament="new" chapters="5">
     <fullName>The First Epistle General of Peter</fullName>
-    <verses>50,0,50,0,44,0,38,0,28,0</verses>
+    <verses>25,25,22,19,14</verses>
   </title>
-  <title osisID="2Pet" short="2 Peter" testament="new" chapters="6">
+  <title osisID="2Pet" short="2 Peter" testament="new" chapters="3">
     <fullName>The Second Epistle General of Peter</fullName>
-    <verses>42,0,44,0,36,0</verses>
+    <verses>21,22,18</verses>
   </title>
-  <title osisID="1John" short="1 John" testament="new" chapters="10">
+  <title osisID="1John" short="1 John" testament="new" chapters="5">
     <fullName>The First Epistle General of John</fullName>
-    <verses>20,0,58,0,48,0,42,0,42,0</verses>
+    <verses>10,29,24,21,21</verses>
   </title>
-  <title osisID="2John" short="2 John" testament="new" chapters="2">
+  <title osisID="2John" short="2 John" testament="new" chapters="1">
     <fullName>The Second Epistle of John</fullName>
-    <verses>26,0</verses>
+    <verses>13</verses>
   </title>
-  <title osisID="3John" short="3 John" testament="new" chapters="2">
+  <title osisID="3John" short="3 John" testament="new" chapters="1">
     <fullName>The Third Epistle of John</fullName>
-    <verses>28,0</verses>
+    <verses>14</verses>
   </title>
-  <title osisID="Jude" short="Jude" testament="new" chapters="2">
+  <title osisID="Jude" short="Jude" testament="new" chapters="1">
     <fullName>The General Epistle of Jude</fullName>
-    <verses>50,0</verses>
+    <verses>25</verses>
   </title>
-  <title osisID="Rev" short="Revelation" testament="new" chapters="44">
+  <title osisID="Rev" short="Revelation" testament="new" chapters="22">
     <fullName>The Revelation of St. John the Divine</fullName>
-    <verses>40,0,58,0,44,0,22,0,28,0,34,0,34,0,26,0,42,0,22,0,38,0,34,0,36,0,40,0,16,0,42,0,36,0,48,0,42,0,30,0,54,0,42,0</verses>
+    <verses>20,29,22,11,14,17,17,13,21,11,19,17,18,20,8,21,18,24,21,15,27,21</verses>
   </title>
 </books>
