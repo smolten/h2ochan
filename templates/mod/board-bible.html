@@ -88,7 +88,9 @@
 			<th>{% trans 'URI' %}</th>
 			<td>
 				{% if not new %}
+					<a href="?/{{ config.board_path|sprintf(board.uri) }}{{ config.file_index }}">
 					<span name="uri_preset" id="uri_preset">{{ config.board_abbreviation|sprintf(board.uri) }}</span>
+					</a>
 				{% else %}
 					/<input size="10" maxlength="255" type="text" name="uri" id="uri" autocomplete="off">/
 				{% endif %}
@@ -118,8 +120,7 @@
 			<td>
 			<button type="button" name="get_status" id="get_status">Get Status</button>
 			<button type="button" name="do_post_book" id="do_post_book">Post Book</button>
-			<button type="button" onclick="history.back()">(Webpage Back)</button>
-                        <br>
+			<button type="button" onclick="history.back()">(Webpage Back)</button>                        <br>
 			<button type="button" name="do_post_threads" id="do_post_threads">Post Chapter Threads</button>
         		<button type="button" name="do_post_replies" id="do_post_replies">Post Verse Replies</button>
 			</td>

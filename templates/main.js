@@ -406,17 +406,15 @@ function citeVerse(chapter, verse, event) {
 	popup.className = 'verse-cite-popup';
 	popup.innerHTML = `
 		<div class="verse-cite-content">
-			<button class="verse-cite-close" onclick="document.getElementById('verse-cite-popup').remove(); event.stopPropagation();">&times;</button>
-			<h3>Cite This Verse</h3>
 			<div class="verse-cite-option">
-				<label>External URL:</label>
+				<button type="button" style="user-select:none;" onmousedown="event.preventDefault();" onclick="copyToClipboard('verse-url-external'); event.preventDefault(); event.stopPropagation();">
+				Copy</button>
 				<input type="text" readonly value="${externalUrl}" id="verse-url-external" onclick="this.select(); event.stopPropagation();" />
-				<button onclick="copyToClipboard('verse-url-external'); event.stopPropagation();">Copy</button>
 			</div>
 			<div class="verse-cite-option">
-				<label>Internal Reference:</label>
+				<button type="button" style="user-select:none;" onmousedown="event.preventDefault();" onclick="copyToClipboard('verse-url-internal'); event.preventDefault(); event.stopPropagation();">
+				Copy</button>
 				<input type="text" readonly value="${internalRef}" id="verse-url-internal" onclick="this.select(); event.stopPropagation();" />
-				<button onclick="copyToClipboard('verse-url-internal'); event.stopPropagation();">Copy</button>
 			</div>
 		</div>
 	`;
@@ -445,8 +443,16 @@ function copyToClipboard(elementId) {
 
 		try {
 			document.execCommand('copy');
+
+                        // Deselect the text
+            if (window.getSelection) {
+                window.getSelection().removeAllRanges();
+            } else if (document.selection) { // For IE
+                document.selection.empty();
+            }
+
 			// Visual feedback
-			let button = input.nextElementSibling;
+			let button = input.previousElementSibling;
 			let originalText = button.textContent;
 			button.textContent = 'Copied!';
 			button.style.background = '#4CAF50';

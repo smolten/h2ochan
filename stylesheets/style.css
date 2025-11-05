@@ -1,3 +1,5 @@
+verse@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&display=swap');
+
 body {
   background: #EEF2FF url('img/fade-blue.png') repeat-x 50% 0%;
   color: black;
@@ -219,6 +221,11 @@ div.post.op {
   margin-bottom: 5px;
 }
 
+div.post.op.bible {
+  margin:0;
+  padding:0;
+}
+
 div.post.op hr {
   border-color: #D9BFB7;
 }
@@ -231,6 +238,7 @@ div.post.op hr {
 .nointro {
   margin: 0 0;
   padding: 0;
+  position: relative;
 }
 
 input.delete {
@@ -238,7 +246,11 @@ input.delete {
   /*margin: 1px 6px 0 0;*/
 }
 input.bookmark {
-  float: right;
+  display: inline-block;
+  position: absolute;
+  right: -6px;
+  top: -6px;
+  opacity: 40%;
 }
 
 .intro span.subject {
@@ -267,9 +279,17 @@ div.delete {
 div.post.reply p {
   margin: 0.3em 0 0 0;
 }
+div.post.reply.bible p {
+  margin: 0;
+}
 
 div.post.reply.highlighted {
   background: #D6BAD0;
+}
+
+div.post.reply.bible {
+  margin: 0;
+  border-style: none;
 }
 
 div.post {
@@ -290,6 +310,10 @@ div.post.reply {
   border-color: #B7C5D9;
   display: inline-block;
   max-width: 94%!important;
+}
+div.post.reply.verse {
+  margin: 0;
+  border-style: none;
 }
 
 span.trip {
@@ -1253,67 +1277,46 @@ div.mix {
 
 /* Bible verse citation styles */
 a.post_no.chapter {
-  font-weight: bold;
+  font-weight: 500;
   cursor: pointer;
   margin-right: 0.3em;
   font-size: 2em;
+  margin-top: -0.3em;
   float: left;
-  font-family: "Garamond", serif;
+  font-family: "EB Garamond", serif;
 }
 
 a.post_no.verse {
+  font-weight: 500;
   cursor: pointer;
   margin-right: 0.3em;
-  transform: translateY(-0.15em);
-  float: left;
+  transform: translateY(-0.2em);
+  display: inline-block;
+  font-family: "EB Garamond", serif;
 }
 
 /* Verse citation popup */
 .verse-cite-popup {
+  min-height: 3em;
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
-  transform: translateY(-100%);
+  height: 3em;
+  transform: translateY(-120%);
   z-index: 9999;
   pointer-events: none;
 }
 
 .verse-cite-content {
-  background: rgba(255, 255, 255, 0.98);
+  background: rgb(214 218 240);
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
   border: 2px solid #34345C;
+  padding: 0.3em;
   width: 100%;
   height: 100%;
-  box-sizing: border-box;
-  overflow-y: auto;
   position: relative;
   pointer-events: auto;
-}
-
-.verse-cite-close {
-  position: absolute;
-  top: 0;
-  right: 0;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #666;
-}
-
-.verse-cite-close:hover {
-  color: #000;
-}
-
-.verse-cite-content h3 {
-  color: #333;
-}
-
-.verse-cite-option label {
-  display: block;
-  font-weight: bold;
-  color: #555;
 }
 
 .verse-cite-option input {
@@ -1321,14 +1324,12 @@ a.post_no.verse {
   border: 1px solid #ccc;
 }
 
-.verse-cite-option button {
-  background: #34345C;
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: background 0.3s;
+.verse-cite-option {
+    display: flex;
+    align-items: center;  /* vertically center the button and input */
+    margin: 0.1em;
 }
 
-.verse-cite-option button:hover {
-  background: #252547;
+.verse-cite-option input {
+    flex: 1;              /* makes input take remaining space */
 }
