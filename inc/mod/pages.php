@@ -594,7 +594,7 @@ function mod_edit_board_bible(Context $ctx, $boardName) {
 	                  $bible_index[] = [
 	                          'osisID' => (string)$t['osisID'],
 	                          'short' => (string)$t['short'],
-	                          'text' => (string)$t
+	                          'text' => (string)$t->fullName
 	                  ];
 	              }
 	          }
@@ -796,7 +796,7 @@ function mod_new_board_bible(Context $ctx) {
 		$bible_index[] = [
 			'osisID' => $osisID,
 			'short' => (string)$t['short'],
-			'text' => (string)$t,
+			'text' => (string)$t->fullName,
 			'exists' => in_array($osisID, $existing_boards)
 		];
 	    }
@@ -4163,8 +4163,9 @@ function mod_bible_make_index(Context $ctx) {
     exit;
     }
 
-    $handle = fopen($path_full, 'r');
-    if (!$handle) {
+    // Use XMLReader for efficient parsing of large Bible XML
+    $reader = new XMLReader();
+    if (!$reader->open($path_full)) {
         error(sprintf(
         	_('Cannot open Bible XML file %s (current dir: %s)'),
 	        $path_full,
@@ -4172,45 +4173,107 @@ function mod_bible_make_index(Context $ctx) {
     	));
     }
 
-    $titles = [];
+    $books = [];
     $current_testament = ''; // Track current testament: 'old', 'apo', or 'new'
+    $current_book = null;
+    $current_chapter_num = 0;
+    $verse_counts = []; // Verse counts for current book's chapters
+    $in_book = false; // Track if we're inside a book div
 
-    while (($line = fgets($handle)) !== false) {
-        // Check for testament bookGroup titles
-        if (preg_match('/<title>(Old Testament|Apocrypha\/Deuterocanon|New Testament)<\/title>/i', $line, $matches)) {
-            $testament_name = $matches[1];
-            if ($testament_name === 'Old Testament') {
-                $current_testament = 'old';
-            } elseif ($testament_name === 'Apocrypha/Deuterocanon') {
-                $current_testament = 'apo';
-            } elseif ($testament_name === 'New Testament') {
-                $current_testament = 'new';
-            }
+    while ($reader->read()) {
+        // Only process opening element tags
+        if ($reader->nodeType != XMLReader::ELEMENT) {
+            continue;
         }
 
-        // Check for book titles
-        if (preg_match('/<div\s+type="book".*?osisID="([^"]+)".*?>\s*<title\s+type="main"\s+short="([^"]+)">(.+?)<\/title>/i', $line, $matches)) {
-            $titles[] = [
-                'osisID' => $matches[1],
-                'short' => $matches[2],
-                'full' => $matches[3],
+        $nodeName = $reader->name;
+
+        // Track testament from bookGroup titles
+        if ($nodeName == 'title') {
+            $title_text = $reader->readString();
+            if ($title_text === 'Old Testament') {
+                $current_testament = 'old';
+            } elseif ($title_text === 'Apocrypha/Deuterocanon') {
+                $current_testament = 'apo';
+            } elseif ($title_text === 'New Testament') {
+                $current_testament = 'new';
+            }
+
+            // Check if this is a book title
+            if ($in_book && $reader->getAttribute('type') == 'main') {
+                $current_book['short'] = (string)$reader->getAttribute('short');
+                $current_book['full'] = $title_text;
+            }
+            continue;
+        }
+
+        // Start of a book
+        if ($nodeName == 'div' && $reader->getAttribute('type') == 'book') {
+            // Save previous book if exists
+            if ($current_book !== null) {
+                $current_book['verse_counts'] = $verse_counts;
+                $current_book['chapter_count'] = count($verse_counts);
+                $books[] = $current_book;
+            }
+
+            // Start new book
+            $current_book = [
+                'osisID' => (string)$reader->getAttribute('osisID'),
+                'short' => '',
+                'full' => '',
                 'testament' => $current_testament
             ];
+            $verse_counts = [];
+            $current_chapter_num = 0;
+            $in_book = true;
+            continue;
+        }
+
+        // Start of a chapter (only count opening tags with sID, ignore closing tags with eID)
+        if ($nodeName == 'chapter' && $in_book && $reader->getAttribute('sID')) {
+            $current_chapter_num++;
+            $verse_counts[$current_chapter_num] = 0;
+            continue;
+        }
+
+        // Count verses in current chapter (only opening tags with sID, ignore closing tags with eID)
+        if ($nodeName == 'verse' && $current_chapter_num > 0 && $reader->getAttribute('sID')) {
+            $verse_counts[$current_chapter_num]++;
+            continue;
         }
     }
 
-    fclose($handle);
+    // Save last book
+    if ($current_book !== null) {
+        $current_book['verse_counts'] = $verse_counts;
+        $current_book['chapter_count'] = count($verse_counts);
+        $books[] = $current_book;
+    }
 
-    // Build index XML
+    $reader->close();
+
+    // Build index XML with chapter and verse counts
     $xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<books>\n";
-    foreach ($titles as $t) {
+    foreach ($books as $book) {
+        // Convert verse_counts array to comma-separated string
+        $verse_list = implode(',', $book['verse_counts']);
+
         $xml .= sprintf(
-            "  <title osisID=\"%s\" short=\"%s\" testament=\"%s\">%s</title>\n",
-            htmlspecialchars($t['osisID']),
-            htmlspecialchars($t['short']),
-            htmlspecialchars($t['testament']),
-            htmlspecialchars($t['full'])
+            "  <title osisID=\"%s\" short=\"%s\" testament=\"%s\" chapters=\"%d\">\n",
+            htmlspecialchars($book['osisID']),
+            htmlspecialchars($book['short']),
+            htmlspecialchars($book['testament']),
+            $book['chapter_count']
         );
+        $xml .= sprintf(
+            "    <fullName>%s</fullName>\n",
+            htmlspecialchars($book['full'])
+        );
+        $xml .= sprintf(
+            "    <verses>%s</verses>\n",
+            htmlspecialchars($verse_list)
+        );
+        $xml .= "  </title>\n";
     }
     $xml .= "</books>\n";
 
