@@ -594,7 +594,7 @@ function mod_edit_board_bible(Context $ctx, $boardName) {
 	                  $bible_index[] = [
 	                          'osisID' => (string)$t['osisID'],
 	                          'short' => (string)$t['short'],
-	                          'text' => (string)$t
+	                          'text' => (string)$t->fullName
 	                  ];
 	              }
 	          }
@@ -796,7 +796,7 @@ function mod_new_board_bible(Context $ctx) {
 		$bible_index[] = [
 			'osisID' => $osisID,
 			'short' => (string)$t['short'],
-			'text' => (string)$t,
+			'text' => (string)$t->fullName,
 			'exists' => in_array($osisID, $existing_boards)
 		];
 	    }
@@ -4178,10 +4178,18 @@ function mod_bible_make_index(Context $ctx) {
     $current_book = null;
     $current_chapter_num = 0;
     $verse_counts = []; // Verse counts for current book's chapters
+    $in_book = false; // Track if we're inside a book div
 
     while ($reader->read()) {
+        // Only process opening element tags
+        if ($reader->nodeType != XMLReader::ELEMENT) {
+            continue;
+        }
+
+        $nodeName = $reader->name;
+
         // Track testament from bookGroup titles
-        if ($reader->nodeType == XMLReader::ELEMENT && $reader->name == 'title') {
+        if ($nodeName == 'title') {
             $title_text = $reader->readString();
             if ($title_text === 'Old Testament') {
                 $current_testament = 'old';
@@ -4190,13 +4198,17 @@ function mod_bible_make_index(Context $ctx) {
             } elseif ($title_text === 'New Testament') {
                 $current_testament = 'new';
             }
+
+            // Check if this is a book title
+            if ($in_book && $reader->getAttribute('type') == 'main') {
+                $current_book['short'] = (string)$reader->getAttribute('short');
+                $current_book['full'] = $title_text;
+            }
+            continue;
         }
 
         // Start of a book
-        if ($reader->nodeType == XMLReader::ELEMENT &&
-            $reader->name == 'div' &&
-            $reader->getAttribute('type') == 'book') {
-
+        if ($nodeName == 'div' && $reader->getAttribute('type') == 'book') {
             // Save previous book if exists
             if ($current_book !== null) {
                 $current_book['verse_counts'] = $verse_counts;
@@ -4205,47 +4217,29 @@ function mod_bible_make_index(Context $ctx) {
             }
 
             // Start new book
-            $osisID = $reader->getAttribute('osisID');
-            $reader->read(); // Move to title element
-
-            // Find the main title element
-            $short = '';
-            $full = '';
-            while ($reader->read()) {
-                if ($reader->nodeType == XMLReader::ELEMENT &&
-                    $reader->name == 'title' &&
-                    $reader->getAttribute('type') == 'main') {
-                    $short = $reader->getAttribute('short');
-                    $full = $reader->readString();
-                    break;
-                }
-                // Stop if we've moved past the title section
-                if ($reader->nodeType == XMLReader::ELEMENT && $reader->name == 'chapter') {
-                    break;
-                }
-            }
-
             $current_book = [
-                'osisID' => $osisID,
-                'short' => $short,
-                'full' => $full,
+                'osisID' => (string)$reader->getAttribute('osisID'),
+                'short' => '',
+                'full' => '',
                 'testament' => $current_testament
             ];
             $verse_counts = [];
             $current_chapter_num = 0;
+            $in_book = true;
+            continue;
         }
 
-        // Start of a chapter
-        if ($reader->nodeType == XMLReader::ELEMENT && $reader->name == 'chapter') {
+        // Start of a chapter (only count if we're in a book)
+        if ($nodeName == 'chapter' && $in_book) {
             $current_chapter_num++;
             $verse_counts[$current_chapter_num] = 0;
+            continue;
         }
 
         // Count verses in current chapter
-        if ($reader->nodeType == XMLReader::ELEMENT &&
-            $reader->name == 'verse' &&
-            $current_chapter_num > 0) {
+        if ($nodeName == 'verse' && $current_chapter_num > 0) {
             $verse_counts[$current_chapter_num]++;
+            continue;
         }
     }
 
