@@ -3189,6 +3189,43 @@ function get_urls($body) {
  * Categorize Bible boards by testament using the short index file
  * Returns an array with 'old_testament', 'new_testament', and 'apocrypha' keys
  */
+/**
+ * Format a Bible book title with the book name bolded (first occurrence only)
+ *
+ * @param string $title The short book name (e.g., "Genesis", "1 Samuel", "Mark")
+ * @param string $subtitle The full book title (e.g., "The First Book of Moses, called Genesis")
+ * @return string The formatted HTML with the book name bolded
+ */
+function formatBibleBookTitle($title, $subtitle) {
+	if (empty($subtitle)) {
+		return htmlspecialchars($title);
+	}
+
+	// Remove leading numbers and spaces from title to get the core book name
+	// "1 Samuel" -> "Samuel", "2 Kings" -> "Kings", "Genesis" -> "Genesis"
+	$book_name = preg_replace('/^[123]\s+/', '', $title);
+
+	// Don't include honorifics like "St." in the bolding
+	// "St. Mark" -> we want to bold just "Mark", not "St."
+	// So if the book_name contains "St. ", remove it
+	$book_name_for_bolding = str_replace('St. ', '', $book_name);
+
+	// Find the first occurrence of the book name in the subtitle
+	$pos = stripos($subtitle, $book_name_for_bolding);
+
+	if ($pos !== false) {
+		// Bold only the first occurrence
+		$before = substr($subtitle, 0, $pos);
+		$match = substr($subtitle, $pos, strlen($book_name_for_bolding));
+		$after = substr($subtitle, $pos + strlen($book_name_for_bolding));
+
+		return htmlspecialchars($before) . '<b>' . htmlspecialchars($match) . '</b>' . htmlspecialchars($after);
+	}
+
+	// If book name not found in subtitle, return subtitle as-is
+	return htmlspecialchars($subtitle);
+}
+
 function categorizeBibleBoards($boards, $bible_path_index) {
 	$old_testament = [];
 	$new_testament = [];
@@ -3221,10 +3258,13 @@ function categorizeBibleBoards($boards, $bible_path_index) {
 		$testament_map[$osisID] = $testament;
 	}
 
-	// Categorize boards by their testament
+	// Categorize boards by their testament and add formatted titles
 	foreach ($boards as $board) {
 		$uri = $board['uri'];
 		$testament = isset($testament_map[$uri]) ? $testament_map[$uri] : '';
+
+		// Add formatted title with book name bolded (first occurrence only)
+		$board['formatted_title'] = formatBibleBookTitle($board['title'], $board['subtitle']);
 
 		if ($testament === 'old') {
 			$old_testament[] = $board;
