@@ -30,6 +30,9 @@
 	// save post to cookie
 	$config['additional_javascript'][] = 'js/bookmark.js';
 
+	// bible scrolling
+	$config['additional_javascript'][] = 'js/bible-infinite-scroll.js';
+
 	// id colors
 	$config['additional_javascript'][] = 'js/id_colors.js';
 	$config['additional_javascript'][] = 'js/id_highlighter.js';
