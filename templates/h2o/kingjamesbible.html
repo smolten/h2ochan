@@ -48,14 +48,18 @@
 			<ul class="kjb-book-list" style="margin-block: 0">
 				{% for board in old_testament %}
 					<li class="boardlinksurl">
-						<a href="/{{ config.board_path|sprintf(board.uri) }}{{ config.file_index }}">{{ board.title|e }}</a>
 						{% if board.subtitle %}
-							 &mdash;
-							{% if config.allow_subtitle_html %}
-								{{ board.subtitle }}
-							{% else %}
-								{{ board.subtitle|e }}
-							{% endif %}
+							{% set book_name = board.title|replace({'1 ': '', '2 ': '', '3 ': ''}) %}
+							{% set full_title_with_bold = board.subtitle|replace({(book_name): '<b>' ~ book_name ~ '</b>'}) %}
+							<a href="/{{ config.board_path|sprintf(board.uri) }}{{ config.file_index }}">
+								{% if config.allow_subtitle_html %}
+									{{ full_title_with_bold|raw }}
+								{% else %}
+									{{ full_title_with_bold|raw }}
+								{% endif %}
+							</a>
+						{% else %}
+							<a href="/{{ config.board_path|sprintf(board.uri) }}{{ config.file_index }}">{{ board.title|e }}</a>
 						{% endif %}
 					</li>
 				{% endfor %}
@@ -69,14 +73,18 @@
 			<ul class="kjb-book-list" style="margin-block: 0;">
 				{% for board in apocrypha %}
 					<li class="boardlinksurl">
-						<a href="/{{ config.board_path|sprintf(board.uri) }}{{ config.file_index }}">{{ board.title|e }}</a>
 						{% if board.subtitle %}
-							 &mdash;
-							{% if config.allow_subtitle_html %}
-								{{ board.subtitle }}
-							{% else %}
-								{{ board.subtitle|e }}
-							{% endif %}
+							{% set book_name = board.title|replace({'1 ': '', '2 ': '', '3 ': ''}) %}
+							{% set full_title_with_bold = board.subtitle|replace({(book_name): '<b>' ~ book_name ~ '</b>'}) %}
+							<a href="/{{ config.board_path|sprintf(board.uri) }}{{ config.file_index }}">
+								{% if config.allow_subtitle_html %}
+									{{ full_title_with_bold|raw }}
+								{% else %}
+									{{ full_title_with_bold|raw }}
+								{% endif %}
+							</a>
+						{% else %}
+							<a href="/{{ config.board_path|sprintf(board.uri) }}{{ config.file_index }}">{{ board.title|e }}</a>
 						{% endif %}
 					</li>
 				{% endfor %}
@@ -90,14 +98,18 @@
 			<ul class="kjb-book-list" style="margin-block: 0;">
 				{% for board in new_testament %}
 					<li class="boardlinksurl">
-						<a href="/{{ config.board_path|sprintf(board.uri) }}{{ config.file_index }}">{{ board.title|e }}</a>
 						{% if board.subtitle %}
-							 &mdash;
-							{% if config.allow_subtitle_html %}
-								{{ board.subtitle }}
-							{% else %}
-								{{ board.subtitle|e }}
-							{% endif %}
+							{% set book_name = board.title|replace({'1 ': '', '2 ': '', '3 ': ''}) %}
+							{% set full_title_with_bold = board.subtitle|replace({(book_name): '<b>' ~ book_name ~ '</b>'}) %}
+							<a href="/{{ config.board_path|sprintf(board.uri) }}{{ config.file_index }}">
+								{% if config.allow_subtitle_html %}
+									{{ full_title_with_bold|raw }}
+								{% else %}
+									{{ full_title_with_bold|raw }}
+								{% endif %}
+							</a>
+						{% else %}
+							<a href="/{{ config.board_path|sprintf(board.uri) }}{{ config.file_index }}">{{ board.title|e }}</a>
 						{% endif %}
 					</li>
 				{% endfor %}

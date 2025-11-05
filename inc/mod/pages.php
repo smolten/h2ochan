@@ -3126,7 +3126,7 @@ function mod_rebuild_all(Context $ctx) {
         error($config['error']['noaccess']);
 
     // Construct POST array like the normal rebuild form
-    // ALL mode rebuilds EVERYTHING including Bible boards
+    // ALL mode rebuilds EVERYTHING including Bible boards and KJB index
     $_POST = [
         'rebuild' => true,
 	'fast' => true,       // Redirect back to dashboard when done
@@ -3134,6 +3134,7 @@ function mod_rebuild_all(Context $ctx) {
         'rebuild_themes' => true,
         'rebuild_javascript' => true,
         'rebuild_index' => true,
+        'rebuild_kjb' => true,   // Rebuild King James Bible index
         'rebuild_thread' => true,
         'boards_user' => true,   // User boards
         'boards_bible' => true,  // AND Bible boards
@@ -3221,8 +3222,8 @@ function mod_rebuild(Context $ctx) {
 			}
 		}
 
-		// Rebuild King James Bible index page
-		if (isset($_POST['rebuild_index'])) {
+		// Rebuild King James Bible index page (only if rebuild_kjb is checked)
+		if (isset($_POST['rebuild_kjb'])) {
 			$log[] = 'Rebuilding King James Bible index page';
 			buildKingJamesBible();
 		}
