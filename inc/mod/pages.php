@@ -991,8 +991,8 @@ function mod_bible_post_threads(Context $ctx, bool $log=true) {
             // First chapter gets the book title as OP
             $body = '<h2 style="text-align: center;">' . htmlspecialchars($fullName) . '</h2>';
         } else {
-            // Subsequent chapters get a placeholder OP
-            $body = '<p style="text-align: center; color: #888;">[Chapter ' . $chapter . ']</p>';
+            // Subsequent chapters get a hidden placeholder OP
+            $body = '<p class="chapter-placeholder" style="display: none;">[Chapter ' . $chapter . ']</p>';
         }
 
         $body_nomarkup = strip_tags($body);

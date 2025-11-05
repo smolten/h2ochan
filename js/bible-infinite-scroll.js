@@ -25,6 +25,7 @@
     let urlUpdateTimer = null;
     let scrollTimer = null;
     let userHasScrolled = false;
+    let loadingEnabled = false;  // Don't load until user scrolls
 
     /**
      * Get the width of a single column
@@ -230,7 +231,19 @@
      * Handle scroll events (debounced)
      */
     function onScroll() {
-        userHasScrolled = true;
+        if (!userHasScrolled) {
+            userHasScrolled = true;
+            // Enable loading after a short delay (user has intentionally scrolled)
+            setTimeout(function() {
+                loadingEnabled = true;
+                console.log('Infinite scroll loading enabled');
+            }, 1000);
+        }
+
+        // Don't do anything if loading not yet enabled
+        if (!loadingEnabled) {
+            return;
+        }
 
         // Debounce the actual scroll handling
         if (scrollTimer) {
