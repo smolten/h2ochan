@@ -4228,15 +4228,15 @@ function mod_bible_make_index(Context $ctx) {
             continue;
         }
 
-        // Start of a chapter (only count if we're in a book)
-        if ($nodeName == 'chapter' && $in_book) {
+        // Start of a chapter (only count opening tags with sID, ignore closing tags with eID)
+        if ($nodeName == 'chapter' && $in_book && $reader->getAttribute('sID')) {
             $current_chapter_num++;
             $verse_counts[$current_chapter_num] = 0;
             continue;
         }
 
-        // Count verses in current chapter
-        if ($nodeName == 'verse' && $current_chapter_num > 0) {
+        // Count verses in current chapter (only opening tags with sID, ignore closing tags with eID)
+        if ($nodeName == 'verse' && $current_chapter_num > 0 && $reader->getAttribute('sID')) {
             $verse_counts[$current_chapter_num]++;
             continue;
         }
