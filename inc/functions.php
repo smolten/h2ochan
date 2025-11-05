@@ -840,27 +840,45 @@ function getBibleBookNavigation($current_uri, $bible_path_index) {
  * @return array Associative array mapping book names/abbreviations to osisID
  */
 function buildBibleBookLookup($bible_path_index) {
-    static $lookup = null;
+    static $cached = null;
 
-    // Cache the lookup table
-    if ($lookup !== null) {
-        return $lookup;
+    // Cache the lookup table and verse counts
+    if ($cached !== null) {
+        return $cached;
     }
 
     $lookup = array();
+    $verseCounts = array(); // osisID => ['chapters' => N, 'verses' => [ch1 => v1, ch2 => v2, ...]]
 
     if (!file_exists($bible_path_index)) {
-        return $lookup;
+        return ['lookup' => $lookup, 'verseCounts' => $verseCounts];
     }
 
     $xml = simplexml_load_file($bible_path_index);
     if (!$xml) {
-        return $lookup;
+        return ['lookup' => $lookup, 'verseCounts' => $verseCounts];
     }
 
     foreach ($xml->title as $title) {
         $osisID = (string)$title['osisID'];
         $short = (string)$title['short'];
+        $chapters = (int)$title['chapters'];
+
+        // Parse verse counts (comma-separated list)
+        $verseList = (string)$title->verses;
+        $verseArray = array();
+        if ($verseList) {
+            $counts = explode(',', $verseList);
+            foreach ($counts as $idx => $count) {
+                $verseArray[$idx + 1] = (int)trim($count); // 1-indexed chapters
+            }
+        }
+
+        // Store verse count data
+        $verseCounts[$osisID] = [
+            'chapters' => $chapters,
+            'verses' => $verseArray
+        ];
 
         // Map osisID (Gen, Exod, 1John, 2Thess) - case insensitive
         $lookup[strtolower($osisID)] = $osisID;
@@ -875,7 +893,8 @@ function buildBibleBookLookup($bible_path_index) {
         }
     }
 
-    return $lookup;
+    $cached = ['lookup' => $lookup, 'verseCounts' => $verseCounts];
+    return $cached;
 }
 
 
@@ -2323,7 +2342,9 @@ function markup(&$body, $track_cites = false, $op = false) {
 
 	// Bible reference linking (e.g., "Genesis 1:4" or "Matt. 4:10" or "1 John 2:3")
 	if (isset($config['bible']['path_index']) && file_exists($config['bible']['path_index'])) {
-		$bibleLookup = buildBibleBookLookup($config['bible']['path_index']);
+		$bibleData = buildBibleBookLookup($config['bible']['path_index']);
+		$bibleLookup = $bibleData['lookup'];
+		$verseCounts = $bibleData['verseCounts'];
 
 		// Fixed regex: lookahead doesn't capture, so suffix handling is cleaner
 		if (!empty($bibleLookup) && preg_match_all('/(^|[\s(])([1-3]?[A-Za-z]+(?:\s+[A-Za-z]+(?:\s+[A-Za-z]+)?)?)\.?\s+(\d+):(\d+)(?=[\s,.)?!\r\n]|$)/um', $body, $bibleRefs, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
@@ -2333,8 +2354,8 @@ function markup(&$body, $track_cites = false, $op = false) {
 			foreach ($bibleRefs as $matches) {
 				$prefix = $matches[1][0];
 				$bookName = trim($matches[2][0]);
-				$chapter = $matches[3][0];
-				$verse = $matches[4][0];
+				$chapter = (int)$matches[3][0];
+				$verse = (int)$matches[4][0];
 
 				// Normalize book name and look up osisID (strip periods and normalize spaces)
 				$bookNameNormalized = strtolower(preg_replace('/\s+/', ' ', rtrim($bookName, '.')));
@@ -2347,8 +2368,21 @@ function markup(&$body, $track_cites = false, $op = false) {
 					$osisID = $bibleLookup[$bookNameNoSpace];
 				}
 
-				if ($osisID) {
-					// Create link to Bible verse using short URL format (redirects via .htaccess)
+				// Validate chapter and verse numbers before creating link
+				if ($osisID && isset($verseCounts[$osisID])) {
+					$bookInfo = $verseCounts[$osisID];
+
+					// Check if chapter exists
+					if ($chapter < 1 || $chapter > $bookInfo['chapters']) {
+						continue; // Skip invalid chapter
+					}
+
+					// Check if verse exists in this chapter
+					if (!isset($bookInfo['verses'][$chapter]) || $verse < 1 || $verse > $bookInfo['verses'][$chapter]) {
+						continue; // Skip invalid verse
+					}
+
+					// Valid reference - create link using short URL format (redirects via .htaccess)
 					$link = $config['root'] . $osisID . '/' . $chapter . '/' . $verse;
 					$replacement = '<a href="' . $link . '">' . htmlspecialchars($bookName . ' ' . $chapter . ':' . $verse) . '</a>';
 
