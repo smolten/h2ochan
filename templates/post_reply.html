@@ -1,6 +1,6 @@
 {% apply spaceless %}
 {# tabs and new lines will be ignored #}
-<div class="post reply" id="reply_{{ post.id }}">
+<div class="post reply{%if config.isbible%} bible{%endif%}" id="reply_{{ post.id }}">
 <p class={% if config.isbible %}"nointro"{% else %}"intro"{% endif %}>
 	{% endapply %}
 	{% if not index %}<a id="{{ post.id }}" class="post_anchor"></a>{% endif %}
