@@ -14,8 +14,8 @@
 
     // Configuration
     const config = {
-        columnsToLoad: 3,  // Load approximately this many columns worth of content
-        loadThreshold: 2,  // Start loading when within this many columns of edge
+        columnsToLoad: 1,  // Load this many chapters at a time
+        loadThreshold: 3,  // Start loading when within this many columns of edge
         urlUpdateDelay: 500  // Delay before updating URL (ms)
     };
 
@@ -23,6 +23,8 @@
     let currentChapter = 1;
     let loading = false;
     let urlUpdateTimer = null;
+    let scrollTimer = null;
+    let userHasScrolled = false;
 
     /**
      * Get the width of a single column
@@ -147,10 +149,18 @@
                 const postsHTML = await loadChapter(chapterNum);
                 if (postsHTML) {
                     if (direction === 'before' && firstElement) {
+                        // Save scroll position before inserting
+                        const oldScrollLeft = thread.scrollLeft;
+                        const oldScrollWidth = thread.scrollWidth;
+
                         // Insert before first post
                         firstElement.insertAdjacentHTML('beforebegin', postsHTML);
+
+                        // Restore scroll position (adjust for new content)
+                        const newScrollWidth = thread.scrollWidth;
+                        thread.scrollLeft = oldScrollLeft + (newScrollWidth - oldScrollWidth);
                     } else if (referenceElement) {
-                        // Insert after last post
+                        // Insert after last post (no scroll adjustment needed)
                         referenceElement.insertAdjacentHTML('afterend', postsHTML);
                     } else {
                         // Fallback: append to thread
@@ -158,6 +168,8 @@
                     }
                 }
             }
+
+            console.log(`Loaded ${chaptersToLoad.length} chapter(s) ${direction}`);
 
         } catch (error) {
             console.error('Error loading chapters:', error);
@@ -215,18 +227,27 @@
     }
 
     /**
-     * Handle scroll events
+     * Handle scroll events (debounced)
      */
     function onScroll() {
-        const { left, right } = getColumnsFromEdge();
+        userHasScrolled = true;
 
-        // Load more content if nearing edges
-        if (left < config.loadThreshold) {
-            loadMoreChapters('before');
+        // Debounce the actual scroll handling
+        if (scrollTimer) {
+            clearTimeout(scrollTimer);
         }
-        if (right < config.loadThreshold) {
-            loadMoreChapters('after');
-        }
+
+        scrollTimer = setTimeout(function() {
+            const { left, right } = getColumnsFromEdge();
+
+            // Load more content if nearing edges
+            if (left < config.loadThreshold) {
+                loadMoreChapters('before');
+            }
+            if (right < config.loadThreshold) {
+                loadMoreChapters('after');
+            }
+        }, 150); // Wait 150ms after scrolling stops
 
         // Update URL (debounced)
         if (urlUpdateTimer) {
