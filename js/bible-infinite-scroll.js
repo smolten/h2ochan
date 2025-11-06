@@ -204,14 +204,16 @@
             console.log(`Loading chapters ${direction}:`, chaptersToLoad);
 
             // Get the reference element for insertion
-            const referenceElement = thread.querySelector('.post.bible:last-child');
-            const firstElement = thread.querySelector('.post.bible:first-child');
+            const allPosts = thread.querySelectorAll('.post.bible');
+            const referenceElement = allPosts[allPosts.length - 1];
+            const firstElement = allPosts[0];
 
             for (const chapterNum of chaptersToLoad) {
                 const postsHTML = await loadChapter(chapterNum);
                 if (postsHTML) {
                     // Get fresh reference to first element for each chapter
-                    const currentFirstElement = thread.querySelector('.post.bible:first-child');
+                    const currentAllPosts = thread.querySelectorAll('.post.bible');
+                    const currentFirstElement = currentAllPosts[0];
 
                     if (direction === 'before' && currentFirstElement) {
                         // Save scroll position before inserting
@@ -229,14 +231,18 @@
                         thread.scrollLeft = oldScrollLeft + scrollAdjustment;
 
                         console.log(`After insert: scrollLeft=${thread.scrollLeft}, scrollWidth=${newScrollWidth}, adjustment=${scrollAdjustment}`);
-                    } else if (referenceElement) {
+                    } else if (direction === 'after' && referenceElement) {
                         console.log(`Inserting chapter ${chapterNum} AFTER last element`);
                         // Insert after last post (no scroll adjustment needed)
                         referenceElement.insertAdjacentHTML('afterend', postsHTML);
                     } else {
-                        console.log(`Appending chapter ${chapterNum} to thread`);
-                        // Fallback: append to thread
-                        thread.insertAdjacentHTML('beforeend', postsHTML);
+                        console.log(`${direction === 'before' ? 'Prepending' : 'Appending'} chapter ${chapterNum} to thread (fallback)`);
+                        // Fallback: prepend or append based on direction
+                        if (direction === 'before') {
+                            thread.insertAdjacentHTML('afterbegin', postsHTML);
+                        } else {
+                            thread.insertAdjacentHTML('beforeend', postsHTML);
+                        }
                     }
                 }
             }
@@ -255,26 +261,38 @@
      */
     function getLeftmostVisibleChapter() {
         const scrollLeft = thread.scrollLeft;
-        const posts = thread.querySelectorAll('.post.bible');
+        const viewportWidth = thread.clientWidth;
 
-        for (let post of posts) {
+        // Find all chapter markers (first verse of each chapter)
+        const chapterMarkers = thread.querySelectorAll('.post_no.chapter');
+
+        let closestChapter = currentChapter;
+        let closestDistance = Infinity;
+
+        for (let marker of chapterMarkers) {
+            const post = marker.closest('.post.bible');
+            if (!post) continue;
+
             const postLeft = post.offsetLeft;
             const postRight = postLeft + post.offsetWidth;
 
-            // Check if this post is visible in the leftmost part of the viewport
-            if (postRight > scrollLeft && postLeft <= scrollLeft + 50) {
-                // Extract chapter from the verse link
-                const chapterLink = post.querySelector('.post_no.chapter');
-                if (chapterLink) {
-                    const chapter = parseInt(chapterLink.textContent);
+            // Check if this post is visible in the viewport
+            if (postRight > scrollLeft && postLeft < scrollLeft + viewportWidth) {
+                // Calculate distance from left edge of viewport
+                const distance = Math.abs(postLeft - scrollLeft);
+
+                // Find the chapter marker closest to the left edge
+                if (distance < closestDistance) {
+                    const chapter = parseInt(marker.textContent);
                     if (!isNaN(chapter)) {
-                        return chapter;
+                        closestChapter = chapter;
+                        closestDistance = distance;
                     }
                 }
             }
         }
 
-        return currentChapter; // Return current if not found
+        return closestChapter;
     }
 
     /**

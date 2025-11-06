@@ -1347,3 +1347,8 @@ a.post_no.verse {
 .post.op.bible:has(.chapter-placeholder) {
     display: none;
 }
+
+/* Hide Bible thread OPs that don't have the book title (h2) */
+.post.op.bible:not(:has(h2)) {
+    display: none;
+}
