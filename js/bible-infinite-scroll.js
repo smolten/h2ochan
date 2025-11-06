@@ -210,21 +210,31 @@
             for (const chapterNum of chaptersToLoad) {
                 const postsHTML = await loadChapter(chapterNum);
                 if (postsHTML) {
-                    if (direction === 'before' && firstElement) {
+                    // Get fresh reference to first element for each chapter
+                    const currentFirstElement = thread.querySelector('.post.bible:first-child');
+
+                    if (direction === 'before' && currentFirstElement) {
                         // Save scroll position before inserting
                         const oldScrollLeft = thread.scrollLeft;
                         const oldScrollWidth = thread.scrollWidth;
 
-                        // Insert before first post
-                        firstElement.insertAdjacentHTML('beforebegin', postsHTML);
+                        console.log(`Inserting chapter ${chapterNum} BEFORE first element. scrollLeft=${oldScrollLeft}, scrollWidth=${oldScrollWidth}`);
 
-                        // Restore scroll position (adjust for new content)
+                        // Insert before first post
+                        currentFirstElement.insertAdjacentHTML('beforebegin', postsHTML);
+
+                        // Restore scroll position (adjust for new content added to left)
                         const newScrollWidth = thread.scrollWidth;
-                        thread.scrollLeft = oldScrollLeft + (newScrollWidth - oldScrollWidth);
+                        const scrollAdjustment = newScrollWidth - oldScrollWidth;
+                        thread.scrollLeft = oldScrollLeft + scrollAdjustment;
+
+                        console.log(`After insert: scrollLeft=${thread.scrollLeft}, scrollWidth=${newScrollWidth}, adjustment=${scrollAdjustment}`);
                     } else if (referenceElement) {
+                        console.log(`Inserting chapter ${chapterNum} AFTER last element`);
                         // Insert after last post (no scroll adjustment needed)
                         referenceElement.insertAdjacentHTML('afterend', postsHTML);
                     } else {
+                        console.log(`Appending chapter ${chapterNum} to thread`);
                         // Fallback: append to thread
                         thread.insertAdjacentHTML('beforeend', postsHTML);
                     }

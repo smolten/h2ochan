@@ -2624,7 +2624,7 @@ function buildThread($id, $return = false, $mod = false) {
 		}
 
 		// Add Bible navigation data if this is a Bible board
-		if (isset($config['isbible']) && $config['isbible']) {
+		if (isset($config['isbible']) && $config['isbible'] && isset($config['bible']['path_index'])) {
 			$bibleNav = getBibleBookMetadata($board['uri'], $config['bible']['path_index']);
 			if ($bibleNav) {
 				$options['bible_navigation'] = $bibleNav;
