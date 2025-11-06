@@ -3371,6 +3371,11 @@ function mod_rebuild(Context $ctx) {
 		}
 	}
 
+	// Sort Bible boards in biblical order
+	if (!empty($bible_boards) && isset($config['bible']['path_index'])) {
+		$bible_boards = sortBoardsByBibleOrder($bible_boards, false, $config['bible']['path_index']);
+	}
+
 	mod_page(
 		_('Rebuild'),
 		$config['file_mod_rebuild'],
