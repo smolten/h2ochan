@@ -295,7 +295,31 @@
                     newURL
                 );
             }
+
+            // Update page navigation to reflect current chapter
+            updatePageNavigation(chapter);
         }
+    }
+
+    /**
+     * Update the page navigation to mark the current chapter as selected
+     */
+    function updatePageNavigation(chapter) {
+        // Find all page navigation divs (top and bottom)
+        const pagesDivs = document.querySelectorAll('.pages');
+
+        pagesDivs.forEach(pagesDiv => {
+            // Remove selected class from all links
+            const allLinks = pagesDiv.querySelectorAll('a');
+            allLinks.forEach(link => {
+                link.classList.remove('selected');
+
+                // Add selected class to the link matching current chapter
+                if (link.textContent.trim() === String(chapter)) {
+                    link.classList.add('selected');
+                }
+            });
+        });
     }
 
     /**
