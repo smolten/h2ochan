@@ -924,13 +924,13 @@ function getBibleBookFullName($osisID, $bible_path_index) {
 }
 
 /**
- * Get Bible book navigation data for infinite scroll
+ * Get detailed Bible book metadata for infinite scroll
  *
  * @param string $currentOsisID Current book's osisID (e.g., "Gen")
  * @param string $bible_path_index Path to the XML index file
  * @return array Structure with current book info, previous book, and next book
  */
-function getBibleBookNavigation($currentOsisID, $bible_path_index) {
+function getBibleBookMetadata($currentOsisID, $bible_path_index) {
     if (!file_exists($bible_path_index)) {
         return null;
     }
@@ -2625,7 +2625,7 @@ function buildThread($id, $return = false, $mod = false) {
 
 		// Add Bible navigation data if this is a Bible board
 		if (isset($config['isbible']) && $config['isbible']) {
-			$bibleNav = getBibleBookNavigation($board['uri'], $config['bible']['path_index']);
+			$bibleNav = getBibleBookMetadata($board['uri'], $config['bible']['path_index']);
 			if ($bibleNav) {
 				$options['bible_navigation'] = $bibleNav;
 			}
