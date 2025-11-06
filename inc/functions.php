@@ -2628,11 +2628,12 @@ function buildThread($id, $return = false, $mod = false) {
 			$bibleNav = getBibleBookMetadata($board['uri'], $config['bible']['path_index']);
 			if ($bibleNav) {
 				$options['bible_navigation'] = $bibleNav;
+				error_log("[buildThread] Bible navigation data added for " . $board['uri'] . ": " . json_encode($bibleNav));
 			} else {
-				error_log("getBibleBookMetadata returned null for board: " . $board['uri']);
+				error_log("[buildThread] getBibleBookMetadata returned null for board: " . $board['uri'] . " with path_index: " . $config['bible']['path_index']);
 			}
 		} else {
-			error_log("Bible navigation check failed. isbible=" . (isset($config['isbible']) ? $config['isbible'] : 'not set') .
+			error_log("[buildThread] Bible navigation check failed for board " . $board['uri'] . ". isbible=" . (isset($config['isbible']) ? ($config['isbible'] ? 'true' : 'false') : 'not set') .
 			          ", path_index=" . (isset($config['bible']['path_index']) ? $config['bible']['path_index'] : 'not set'));
 		}
 
