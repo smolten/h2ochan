@@ -220,26 +220,36 @@
                         const oldScrollLeft = thread.scrollLeft;
                         const oldScrollWidth = thread.scrollWidth;
 
-                        console.log(`Inserting chapter ${chapterNum} BEFORE first element. scrollLeft=${oldScrollLeft}, scrollWidth=${oldScrollWidth}`);
+                        console.log(`Prepending chapter ${chapterNum}. scrollLeft=${oldScrollLeft}, scrollWidth=${oldScrollWidth}`);
 
                         // Insert before first post
                         currentFirstElement.insertAdjacentHTML('beforebegin', postsHTML);
 
-                        // Restore scroll position (adjust for new content added to left)
-                        const newScrollWidth = thread.scrollWidth;
-                        const scrollAdjustment = newScrollWidth - oldScrollWidth;
-                        thread.scrollLeft = oldScrollLeft + scrollAdjustment;
+                        // Wait for layout to reflow, then adjust scroll position
+                        requestAnimationFrame(() => {
+                            const newScrollWidth = thread.scrollWidth;
+                            const scrollAdjustment = newScrollWidth - oldScrollWidth;
+                            thread.scrollLeft = oldScrollLeft + scrollAdjustment;
 
-                        console.log(`After insert: scrollLeft=${thread.scrollLeft}, scrollWidth=${newScrollWidth}, adjustment=${scrollAdjustment}`);
+                            console.log(`After prepend: scrollLeft=${thread.scrollLeft}, scrollWidth=${newScrollWidth}, adjustment=${scrollAdjustment}`);
+                        });
                     } else if (direction === 'after' && referenceElement) {
-                        console.log(`Inserting chapter ${chapterNum} AFTER last element`);
+                        console.log(`Appending chapter ${chapterNum} AFTER last element`);
                         // Insert after last post (no scroll adjustment needed)
                         referenceElement.insertAdjacentHTML('afterend', postsHTML);
                     } else {
                         console.log(`${direction === 'before' ? 'Prepending' : 'Appending'} chapter ${chapterNum} to thread (fallback)`);
                         // Fallback: prepend or append based on direction
                         if (direction === 'before') {
+                            const oldScrollLeft = thread.scrollLeft;
+                            const oldScrollWidth = thread.scrollWidth;
+
                             thread.insertAdjacentHTML('afterbegin', postsHTML);
+
+                            requestAnimationFrame(() => {
+                                const newScrollWidth = thread.scrollWidth;
+                                thread.scrollLeft = oldScrollLeft + (newScrollWidth - oldScrollWidth);
+                            });
                         } else {
                             thread.insertAdjacentHTML('beforeend', postsHTML);
                         }
@@ -249,10 +259,33 @@
 
             console.log(`Loaded ${chaptersToLoad.length} chapter(s) ${direction}`);
 
+            // After loading, check if we need to load more
+            loading = false;
+            setTimeout(() => {
+                checkEdgesAndLoad();
+            }, 300);
+
         } catch (error) {
             console.error('Error loading chapters:', error);
-        } finally {
             loading = false;
+        }
+    }
+
+    /**
+     * Check if we're near edges and load more content if needed
+     */
+    function checkEdgesAndLoad() {
+        if (loading || !loadingEnabled) return;
+
+        const { left, right } = getColumnsFromEdge();
+
+        // Load more content if nearing edges
+        if (left < config.loadThreshold && thread.scrollLeft > 50) {
+            console.log('Still near left edge after loading, loading more');
+            loadMoreChapters('before');
+        } else if (right < config.loadThreshold) {
+            console.log('Still near right edge after loading, loading more');
+            loadMoreChapters('after');
         }
     }
 
@@ -419,6 +452,7 @@
         }
 
         // Parse Bible navigation data
+        console.log('data-bible-nav attribute:', thread.dataset.bibleNav);
         if (thread.dataset.bibleNav) {
             try {
                 bibleNav = JSON.parse(thread.dataset.bibleNav);
@@ -426,6 +460,8 @@
             } catch (e) {
                 console.warn('Failed to parse Bible navigation data:', e);
             }
+        } else {
+            console.warn('No data-bible-nav attribute found on thread element');
         }
 
         // Get initial chapter from URL or thread ID
