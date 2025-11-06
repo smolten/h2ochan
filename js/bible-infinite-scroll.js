@@ -141,6 +141,8 @@
                 // Check if we've reached the end of current book
                 const maxChapter = bibleNav ? bibleNav.current.chapters : Infinity;
 
+                console.log(`Loading 'after': maxLoadedChapter=${maxLoadedChapter}, maxChapter=${maxChapter}, bibleNav=`, bibleNav);
+
                 if (maxLoadedChapter < maxChapter) {
                     // Load next chapters in current book
                     for (let i = 1; i <= config.columnsToLoad; i++) {
@@ -156,6 +158,8 @@
                         uri: bibleNav.next.osisID,
                         chapter: 1
                     };
+                } else {
+                    console.log(`Cannot load more: at end of book, bibleNav.next=`, bibleNav ? bibleNav.next : 'no bibleNav');
                 }
             }
 
@@ -310,11 +314,16 @@
         scrollTimer = setTimeout(function() {
             const { left, right } = getColumnsFromEdge();
 
+            console.log(`Scroll position: ${left.toFixed(2)} columns from left, ${right.toFixed(2)} columns from right`);
+
             // Load more content if nearing edges
-            if (left < config.loadThreshold) {
+            // Only load 'before' if we have room to scroll left (not at position 0)
+            if (left < config.loadThreshold && thread.scrollLeft > 50) {
+                console.log('Near left edge, loading previous chapters');
                 loadMoreChapters('before');
             }
             if (right < config.loadThreshold) {
+                console.log('Near right edge, loading next chapters');
                 loadMoreChapters('after');
             }
         }, 150); // Wait 150ms after scrolling stops
@@ -390,20 +399,35 @@
 
         console.log(`Bible infinite scroll initialized on ${boardURI}, chapter ${currentChapter}`);
 
-        // After a short delay, check if we need to fill empty columns
+        // Preload previous chapter so user can scroll left immediately
         setTimeout(function() {
-            const scrollWidth = thread.scrollWidth;
-            const clientWidth = thread.clientWidth;
-            const columnWidth = getColumnWidth();
+            if (currentChapter > 1) {
+                console.log('Preloading previous chapter to enable leftward scrolling');
+                loadingEnabled = true;
+                loadMoreChapters('before').then(() => {
+                    // Check if we need to fill empty columns to the right
+                    const scrollWidth = thread.scrollWidth;
+                    const clientWidth = thread.clientWidth;
 
-            // If content doesn't fill even 2 screens worth, load more
-            if (scrollWidth < clientWidth * 1.5 && bibleNav) {
-                const maxChapter = bibleNav.current.chapters;
-                if (currentChapter < maxChapter) {
-                    console.log('Initial content is short, loading next chapter to fill columns');
-                    loadingEnabled = true;  // Enable loading temporarily
-                    loadMoreChapters('after');
-                }
+                    if (scrollWidth < clientWidth * 2 && bibleNav) {
+                        const maxChapter = bibleNav.current.chapters;
+                        if (currentChapter < maxChapter) {
+                            console.log('Initial content is short, loading next chapter');
+                            loadMoreChapters('after');
+                        } else if (bibleNav.next) {
+                            console.log('At last chapter, preloading next book');
+                            loadMoreChapters('after');
+                        }
+                    }
+                    loadingEnabled = false;  // Disable until user scrolls
+                });
+            } else if (bibleNav && bibleNav.previous) {
+                // At chapter 1, preload previous book's last chapter
+                console.log('At chapter 1, preloading previous book');
+                loadingEnabled = true;
+                loadMoreChapters('before').then(() => {
+                    loadingEnabled = false;
+                });
             }
         }, 500);
     }
