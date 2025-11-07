@@ -349,7 +349,10 @@ document.addEventListener('DOMContentLoaded', function() {
     var nextBookBtn = document.getElementById('next_book_btn');
     if (nextBookBtn) {
 	nextBookBtn.addEventListener('click', function() {
-	    window.location.href = '/mod.php?/edit_bible/' + getNextBibleBookURI(uriValue);
+	    var nextURI = getNextBibleBookURI(uriValue);
+	    if (nextURI !== uriValue) {
+		window.location.href = '/mod.php?/edit_bible/' + nextURI;
+	    }
 	});
     }
 
