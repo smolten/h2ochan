@@ -1068,18 +1068,23 @@ function mod_bible_post_threads(Context $ctx, bool $log=true) {
         }
 
         $verses = $chapters[$chapter];           // array of verses for this chapter
-        if (!isset($verses[1])) {       // error if Verse 1 not present
+
+        // Find the first available verse (might not be verse 1)
+        $verseNumbers = array_keys($verses);
+        if (empty($verseNumbers)) {
             $errors[] = [
                 'chapter' => $chapter,
-                'verse' => 1,
-                'message' => "Verse 1 doesn't exist"
+                'verse' => 'N/A',
+                'message' => "No verses found"
             ];
-            continue; // skip to next chapter
+            continue;
         }
+        sort($verseNumbers);
+        $firstVerse = $verseNumbers[0];
 
-        $prepend = '<a class="post_no chapter" id="v1" onclick="citeVerse(' . $chapter . ', 1, event)" ' .
-            'href="/' . $bookURI . '/res/' . $chapter . '.html#v1">' . $chapter . '</a>';
-        $body = $prepend . $verses[1];                      // Chapter 1 Verse 1 (with BIG chapter num)
+        $prepend = '<a class="post_no chapter" id="v' . $firstVerse . '" onclick="citeVerse(' . $chapter . ', ' . $firstVerse . ', event)" ' .
+            'href="/' . $bookURI . '/res/' . $chapter . '.html#v' . $firstVerse . '">' . $chapter . '</a>';
+        $body = $prepend . $verses[$firstVerse];                      // Chapter with first available verse
         $body_nomarkup = strip_tags($body);      // remove HTML tags
         $slug = preg_replace('/[^a-zA-Z0-9]/', '', $body_nomarkup); // simple alpha-numeric slug
         $slug = substr($slug, 0, 256); // db char limit
@@ -1097,7 +1102,7 @@ function mod_bible_post_threads(Context $ctx, bool $log=true) {
             $query->bindValue(':faketime', 1000-$chapter);
             $query->bindValue(':ip', '127.0.0.1');
             $query->bindValue(':slug', $slug);
-            $query->bindValue(':verse', 1);
+            $query->bindValue(':verse', $firstVerse);
 
             $query->execute();
 
@@ -1190,8 +1195,19 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
         }
         $threadId = $chapterToThreadId[$chapter];
 
-        // Skip Verse 1 because it's already the thread
-        for ($verse = 2; $verse <= count($verses); $verse++) {
+        // Get verse numbers and skip the first verse (already posted as thread)
+        $verseNumbers = array_keys($verses);
+        sort($verseNumbers);
+        if (count($verseNumbers) <= 1) {
+            continue; // Only one verse, already posted as thread
+        }
+
+        // Skip first verse, post the rest as replies
+        for ($i = 1; $i < count($verseNumbers); $i++) {
+            $verse = $verseNumbers[$i];
+            if (!isset($verses[$verse])) {
+                continue;
+            }
             $prepend = '<a class="post_no verse" id="v' . $verse . '" onclick="citeVerse(' . $chapter . ', ' . $verse . ', event)" ' .
                 'href="/' . $bookURI . '/res/' . $chapter . '.html#v' . $verse . '">'.$verse.'</a>';
             $body = $prepend . $verses[$verse];
