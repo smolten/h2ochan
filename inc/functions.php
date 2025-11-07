@@ -833,6 +833,40 @@ function getBibleBookNavigation($current_uri, $bible_path_index) {
 }
 
 /**
+ * Get the next book URI in biblical order, or null if this is the last book
+ *
+ * @param string $current_uri Current book's osisID (e.g., 'Gen', 'Exod')
+ * @param string $bible_path_index Path to the Bible index XML file
+ * @return string|null Next book's osisID, or null if current is last book or not found
+ */
+function getNextBibleBookURI($current_uri, $bible_path_index) {
+    if (!file_exists($bible_path_index)) {
+        return null;
+    }
+
+    $xml = simplexml_load_file($bible_path_index);
+    if (!$xml) {
+        return null;
+    }
+
+    // Build array of all book URIs in order
+    $books = array();
+    foreach ($xml->title as $title) {
+        $books[] = (string)$title['osisID'];
+    }
+
+    // Find current book's position
+    $currentIndex = array_search($current_uri, $books, true);
+
+    // Return next book if exists and not at the end
+    if ($currentIndex !== false && $currentIndex < count($books) - 1) {
+        return $books[$currentIndex + 1];
+    }
+
+    return null; // Either not found or this is the last book
+}
+
+/**
  * Build a lookup table for Bible book names to osisID
  * Supports: osisID (Gen, 1John), full names (Genesis, 1 John, 2 Thessalonians)
  *
