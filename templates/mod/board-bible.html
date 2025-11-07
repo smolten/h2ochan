@@ -11,6 +11,7 @@
 	<input type="hidden" name="token_post_threads" value="{{ token_post_threads }}">
 	<input type="hidden" name="token_post_replies" value="{{ token_post_replies }}">
 	<input type="hidden" name="token_post_book" value="{{ token_post_book }}">
+	<input type="hidden" name="token_test_delete_book" value="{{ token_test_delete_book }}">
 	<table>
 		<tr>
 	            <th>{% trans 'Bible Book' %}</th>
@@ -121,8 +122,7 @@
 			<button type="button" name="get_status" id="get_status">Get Status</button>
 			<button type="button" name="do_post_book" id="do_post_book">Post Book</button>
 			<button type="button" onclick="history.back()">(Webpage Back)</button>                        <br>
-			<button type="button" name="do_post_threads" id="do_post_threads">Post Chapter Threads</button>
-        		<button type="button" name="do_post_replies" id="do_post_replies">Post Verse Replies</button>
+			<button type="button" name="do_test_delete_book" id="do_test_delete_book">TEST Delete Book</button>
 			</td>
 		</tr>		
 		{% endif %}
@@ -241,8 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if(status) {
         document.getElementById('get_status').addEventListener('click', board_status);	/*doesn't exist on NEW page*/
         document.getElementById('do_post_book').addEventListener('click', do_book);
-        document.getElementById('do_post_threads').addEventListener('click', do_threads);
-        document.getElementById('do_post_replies').addEventListener('click', do_replies);
+        document.getElementById('do_test_delete_book').addEventListener('click', do_test_delete_book);
 
 	if(bible_create_all) {
 	    do_book();
@@ -305,39 +304,24 @@ document.addEventListener('DOMContentLoaded', function() {
 	    status.textContent = 'Error: ' + err;
 	});
     };
-    function do_threads() {
-	status.textContent = "Writing Chapters-Only....";
-    	var tokenThreads = document.querySelector('input[name="token_post_threads"]');
+    function do_test_delete_book() {
+	status.textContent = "Testing Delete Book....";
+	var tokenTestDelete = document.querySelector('input[name="token_test_delete_book"]');
 	var params = new URLSearchParams();
 	params.append('uri', uriValue);
-	params.append('token', tokenThreads.value);
-	console.log("Posting threads for URI:", uriValue, "token:", tokenThreads.value);
+	params.append('token', tokenTestDelete.value);
+	console.log("Testing delete book for URI:", uriValue);
 
-	fetch('/mod.php?/bible-post-threads', {
+	fetch('/mod.php?/bible-test-delete-book', {
 	    method: 'POST',
 	    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 	    body: params.toString(),
 	    credentials: 'same-origin'
 	})
-	.then(() => board_status())
-	.catch(err => {
-	    status.textContent = 'Error: ' + err;
-	});
-    };
-    function do_replies() {
-	status.textContent = "Writing Verses-Only....";
-    	var tokenReplies = document.querySelector('input[name="token_post_replies"]');
-	var params = new URLSearchParams();
-	params.append('uri', uriValue);
-	params.append('token', tokenReplies.value);
-
-	fetch('/mod.php?/bible-post-replies', {
-	    method: 'POST',
-	    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-	    body: params.toString(),
-	    credentials: 'same-origin'
+	.then(response => response.text())
+	.then(text => {
+	    status.textContent = text || '(no response)';
 	})
-	.then(() => board_status())
 	.catch(err => {
 	    status.textContent = 'Error: ' + err;
 	});

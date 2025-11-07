@@ -610,6 +610,7 @@ function mod_edit_board_bible(Context $ctx, $boardName) {
          			'token_post_threads' => make_secure_link_token('bible-post-threads'),
 				'token_post_replies' => make_secure_link_token('bible-post-replies'),
 				'token_post_book' => make_secure_link_token('bible-post-book'),
+				'token_test_delete_book' => make_secure_link_token('bible-test-delete-book'),
 	                        'bible_path_full' => $bible_path_full,
                                 'bible_path_index' => $bible_path_index,
                                 'bible_index' => $bible_index,
@@ -923,6 +924,37 @@ function mod_all_boards_status(Context $ctx)
 
     echo json_encode($result);
     exit;
+}
+
+function mod_bible_test_delete_book(Context $ctx) {
+    global $board, $mod;
+    $config = $ctx->get('config');
+
+    if (!hasPermission($config['mod']['manageboards'], $board['uri']))
+        error($config['error']['noaccess']);
+
+    $bookURI = isset($_POST['uri']) ? preg_replace('/[^a-zA-Z0-9]/', '', $_POST['uri']) : '';
+    if (!$bookURI)
+        error("Missing or invalid book URI.");
+
+    // TEST MODE: Assert NOT bible board
+    // This is a safety check to ensure we don't accidentally delete posts from non-bible boards
+    // Once we're confident in the implementation, we'll flip this to assert IS bible board
+
+    // Check if this is a bible board by checking the board type in config
+    openBoard($bookURI);
+    $boardConfig = $config;
+    $isBibleBoard = isset($boardConfig['board_type']) && $boardConfig['board_type'] === 'bible';
+
+    if ($isBibleBoard) {
+        // TEST MODE: Fail on bible boards (safety check)
+        echo "TEST MODE: Refusing to delete bible board '$bookURI'. This is the expected behavior in test mode. In production, this check will be reversed.";
+        modLog("TEST delete book BLOCKED (safety): " . $bookURI . " (is bible board)");
+    } else {
+        // TEST MODE: This would delete non-bible boards, which is also blocked for safety
+        echo "TEST MODE: Refusing to delete non-bible board '$bookURI'. This is a safety check. No actual deletion will occur in test mode.";
+        modLog("TEST delete book BLOCKED (safety): " . $bookURI . " (NOT bible board)");
+    }
 }
 
 function mod_bible_post_book(Context $ctx) {
