@@ -269,6 +269,12 @@ document.addEventListener('DOMContentLoaded', function() {
 		postBookBtn.textContent = 'Post Book';
 	    }
 	});
+
+	if (repostAllCheckbox.checked && fromEditPage) {
+	    setTimeout(function() {
+		postBookBtn.click();
+	    }, 100);
+	}
     }
 
     var status = document.getElementById('posts_status');
