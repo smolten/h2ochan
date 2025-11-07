@@ -927,11 +927,11 @@ function mod_all_boards_status(Context $ctx)
 }
 
 function mod_bible_delete_book(Context $ctx) {
-    global $board, $mod;
-    $config = $ctx->get('config');
+    global $board, $mod, $config;
+    $globalConfig = $ctx->get('config');
 
-    if (!hasPermission($config['mod']['manageboards'], $board['uri']))
-        error($config['error']['noaccess']);
+    if (!hasPermission($globalConfig['mod']['manageboards'], $board['uri']))
+        error($globalConfig['error']['noaccess']);
 
     $bookURI = isset($_POST['uri']) ? preg_replace('/[^a-zA-Z0-9]/', '', $_POST['uri']) : '';
     if (!$bookURI)
@@ -939,7 +939,7 @@ function mod_bible_delete_book(Context $ctx) {
 
     // Safety check: Only delete from bible boards
     // This prevents accidental deletion of user content from non-bible boards
-    openBoard($bookURI);
+    openBoard($bookURI);  // This loads board config into global $config
     $isBibleBoard = isset($config['isbible']) && $config['isbible'];
 
     if (!$isBibleBoard) {
