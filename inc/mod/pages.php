@@ -1041,6 +1041,22 @@ function mod_bible_post_threads(Context $ctx, bool $log=true) {
 
     $errors = [];  // Array to collect DB errors
 
+    // Check if verse column exists, add it if missing (for old bible boards)
+    try {
+        $checkColumn = query(sprintf("SHOW COLUMNS FROM ``posts_%s`` LIKE 'verse'", $bookURI));
+        $columnExists = $checkColumn->fetch();
+        if (!$columnExists) {
+            // Add verse column as SMALLINT (verses typically 1-176)
+            query(sprintf("ALTER TABLE ``posts_%s`` ADD COLUMN `verse` SMALLINT DEFAULT NULL", $bookURI));
+        }
+    } catch (PDOException $e) {
+        $errors[] = [
+            'chapter' => 0,
+            'verse' => 0,
+            'message' => 'Schema migration failed: ' . $e->getMessage()
+        ];
+    }
+
     // Use array_keys to get actual chapter numbers (handles books starting at chapter 6 or 10)
     $chapterNumbers = array_keys($chapters);
     sort($chapterNumbers); // Sort in ascending order
@@ -1121,6 +1137,22 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
     $chapters = parseBibleBookText($bookURI, $config['bible']['path_full']);
 
         $errors = [];  // Array to collate all DB errors
+
+    // Check if verse column exists, add it if missing (for old bible boards)
+    try {
+        $checkColumn = query(sprintf("SHOW COLUMNS FROM ``posts_%s`` LIKE 'verse'", $bookURI));
+        $columnExists = $checkColumn->fetch();
+        if (!$columnExists) {
+            // Add verse column as SMALLINT (verses typically 1-176)
+            query(sprintf("ALTER TABLE ``posts_%s`` ADD COLUMN `verse` SMALLINT DEFAULT NULL", $bookURI));
+        }
+    } catch (PDOException $e) {
+        $errors[] = [
+            'chapter' => 0,
+            'verse' => 0,
+            'message' => 'Schema migration failed: ' . $e->getMessage()
+        ];
+    }
 
     // Build mapping of chapter numbers to thread IDs
     // This handles books that don't start at chapter 1 (EpJer starts at 6, EsthGr at 10)
