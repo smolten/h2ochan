@@ -385,7 +385,21 @@ document.addEventListener('DOMContentLoaded', function() {
 		status.textContent = 'STOPPED: ' + postText;
 		return Promise.reject('fail');
 	    }
-	    status.textContent = "REPOST: Done. Next in 2s...";
+	    status.textContent = "REPOST: Fetching status...";
+	    var tokenStatus = document.querySelector('input[name="token_board_status"]');
+	    var statusParams = new URLSearchParams();
+	    statusParams.append('uri', uriValue);
+	    statusParams.append('token', tokenStatus.value);
+	    return fetch('/mod.php?/board-status', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+		body: statusParams.toString(),
+		credentials: 'same-origin'
+	    });
+	})
+	.then(response => response.text())
+	.then(statusText => {
+	    status.textContent = "REPOST: Done. " + statusText + " Next in 2s...";
 	    setTimeout(() => {
 		var nextURI = getNextBibleBookURI(uriValue);
 		if (nextURI !== uriValue) {
