@@ -941,10 +941,9 @@ function mod_bible_test_delete_book(Context $ctx) {
     // This is a safety check to ensure we don't accidentally delete posts from non-bible boards
     // Once we're confident in the implementation, we'll flip this to assert IS bible board
 
-    // Check if this is a bible board by checking the board type in config
+    // Check if this is a bible board by checking config.isbible
     openBoard($bookURI);
-    $boardConfig = $config;
-    $isBibleBoard = isset($boardConfig['board_type']) && $boardConfig['board_type'] === 'bible';
+    $isBibleBoard = isset($config['isbible']) && $config['isbible'];
 
     if ($isBibleBoard) {
         // TEST MODE: Fail on bible boards (safety check)
@@ -959,13 +958,34 @@ function mod_bible_test_delete_book(Context $ctx) {
 
 function mod_bible_post_book(Context $ctx) {
   global $mod, $board;
+  $config = $ctx->get('config');
+
+  $bookURI = isset($_POST['uri']) ? preg_replace('/[^a-zA-Z0-9]/', '', $_POST['uri']) : '';
+  if (!$bookURI)
+    error("Missing or invalid book URI.");
+
+  // Check if board already has posts - prevent reposting
+  try {
+    $query = query(sprintf(
+        "SELECT COUNT(*) AS c FROM ``posts_%s``",
+        $bookURI
+    ));
+    $row = $query->fetch(PDO::FETCH_ASSOC);
+    $totalPosts = $row ? (int)$row['c'] : 0;
+
+    if ($totalPosts > 0) {
+        echo "ERROR: Board '$bookURI' already has $totalPosts posts. Cannot repost book. Use TEST Delete Book first to clear the board.";
+        modLog("Post book BLOCKED: " . $bookURI . " already has $totalPosts posts");
+        return;
+    }
+  } catch (Exception $e) {
+    // If table doesn't exist, that's fine - we'll create posts
+  }
+
   mod_bible_post_threads($ctx, false);
   mod_bible_post_replies($ctx, false);
 
-  $bookURI = isset($_POST['uri']) ? preg_replace('/[^a-zA-Z0-9]/', '', $_POST['uri']) : '';   
-
   // CLEAR fast mode from config.....
-  $config = $ctx->get('config');
   $boardDir = sprintf($config['board_path'], $bookURI);
   $configFile = $boardDir . 'config.php';
   if (file_exists($configFile)) {
