@@ -250,7 +250,9 @@ document.addEventListener('DOMContentLoaded', function() {
     var postBookBtn = document.getElementById('do_post_book');
     if (repostAllCheckbox && postBookBtn) {
 	var referrer = document.referrer;
-	var fromEditPage = referrer.includes('/mod.php?/edit_bible/');
+	var currentURL = window.location.href;
+	var isSamePage = referrer === currentURL;
+	var fromEditPage = referrer.includes('/mod.php?/edit_bible/') && !isSamePage;
 
 	if (localStorage.getItem('bible_repost_all') === 'true' && fromEditPage) {
 	    repostAllCheckbox.checked = true;
