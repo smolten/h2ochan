@@ -249,9 +249,16 @@ document.addEventListener('DOMContentLoaded', function() {
     var repostAllCheckbox = document.getElementById('bible_repost_all');
     var postBookBtn = document.getElementById('do_post_book');
     if (repostAllCheckbox && postBookBtn) {
-	if (localStorage.getItem('bible_repost_all') === 'true') {
+	var referrer = document.referrer;
+	var fromEditPage = referrer.includes('/mod.php?/edit_bible/');
+
+	if (localStorage.getItem('bible_repost_all') === 'true' && fromEditPage) {
 	    repostAllCheckbox.checked = true;
 	    postBookBtn.textContent = '(re)Post Book';
+	} else {
+	    repostAllCheckbox.checked = false;
+	    localStorage.removeItem('bible_repost_all');
+	    postBookBtn.textContent = 'Post Book';
 	}
 	repostAllCheckbox.addEventListener('change', function() {
 	    if (this.checked) {
