@@ -345,5 +345,35 @@ document.addEventListener('DOMContentLoaded', function() {
 	    status.textContent = 'Error: ' + err;
 	});
     };
+
+    var nextBookBtn = document.getElementById('next_book_btn');
+    if (nextBookBtn) {
+	nextBookBtn.addEventListener('click', function() {
+	    window.location.href = '/mod.php?/edit_bible/' + getNextBibleBookURI(uriValue);
+	});
+    }
+
+    function getNextBibleBookURI(currentURI) {
+	if (typeof bible_index === 'undefined') {
+	    alert('Bible index not loaded');
+	    return currentURI;
+	}
+	var currentIndex = -1;
+	for (var i = 0; i < bible_index.length; i++) {
+	    if (bible_index[i].osisID === currentURI) {
+		currentIndex = i;
+		break;
+	    }
+	}
+	if (currentIndex === -1) {
+	    alert('Current book not found in index');
+	    return currentURI;
+	}
+	if (currentIndex >= bible_index.length - 1) {
+	    alert('Done! This is the last book (Revelation).');
+	    return currentURI;
+	}
+	return bible_index[currentIndex + 1].osisID;
+    }
 });
 </script>
