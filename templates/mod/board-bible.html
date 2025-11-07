@@ -85,6 +85,15 @@
 	<input type="checkbox" name="bible_create_all" id="bible_create_all" {% if config.bible_create_all %}checked{% endif %}>
     </td></pre>
 </tr>
+		{% if not new %}
+		<tr>
+		    <th>REPOST_ALL</th>
+		    <td><pre>
+	REPOST ALL BIBLE BOOKS:
+	<input type="checkbox" name="bible_repost_all" id="bible_repost_all">
+		    </td></pre>
+		</tr>
+		{% endif %}
 		<tr>
 			<th>{% trans 'URI' %}</th>
 			<td>
