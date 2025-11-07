@@ -299,7 +299,14 @@ document.addEventListener('DOMContentLoaded', function() {
 	    body: params.toString(),
 	    credentials: 'same-origin'
 	})
-	.then(() => board_status())
+	.then(response => response.text())
+	.then(text => {
+	    if (text && text.includes('ERROR')) {
+		status.textContent = text;
+	    } else {
+		board_status();
+	    }
+	})
 	.catch(err => {
 	    status.textContent = 'Error: ' + err;
 	});

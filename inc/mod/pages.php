@@ -966,16 +966,27 @@ function mod_bible_post_book(Context $ctx) {
 
   // Check if board already has posts - prevent reposting
   try {
-    $query = query(sprintf(
-        "SELECT COUNT(*) AS c FROM ``posts_%s``",
+    // Count threads
+    $queryThreads = query(sprintf(
+        "SELECT COUNT(*) AS c FROM ``posts_%s`` WHERE `thread` IS NULL",
         $bookURI
     ));
-    $row = $query->fetch(PDO::FETCH_ASSOC);
-    $totalPosts = $row ? (int)$row['c'] : 0;
+    $rowThreads = $queryThreads->fetch(PDO::FETCH_ASSOC);
+    $threads = $rowThreads ? (int)$rowThreads['c'] : 0;
+
+    // Count replies
+    $queryReplies = query(sprintf(
+        "SELECT COUNT(*) AS c FROM ``posts_%s`` WHERE `thread` IS NOT NULL",
+        $bookURI
+    ));
+    $rowReplies = $queryReplies->fetch(PDO::FETCH_ASSOC);
+    $replies = $rowReplies ? (int)$rowReplies['c'] : 0;
+
+    $totalPosts = $threads + $replies;
 
     if ($totalPosts > 0) {
-        echo "ERROR: Board '$bookURI' already has $totalPosts posts. Cannot repost book. Use TEST Delete Book first to clear the board.";
-        modLog("Post book BLOCKED: " . $bookURI . " already has $totalPosts posts");
+        echo "ERROR: Refusing to Post Book. Threads: {$threads} Replies: {$replies}";
+        modLog("Post book BLOCKED: " . $bookURI . " already has $totalPosts posts (Threads: $threads, Replies: $replies)");
         return;
     }
   } catch (Exception $e) {
