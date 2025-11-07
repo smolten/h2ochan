@@ -316,12 +316,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     function do_book() {
+	if (repostAllCheckbox && repostAllCheckbox.checked) {
+	    do_repost_sequence();
+	} else {
+	    do_post_only();
+	}
+    }
+    function do_post_only() {
 	status.textContent = "Writing Book....";
         var tokenBook = document.querySelector('input[name="token_post_book"]');
 	var params = new URLSearchParams();
 	params.append('uri', uriValue);
 	params.append('token', tokenBook.value);
-	console.log("Posting book of URI:", uriValue);
 
 	fetch('/mod.php?/bible-post-book', {
 	    method: 'POST',
@@ -340,7 +346,65 @@ document.addEventListener('DOMContentLoaded', function() {
 	.catch(err => {
 	    status.textContent = 'Error: ' + err;
 	});
-    };
+    }
+    function do_repost_sequence() {
+	if (!repostAllCheckbox.checked) {
+	    status.textContent = 'REPOST stopped (unchecked)';
+	    return;
+	}
+	status.textContent = "REPOST: Deleting...";
+	var tokenDel = document.querySelector('input[name="token_delete_book"]');
+	var delParams = new URLSearchParams();
+	delParams.append('uri', uriValue);
+	delParams.append('token', tokenDel.value);
+	fetch('/mod.php?/bible-delete-book', {
+	    method: 'POST',
+	    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+	    body: delParams.toString(),
+	    credentials: 'same-origin'
+	})
+	.then(response => response.text())
+	.then(delText => {
+	    if (delText.includes('ERROR')) {
+		status.textContent = 'STOPPED: ' + delText;
+		return Promise.reject('fail');
+	    }
+	    status.textContent = "REPOST: Posting...";
+	    var tokenBook = document.querySelector('input[name="token_post_book"]');
+	    var postParams = new URLSearchParams();
+	    postParams.append('uri', uriValue);
+	    postParams.append('token', tokenBook.value);
+	    return fetch('/mod.php?/bible-post-book', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+		body: postParams.toString(),
+		credentials: 'same-origin'
+	    });
+	})
+	.then(response => response.text())
+	.then(postText => {
+	    if (postText && postText.includes('ERROR')) {
+		status.textContent = 'STOPPED: ' + postText;
+		return Promise.reject('fail');
+	    }
+	    status.textContent = "REPOST: Done. Next in 2s...";
+	    setTimeout(() => {
+		var nextURI = getNextBibleBookURI(uriValue);
+		if (nextURI !== uriValue) {
+		    window.location.href = '/mod.php?/edit_bible/' + nextURI;
+		} else {
+		    status.textContent = 'REPOST COMPLETE!';
+		    localStorage.removeItem('bible_repost_all');
+		    repostAllCheckbox.checked = false;
+		}
+	    }, 2000);
+	})
+	.catch(err => {
+	    if (err !== 'fail') {
+		status.textContent = 'ERROR: ' + err;
+	    }
+	});
+    }
     function do_delete_book() {
 	status.textContent = "Deleting Book....";
 	var tokenDelete = document.querySelector('input[name="token_delete_book"]');
