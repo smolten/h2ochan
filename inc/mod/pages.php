@@ -1046,8 +1046,8 @@ function mod_bible_post_threads(Context $ctx, bool $log=true) {
         $checkColumn = query(sprintf("SHOW COLUMNS FROM ``posts_%s`` LIKE 'verse'", $bookURI));
         $columnExists = $checkColumn->fetch();
         if (!$columnExists) {
-            // Add verse column as SMALLINT (verses typically 1-176)
-            query(sprintf("ALTER TABLE ``posts_%s`` ADD COLUMN `verse` SMALLINT DEFAULT NULL", $bookURI));
+            // Add verse column as INT(11) to match existing schema
+            query(sprintf("ALTER TABLE ``posts_%s`` ADD COLUMN `verse` INT(11) DEFAULT NULL", $bookURI));
         }
     } catch (PDOException $e) {
         $errors[] = [
@@ -1143,8 +1143,8 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
         $checkColumn = query(sprintf("SHOW COLUMNS FROM ``posts_%s`` LIKE 'verse'", $bookURI));
         $columnExists = $checkColumn->fetch();
         if (!$columnExists) {
-            // Add verse column as SMALLINT (verses typically 1-176)
-            query(sprintf("ALTER TABLE ``posts_%s`` ADD COLUMN `verse` SMALLINT DEFAULT NULL", $bookURI));
+            // Add verse column as INT(11) to match existing schema
+            query(sprintf("ALTER TABLE ``posts_%s`` ADD COLUMN `verse` INT(11) DEFAULT NULL", $bookURI));
         }
     } catch (PDOException $e) {
         $errors[] = [
