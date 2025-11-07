@@ -414,6 +414,10 @@ document.addEventListener('DOMContentLoaded', function() {
 	.then(statusText => {
 	    status.textContent = "REPOST: Done. " + statusText + " Next in 2s...";
 	    setTimeout(() => {
+		if (!repostAllCheckbox.checked) {
+		    status.textContent = 'REPOST stopped (unchecked)';
+		    return;
+		}
 		var nextURI = getNextBibleBookURI(uriValue);
 		if (nextURI !== uriValue) {
 		    window.location.href = '/mod.php?/edit_bible/' + nextURI;
