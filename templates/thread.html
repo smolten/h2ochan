@@ -41,6 +41,8 @@
 					{{ board.subtitle|e }}
 				{% endif %}
 			{% endif %}
+                        {% if board.linkPrev %}<a href="{{ board.linkPrev }}" style="float:left">&lt;&lt; {{ board.titlePrev }}</a>{% endif %}
+                        {% if board.linkNext %}<a href="{{ board.linkNext }}" style="float:right">{{ board.titleNext }} &gt;&gt;</a>{% endif %}
 			{% if mod %}<p><a href="?/">{% trans %}Return to dashboard{% endtrans %}</a></p>{% endif %}
 		</div>
 	</header>
