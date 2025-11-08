@@ -33,6 +33,9 @@
 	// bible scrolling
 	$config['additional_javascript'][] = 'js/bible-infinite-scroll.js';
 
+	// post preview on hover/tap
+	$config['additional_javascript'][] = 'js/post-preview.js';
+
 	// id colors
 	$config['additional_javascript'][] = 'js/id_colors.js';
 	$config['additional_javascript'][] = 'js/id_highlighter.js';

@@ -1363,3 +1363,40 @@ a.post_no.verse {
         column-width: 11em;  /* Narrower columns on mobile */
     }
 }
+
+/* Post preview popup (hover/tap quotes) */
+.post-preview-popup {
+    position: absolute;
+    z-index: 10000;
+    max-width: 600px;
+    pointer-events: auto;
+}
+
+.post-preview-content {
+    background: rgb(214 218 240);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 2px solid #34345C;
+    padding: 0.5em;
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.post-preview-content .post {
+    margin: 0;
+    box-shadow: none;
+    border: none;
+}
+
+/* Mobile adjustments for preview */
+@media (max-width: 768px) {
+    .post-preview-popup {
+        max-width: 90vw;
+        left: 5vw !important;
+        right: 5vw;
+    }
+
+    .post-preview-content {
+        max-height: 50vh;
+    }
+}
