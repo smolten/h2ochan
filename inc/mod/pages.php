@@ -942,7 +942,7 @@ function mod_bible_delete_book(Context $ctx) {
         error("Board not found: $bookURI");
 
     // Safety check: Only delete from bible boards (use board-specific config)
-    $boardConfig = $board['config'] ?? [];
+    $boardConfig = $board['config'] ?? $config;
     $isBibleBoard = isset($boardConfig['isbible']) && $boardConfig['isbible'];
 
     if (!$isBibleBoard) {
