@@ -308,7 +308,7 @@ document.addEventListener('DOMContentLoaded', function() {
     	    }
 	});
     }
-    function board_status() {	
+    function board_status() {
         var tokenStatus = document.querySelector('input[name="token_board_status"]');
         var params = new URLSearchParams();
         params.append('uri', uriValue);
@@ -322,10 +322,17 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.text())
         .then(text => {
-            status.textContent = text || '(no response)';
+            if (text && (text.includes('ERROR:') || text.includes('Error:'))) {
+                status.textContent = text;
+                status.style.color = 'red';
+            } else {
+                status.textContent = text || '(no response)';
+                status.style.color = '';
+            }
         })
         .catch(err => {
-            status.textContent = 'Error: ' + err;
+            status.textContent = 'ERROR: ' + err;
+            status.style.color = 'red';
         });
     };
     function do_book() {
