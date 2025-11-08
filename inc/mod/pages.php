@@ -1598,6 +1598,16 @@ function mod_view_board(Context $ctx, $boardName, $page_no = 1) {
 	$page['config'] = $config;
 	$page['pm'] = create_pm_header();
 
+	// Add Bible book navigation if this is a Bible board
+	global $board;
+	if (isset($config['isbible']) && $config['isbible'] && isset($config['bible']['path_index'])) {
+		$bibleNav = getBibleBookNavigation($board['uri'], $config['bible']['path_index']);
+		$page['board']['linkPrev'] = $bibleNav['linkPrev'];
+		$page['board']['linkNext'] = $bibleNav['linkNext'];
+		$page['board']['titlePrev'] = $bibleNav['titlePrev'];
+		$page['board']['titleNext'] = $bibleNav['titleNext'];
+	}
+
 	echo Element($config['file_board_index'], $page);
 }
 
