@@ -16,9 +16,10 @@
 
     // Configuration
     const config = {
-        columnsToLoad: 1,  // Load this many chapters at a time
-        loadThreshold: 5,  // Start loading when within this many columns of edge
-        urlUpdateDelay: 500  // Delay before updating URL (ms)
+        columnsToLoad: 2,  // Load this many chapters at a time
+        loadThreshold: 3,  // Start loading when within this many columns of edge (want 2+ cols outside view)
+        urlUpdateDelay: 250,  // Delay before updating URL (ms)
+        sentryDistance: '200px'  // Distance for IntersectionObserver sentries
     };
 
     // State
@@ -29,6 +30,11 @@
     let userHasScrolled = false;
     let loadingEnabled = false;  // Don't load until user scrolls
     let initialPreloadDone = false;  // Track if we've done initial preload
+
+    // Sentry elements and observer for detecting when to load content
+    let leftSentry = null;
+    let rightSentry = null;
+    let sentryObserver = null;
 
     // Cache for book metadata (title, subtitle, prev/next, chapters)
     const bookMetadataCache = new Map();
@@ -64,6 +70,76 @@
             left: columnsFromLeft,
             right: columnsFromRight
         };
+    }
+
+    /**
+     * Create or update sentry elements for IntersectionObserver
+     * These sentries sit at the edges and trigger loading when they become visible
+     */
+    function updateSentries() {
+        if (!thread) return;
+
+        // Remove existing sentries
+        if (leftSentry) leftSentry.remove();
+        if (rightSentry) rightSentry.remove();
+
+        // Create left sentry (at the beginning)
+        leftSentry = document.createElement('div');
+        leftSentry.className = 'scroll-sentry left-sentry';
+        leftSentry.style.cssText = 'position: absolute; left: 0; top: 0; width: 1px; height: 1px; pointer-events: none;';
+
+        // Create right sentry (at the end)
+        rightSentry = document.createElement('div');
+        rightSentry.className = 'scroll-sentry right-sentry';
+        rightSentry.style.cssText = 'position: absolute; right: 0; top: 0; width: 1px; height: 1px; pointer-events: none;';
+
+        // Insert sentries
+        const firstPost = thread.querySelector('.post.bible');
+        const lastPost = thread.querySelectorAll('.post.bible');
+
+        if (firstPost) {
+            firstPost.parentNode.insertBefore(leftSentry, firstPost);
+        }
+
+        if (lastPost.length > 0) {
+            lastPost[lastPost.length - 1].parentNode.appendChild(rightSentry);
+        }
+    }
+
+    /**
+     * Initialize IntersectionObserver for sentries
+     */
+    function initSentryObserver() {
+        if (!('IntersectionObserver' in window)) {
+            console.log('IntersectionObserver not supported, falling back to scroll detection only');
+            return;
+        }
+
+        const options = {
+            root: thread,
+            rootMargin: config.sentryDistance,
+            threshold: 0
+        };
+
+        sentryObserver = new IntersectionObserver((entries) => {
+            if (!loadingEnabled || loading) return;
+
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    if (entry.target.classList.contains('left-sentry')) {
+                        console.log('Left sentry visible, loading previous chapters');
+                        loadMoreChapters('before');
+                    } else if (entry.target.classList.contains('right-sentry')) {
+                        console.log('Right sentry visible, loading next chapters');
+                        loadMoreChapters('after');
+                    }
+                }
+            });
+        }, options);
+
+        // Observe sentries
+        if (leftSentry) sentryObserver.observe(leftSentry);
+        if (rightSentry) sentryObserver.observe(rightSentry);
     }
 
     /**
@@ -731,6 +807,9 @@
                     const crossBookKey = `${crossBook.uri}:${targetChapter}`;
                     loadedCrossBookChapters.add(crossBookKey);
                     console.log(`Loaded cross-book chapter: ${crossBook.uri} ${targetChapter}`);
+
+                    // Update sentries after cross-book loading
+                    updateSentries();
                 } catch (error) {
                     console.error(`Error loading cross-book chapter:`, error);
                 }
@@ -819,6 +898,9 @@
             }
 
             console.log(`Loaded ${chaptersToLoad.length} chapter(s) ${direction}`);
+
+            // Update sentries after loading new content
+            updateSentries();
 
             loading = false;
 
@@ -1063,6 +1145,10 @@
 
         // Add scroll listener
         thread.addEventListener('scroll', onScroll);
+
+        // Initialize sentries for IntersectionObserver
+        updateSentries();
+        initSentryObserver();
 
         console.log(`Bible infinite scroll initialized on ${boardURI}, chapter ${currentChapter}`);
 
