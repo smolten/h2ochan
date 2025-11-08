@@ -1,7 +1,9 @@
-<input type="checkbox" class="bookmark" 
-       name="bookmark_{{ board.uri }}_{{ post.id }}" 
+{% if not config.isbible or post.thread %}
+<input type="checkbox" class="bookmark"
+       name="bookmark_{{ board.uri }}_{{ post.id }}"
        id="bookmark_{{ board.uri }}_{{ post.id }}"
        data-post-id="{{ post.id }}"
        data-board-uri="{{ board.uri }}"
        data-post-link="/{{ board.uri }}/res/{% if post.thread %}{{ post.thread }}{% else %}{{ post.id }}{% endif %}.html#q{{ post.id }}"
 />
+{% endif %}

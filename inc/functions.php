@@ -833,40 +833,6 @@ function getBibleBookNavigation($current_uri, $bible_path_index) {
 }
 
 /**
- * Get the next book URI in biblical order, or null if this is the last book
- *
- * @param string $current_uri Current book's osisID (e.g., 'Gen', 'Exod')
- * @param string $bible_path_index Path to the Bible index XML file
- * @return string|null Next book's osisID, or null if current is last book or not found
- */
-function getNextBibleBookURI($current_uri, $bible_path_index) {
-    if (!file_exists($bible_path_index)) {
-        return null;
-    }
-
-    $xml = simplexml_load_file($bible_path_index);
-    if (!$xml) {
-        return null;
-    }
-
-    // Build array of all book URIs in order
-    $books = array();
-    foreach ($xml->title as $title) {
-        $books[] = (string)$title['osisID'];
-    }
-
-    // Find current book's position
-    $currentIndex = array_search($current_uri, $books, true);
-
-    // Return next book if exists and not at the end
-    if ($currentIndex !== false && $currentIndex < count($books) - 1) {
-        return $books[$currentIndex + 1];
-    }
-
-    return null; // Either not found or this is the last book
-}
-
-/**
  * Build a lookup table for Bible book names to osisID
  * Supports: osisID (Gen, 1John), full names (Genesis, 1 John, 2 Thessalonians)
  *
@@ -929,6 +895,78 @@ function buildBibleBookLookup($bible_path_index) {
 
     $cached = ['lookup' => $lookup, 'verseCounts' => $verseCounts];
     return $cached;
+}
+
+/**
+ * Get the full name of a Bible book from the index
+ *
+ * @param string $osisID The OSIS ID of the book (e.g., "Gen", "Ps", "Matt")
+ * @param string $bible_path_index Path to the Bible index XML file
+ * @return string The full book name, or empty string if not found
+ */
+function getBibleBookFullName($osisID, $bible_path_index) {
+    if (!file_exists($bible_path_index)) {
+        return '';
+    }
+
+    $xml = simplexml_load_file($bible_path_index);
+    if (!$xml) {
+        return '';
+    }
+
+    foreach ($xml->title as $title) {
+        if ((string)$title['osisID'] === $osisID) {
+            return (string)$title->fullName;
+        }
+    }
+
+    return '';
+}
+
+/**
+ * Get detailed Bible book metadata for infinite scroll
+ *
+ * @param string $currentOsisID Current book's osisID (e.g., "Gen")
+ * @param string $bible_path_index Path to the XML index file
+ * @return array Structure with current book info, previous book, and next book
+ */
+function getBibleBookMetadata($currentOsisID, $bible_path_index) {
+    if (!file_exists($bible_path_index)) {
+        return null;
+    }
+
+    $xml = simplexml_load_file($bible_path_index);
+    if (!$xml) {
+        return null;
+    }
+
+    $books = [];
+    foreach ($xml->title as $title) {
+        $books[] = [
+            'osisID' => (string)$title['osisID'],
+            'short' => (string)$title['short'],
+            'chapters' => (int)$title['chapters']
+        ];
+    }
+
+    // Find current book index
+    $currentIndex = -1;
+    for ($i = 0; $i < count($books); $i++) {
+        if ($books[$i]['osisID'] === $currentOsisID) {
+            $currentIndex = $i;
+            break;
+        }
+    }
+
+    if ($currentIndex === -1) {
+        return null;
+    }
+
+    return [
+        'current' => $books[$currentIndex],
+        'previous' => $currentIndex > 0 ? $books[$currentIndex - 1] : null,
+        'next' => $currentIndex < count($books) - 1 ? $books[$currentIndex + 1] : null
+    ];
 }
 
 
@@ -2585,6 +2623,20 @@ function buildThread($id, $return = false, $mod = false) {
 			$options['pm'] = create_pm_header();
 		}
 
+		// Add Bible navigation data if this is a Bible board
+		if (isset($config['isbible']) && $config['isbible'] && isset($config['bible']['path_index'])) {
+			$bibleNav = getBibleBookMetadata($board['uri'], $config['bible']['path_index']);
+			if ($bibleNav) {
+				$options['bible_navigation'] = $bibleNav;
+				error_log("[buildThread] Bible navigation data added for " . $board['uri'] . ": " . json_encode($bibleNav));
+			} else {
+				error_log("[buildThread] getBibleBookMetadata returned null for board: " . $board['uri'] . " with path_index: " . $config['bible']['path_index']);
+			}
+		} else {
+			error_log("[buildThread] Bible navigation check failed for board " . $board['uri'] . ". isbible=" . (isset($config['isbible']) ? ($config['isbible'] ? 'true' : 'false') : 'not set') .
+			          ", path_index=" . (isset($config['bible']['path_index']) ? $config['bible']['path_index'] : 'not set'));
+		}
+
 		$body = Element($config['file_thread'], $options);
 
 		// json api
@@ -2645,7 +2697,7 @@ function buildThread50($id, $return = false, $mod = false, $thread = null) {
 
 		// Check if any posts were found
 		if (!isset($thread))
-			error($config['error']['nonexistant']);
+			error($config['error']['nonexistant'].": ".$id);
 
 
 		if ($query->rowCount() == $config['noko50_count']+1) {
@@ -3228,21 +3280,34 @@ function get_urls($body) {
  *
  * @param string $title The short book name (e.g., "Genesis", "1 Samuel", "Mark")
  * @param string $subtitle The full book title (e.g., "The First Book of Moses, called Genesis")
+ * @param string $uri The board URI (e.g., "Gen", "EpJer", "EsthGr") - optional
  * @return string The formatted HTML with the book name bolded
  */
-function formatBibleBookTitle($title, $subtitle) {
+function formatBibleBookTitle($title, $subtitle, $uri = null) {
 	if (empty($subtitle)) {
 		return htmlspecialchars($title);
 	}
 
-	// Remove leading numbers and spaces from title to get the core book name
-	// "1 Samuel" -> "Samuel", "2 Kings" -> "Kings", "Genesis" -> "Genesis"
-	$book_name = preg_replace('/^[123]\s+/', '', $title);
+	// Special cases for books where abbreviation doesn't match the book name in subtitle
+	$special_cases = [
+		'EpJer' => 'Jeremiah',  // Epistle of Jeremiah
+		'EsthGr' => 'Esther',   // Greek Esther
+	];
 
-	// Don't include honorifics like "St." in the bolding
-	// "St. Mark" -> we want to bold just "Mark", not "St."
-	// So if the book_name contains "St. ", remove it
-	$book_name_for_bolding = str_replace('St. ', '', $book_name);
+	// Check if this is a special case (using URI if provided, otherwise fall back to title)
+	$lookup_key = $uri !== null ? $uri : $title;
+	$book_name_for_bolding = isset($special_cases[$lookup_key]) ? $special_cases[$lookup_key] : null;
+
+	if (!$book_name_for_bolding) {
+		// Remove leading numbers and spaces from title to get the core book name
+		// "1 Samuel" -> "Samuel", "2 Kings" -> "Kings", "Genesis" -> "Genesis"
+		$book_name = preg_replace('/^[123]\s+/', '', $title);
+
+		// Don't include honorifics like "St." in the bolding
+		// "St. Mark" -> we want to bold just "Mark", not "St."
+		// So if the book_name contains "St. ", remove it
+		$book_name_for_bolding = str_replace('St. ', '', $book_name);
+	}
 
 	// Find the first occurrence of the book name in the subtitle
 	$pos = stripos($subtitle, $book_name_for_bolding);
@@ -3298,7 +3363,7 @@ function categorizeBibleBoards($boards, $bible_path_index) {
 		$testament = isset($testament_map[$uri]) ? $testament_map[$uri] : '';
 
 		// Add formatted title with book name bolded (first occurrence only)
-		$board['formatted_title'] = formatBibleBookTitle($board['title'], $board['subtitle']);
+		$board['formatted_title'] = formatBibleBookTitle($board['title'], $board['subtitle'], $board['uri']);
 
 		if ($testament === 'old') {
 			$old_testament[] = $board;

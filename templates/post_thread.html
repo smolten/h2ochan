@@ -1,9 +1,8 @@
 {% apply spaceless %}
 {# tabs and new lines will be ignored #}
 
-<div class="thread{% if config.isbible %} bible{% endif %}" id="thread_{{ post.id }}" data-board="{{ board.uri }}"
-    {% if config.isbible %}style="overflow-x: auto; text-align:justify; height:calc(80vh); column-width:13em; column-fill:auto;"{%endif%}
->
+<div class="thread{%if config.isbible%} bible{%endif%}" id="thread_{{ post.id }}" data-board="{{ board.uri }}"{% if bible_navigation %} data-bible-nav="{{ bible_navigation|json_encode|e('html_attr') }}"{% endif %}>
+
 {% if not index %}<a id="{{ post.id }}" class="post_anchor"></a>{% endif %}
 
 {% endapply %}

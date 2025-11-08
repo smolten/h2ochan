@@ -63,8 +63,9 @@ $pages = [
 	'/edit_bible/(\%b)'			=> 'secure_POST edit_board_bible',
 	'/board-status'                         => 'secure_POST board_status',
 	'/all-boards-status'                    => 'secure_POST all_boards_status',
+	'/bible-post-threads'                   => 'secure_POST bible_post_threads',
+	'/bible-post-replies'			=> 'secure_POST bible_post_replies',
 	'/bible-post-book'			=> 'secure_POST bible_post_book',
-	'/bible-delete-book'			=> 'secure_POST bible_delete_book',
 
 	// h2o toggle lock on all non-bible boards
 	'/lock_all'   => 'secure_POST lock_all',

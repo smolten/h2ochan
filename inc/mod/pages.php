@@ -610,7 +610,6 @@ function mod_edit_board_bible(Context $ctx, $boardName) {
          			'token_post_threads' => make_secure_link_token('bible-post-threads'),
 				'token_post_replies' => make_secure_link_token('bible-post-replies'),
 				'token_post_book' => make_secure_link_token('bible-post-book'),
-				'token_delete_book' => make_secure_link_token('bible-delete-book'),
 	                        'bible_path_full' => $bible_path_full,
                                 'bible_path_index' => $bible_path_index,
                                 'bible_index' => $bible_index,
@@ -926,85 +925,15 @@ function mod_all_boards_status(Context $ctx)
     exit;
 }
 
-function mod_bible_delete_book(Context $ctx) {
-    global $board, $mod, $config;
-    $globalConfig = $ctx->get('config');
-
-    if (!hasPermission($globalConfig['mod']['manageboards'], $board['uri']))
-        error($globalConfig['error']['noaccess']);
-
-    $bookURI = isset($_POST['uri']) ? preg_replace('/[^a-zA-Z0-9]/', '', $_POST['uri']) : '';
-    if (!$bookURI)
-        error("Missing or invalid book URI.");
-
-    // Safety check: Only delete from bible boards
-    // This prevents accidental deletion of user content from non-bible boards
-    openBoard($bookURI);  // This loads board config into global $config
-    $isBibleBoard = isset($config['isbible']) && $config['isbible'];
-
-    if (!$isBibleBoard) {
-        echo "ERROR: Refusing to delete non-bible board '$bookURI'. This board does not have config.isbible set to true.";
-        modLog("Delete book BLOCKED: " . $bookURI . " (NOT a bible board)");
-        return;
-    }
-
-    // Delete all posts from this bible board
-    try {
-        $query = query(sprintf("DELETE FROM ``posts_%s``", $bookURI));
-
-        // Get count of deleted rows
-        $deletedCount = $query->rowCount();
-
-        echo "Successfully deleted $deletedCount posts from bible board '$bookURI'.";
-        modLog("Deleted book: " . $bookURI . " ($deletedCount posts removed)");
-
-    } catch (Exception $e) {
-        echo "ERROR: Failed to delete posts from '$bookURI': " . $e->getMessage();
-        modLog("Delete book FAILED: " . $bookURI . " - " . $e->getMessage());
-    }
-}
-
 function mod_bible_post_book(Context $ctx) {
   global $mod, $board;
-  $config = $ctx->get('config');
-
-  $bookURI = isset($_POST['uri']) ? preg_replace('/[^a-zA-Z0-9]/', '', $_POST['uri']) : '';
-  if (!$bookURI)
-    error("Missing or invalid book URI.");
-
-  // Check if board already has posts - prevent reposting
-  try {
-    // Count threads
-    $queryThreads = query(sprintf(
-        "SELECT COUNT(*) AS c FROM ``posts_%s`` WHERE `thread` IS NULL",
-        $bookURI
-    ));
-    $rowThreads = $queryThreads->fetch(PDO::FETCH_ASSOC);
-    $threads = $rowThreads ? (int)$rowThreads['c'] : 0;
-
-    // Count replies
-    $queryReplies = query(sprintf(
-        "SELECT COUNT(*) AS c FROM ``posts_%s`` WHERE `thread` IS NOT NULL",
-        $bookURI
-    ));
-    $rowReplies = $queryReplies->fetch(PDO::FETCH_ASSOC);
-    $replies = $rowReplies ? (int)$rowReplies['c'] : 0;
-
-    $totalPosts = $threads + $replies;
-
-    if ($totalPosts > 0) {
-        echo "ERROR: Refusing to Post Book. Threads: {$threads} Replies: {$replies}";
-        modLog("Post book BLOCKED: " . $bookURI . " already has $totalPosts posts (Threads: $threads, Replies: $replies)");
-        return;
-    }
-  } catch (Exception $e) {
-    // If table doesn't exist, that's fine - we'll create posts
-  }
-
   mod_bible_post_threads($ctx, false);
   mod_bible_post_replies($ctx, false);
 
+  $bookURI = isset($_POST['uri']) ? preg_replace('/[^a-zA-Z0-9]/', '', $_POST['uri']) : '';   
+
   // CLEAR fast mode from config.....
+  $config = $ctx->get('config');
   $boardDir = sprintf($config['board_path'], $bookURI);
   $configFile = $boardDir . 'config.php';
   if (file_exists($configFile)) {
@@ -1032,34 +961,25 @@ function mod_bible_post_threads(Context $ctx, bool $log=true) {
     if (!hasPermission($config['mod']['manageboards'], $board['uri']))
         error($config['error']['noaccess']);
 
-    $bookURI = isset($_POST['uri']) ? preg_replace('/[^a-zA-Z0-9]/', '', $_POST['uri']) : '';   
+    $bookURI = isset($_POST['uri']) ? preg_replace('/[^a-zA-Z0-9]/', '', $_POST['uri']) : '';
     if (!$bookURI)
         error("Missing or invalid book URI.");
 
-    // Parse the full text of the book into chapters (array of chapters, each is array of verses)
+    // Get the full book title from the Bible index
+    $fullName = getBibleBookFullName($bookURI, $config['bible']['path_index']);
+    if (empty($fullName)) {
+        $fullName = "THE BOOK OF " . strtoupper($bookURI);
+    }
+
+    // Parse the full text of the book into chapters
     $chapters = parseBibleBookText($bookURI, $config['bible']['path_full']);
 
     $errors = [];  // Array to collect DB errors
 
-    // Check if verse column exists, add it if missing (for old bible boards)
-    try {
-        $checkColumn = query(sprintf("SHOW COLUMNS FROM ``posts_%s`` LIKE 'verse'", $bookURI));
-        $columnExists = $checkColumn->fetch();
-        if (!$columnExists) {
-            // Add verse column as INT(11) to match existing schema
-            query(sprintf("ALTER TABLE ``posts_%s`` ADD COLUMN `verse` INT(11) DEFAULT NULL", $bookURI));
-        }
-    } catch (PDOException $e) {
-        $errors[] = [
-            'chapter' => 0,
-            'verse' => 0,
-            'message' => 'Schema migration failed: ' . $e->getMessage()
-        ];
-    }
-
     // Use array_keys to get actual chapter numbers (handles books starting at chapter 6 or 10)
     $chapterNumbers = array_keys($chapters);
     sort($chapterNumbers); // Sort in ascending order
+    $firstChapter = min($chapterNumbers); // Get the lowest chapter number
 
     foreach ($chapterNumbers as $chapter) {
         // Skip if this chapter doesn't exist in the array
@@ -1067,26 +987,17 @@ function mod_bible_post_threads(Context $ctx, bool $log=true) {
             continue;
         }
 
-        $verses = $chapters[$chapter];           // array of verses for this chapter
-
-        // Find the first available verse (might not be verse 1)
-        $verseNumbers = array_keys($verses);
-        if (empty($verseNumbers)) {
-            $errors[] = [
-                'chapter' => $chapter,
-                'verse' => 'N/A',
-                'message' => "No verses found"
-            ];
-            continue;
+        // Determine the OP body based on chapter number
+        if ($chapter === $firstChapter) {
+            // First chapter (could be 1, 6, 11, etc.) gets the book title as OP
+            $body = '<h2 style="text-align: center;">' . htmlspecialchars($fullName) . '</h2>';
+        } else {
+            // Subsequent chapters get a hidden placeholder OP
+            $body = '<p class="chapter-placeholder" style="display: none;">[Chapter ' . $chapter . ']</p>';
         }
-        sort($verseNumbers);
-        $firstVerse = $verseNumbers[0];
 
-        $prepend = '<a class="post_no chapter" id="v' . $firstVerse . '" onclick="citeVerse(' . $chapter . ', ' . $firstVerse . ', event)" ' .
-            'href="/' . $bookURI . '/res/' . $chapter . '.html#v' . $firstVerse . '">' . $chapter . '</a>';
-        $body = $prepend . $verses[$firstVerse];                      // Chapter with first available verse
-        $body_nomarkup = strip_tags($body);      // remove HTML tags
-        $slug = preg_replace('/[^a-zA-Z0-9]/', '', $body_nomarkup); // simple alpha-numeric slug
+        $body_nomarkup = strip_tags($body);
+        $slug = preg_replace('/[^a-zA-Z0-9]/', '', $body_nomarkup);
         $slug = substr($slug, 0, 256); // db char limit
 
         try {
@@ -1095,32 +1006,33 @@ function mod_bible_post_threads(Context $ctx, bool $log=true) {
                     files, num_files, filehash, password, ip, sticky, locked, cycle, sage, embed, slug, verse)
                 VALUES
                 (NULL, NULL, NULL, NULL, NULL, NULL, :body, :body_nomarkup, :faketime, :faketime,
-                    NULL, 0, NULL, SUBSTRING(MD5(RAND()),1,12), :ip, 0, 0, 0, 0, NULL, :slug, :verse)');
+                    NULL, 0, NULL, SUBSTRING(MD5(RAND()),1,12), :ip, 0, 0, 0, 0, NULL, :slug, 0)');
 
             $query->bindValue(':body', $body);
             $query->bindValue(':body_nomarkup', $body_nomarkup);
-            $query->bindValue(':faketime', 1000-$chapter);
+            $query->bindValue(':faketime', 1000 - $chapter);
             $query->bindValue(':ip', '127.0.0.1');
             $query->bindValue(':slug', $slug);
-            $query->bindValue(':verse', $firstVerse);
 
             $query->execute();
 
         } catch (PDOException $e) {
             $errors[] = [
                 'chapter' => $chapter,
-                'verse' => 1,
                 'message' => $e->getMessage()
             ];
         }
     }
 
     // Log summary including errors
-    $note = "Posted chapter threads for book $bookURI";
+    $note = "Posted chapter thread OPs for book $bookURI";
+    if ($chapterNumbers && count($chapterNumbers) > 0) {
+        $note .= " (Chapter {$chapterNumbers[0]} = Book Title: $fullName)";
+    }
     if (!empty($errors)) {
         $note .= " -- ERROR(S):\n";
         foreach ($errors as $err) {
-            $note .= "Chapter {$err['chapter']}, Verse {$err['verse']}: {$err['message']}\n";
+            $note .= "Chapter {$err['chapter']}: {$err['message']}\n";
         }
     }
 
@@ -1141,26 +1053,10 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
     $bookURI = isset($_POST['uri']) ? preg_replace('/[^a-zA-Z0-9]/', '', $_POST['uri']) : '';
     $chapters = parseBibleBookText($bookURI, $config['bible']['path_full']);
 
-        $errors = [];  // Array to collate all DB errors
-
-    // Check if verse column exists, add it if missing (for old bible boards)
-    try {
-        $checkColumn = query(sprintf("SHOW COLUMNS FROM ``posts_%s`` LIKE 'verse'", $bookURI));
-        $columnExists = $checkColumn->fetch();
-        if (!$columnExists) {
-            // Add verse column as INT(11) to match existing schema
-            query(sprintf("ALTER TABLE ``posts_%s`` ADD COLUMN `verse` INT(11) DEFAULT NULL", $bookURI));
-        }
-    } catch (PDOException $e) {
-        $errors[] = [
-            'chapter' => 0,
-            'verse' => 0,
-            'message' => 'Schema migration failed: ' . $e->getMessage()
-        ];
-    }
+    $errors = [];  // Array to collate all DB errors
 
     // Build mapping of chapter numbers to thread IDs
-    // This handles books that don't start at chapter 1 (EpJer starts at 6, EsthGr at 10)
+    // All threads have verse = 0 (they are thread OPs)
     $chapterToThreadId = [];
     $query = query(sprintf(
         "SELECT `id`, `time` FROM ``posts_%s`` WHERE `thread` IS NULL ORDER BY `time` DESC",
@@ -1171,10 +1067,9 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
         $chapterToThreadId[$chapterNum] = (int)$row['id'];
     }
 
-    // Iterate chapters in reverse if needed (latest chapters first)
-    // Use array_keys to get actual chapter numbers (handles books starting at chapter 6 or 10)
+    // Iterate chapters in ascending order
     $chapterNumbers = array_keys($chapters);
-    rsort($chapterNumbers); // Sort in descending order
+    sort($chapterNumbers);
 
     foreach ($chapterNumbers as $chapter) {
         $verses = $chapters[$chapter];
@@ -1184,7 +1079,7 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
             continue;
         }
 
-        // Get the actual thread ID for this chapter
+        // Get the thread ID for this chapter
         if (!isset($chapterToThreadId[$chapter])) {
             $errors[] = [
                 'chapter' => $chapter,
@@ -1195,25 +1090,26 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
         }
         $threadId = $chapterToThreadId[$chapter];
 
-        // Get verse numbers and skip the first verse (already posted as thread)
-        $verseNumbers = array_keys($verses);
-        sort($verseNumbers);
-        if (count($verseNumbers) <= 1) {
-            continue; // Only one verse, already posted as thread
-        }
-
-        // Skip first verse, post the rest as replies
-        for ($i = 1; $i < count($verseNumbers); $i++) {
-            $verse = $verseNumbers[$i];
+        // Post ALL verses (including verse 1) as replies
+        for ($verse = 1; $verse <= count($verses); $verse++) {
             if (!isset($verses[$verse])) {
-                continue;
+                continue; // Skip if this verse doesn't exist
             }
-            $prepend = '<a class="post_no verse" id="v' . $verse . '" onclick="citeVerse(' . $chapter . ', ' . $verse . ', event)" ' .
-                'href="/' . $bookURI . '/res/' . $chapter . '.html#v' . $verse . '">'.$verse.'</a>';
+
+            // Add verse number link with chapter:verse format
+            if ($verse == 1) {
+                // Verse 1 gets the chapter number as well
+                $prepend = '<a class="post_no chapter" id="v' . $verse . '" onclick="citeVerse(' . $chapter . ', ' . $verse . ', event)" ' .
+                    'href="/' . $bookURI . '/res/' . $chapter . '.html#v' . $verse . '">' . $chapter . '</a>';
+            } else {
+                $prepend = '<a class="post_no verse" id="v' . $verse . '" onclick="citeVerse(' . $chapter . ', ' . $verse . ', event)" ' .
+                    'href="/' . $bookURI . '/res/' . $chapter . '.html#v' . $verse . '">' . $verse . '</a>';
+            }
+
             $body = $prepend . $verses[$verse];
-            $body_nomarkup = preg_replace('/<[^>]+>/', '', $body);          // strip HTML
-            $slug = preg_replace('/[^a-zA-Z0-9]/', '', $body_nomarkup);     // alpha-numeric slug
-	    $slug = substr($slug, 0, 256); // db char limit
+            $body_nomarkup = preg_replace('/<[^>]+>/', '', $body);
+            $slug = preg_replace('/[^a-zA-Z0-9]/', '', $body_nomarkup);
+            $slug = substr($slug, 0, 256); // db char limit
 
             try {
                 $query = prepare("
@@ -1228,7 +1124,7 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
                 $query->bindValue(':thread', $threadId);
                 $query->bindValue(':body', $body);
                 $query->bindValue(':body_nomarkup', $body_nomarkup);
-                $query->bindValue(':faketime', 1000-$chapter);
+                $query->bindValue(':faketime', 1000 - $chapter - ($verse / 1000)); // Order by chapter then verse
                 $query->bindValue(':ip', '127.0.0.1');
                 $query->bindValue(':slug', $slug);
                 $query->bindValue(':verse', $verse);
@@ -1247,7 +1143,7 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
     }
 
     // Log summary including errors
-    $note = "Posted all verse replies for {$bookURI}";
+    $note = "Posted all verse replies for {$bookURI} (including Chapter 1 Verse 1)";
     if (!empty($errors)) {
         $note .= " -- Errors encountered:\n";
         foreach ($errors as $err) {
@@ -4253,9 +4149,10 @@ function mod_set_lock_all($ctx, bool $lock) {
         exit;
     }
 
-    
-    // leaves user on useless page....
-    
+    Vichan\Functions\Theme\rebuild_themes('boards');
+
+    // return from mod/lock to og page
+    echo '<script>history.back();</script>';    
     exit;
 }
 // create index of bible book names given xml of entire bible

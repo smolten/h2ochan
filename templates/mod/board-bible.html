@@ -8,8 +8,9 @@
 	<input type="hidden" name="token" value="{{ token }}">
 	<input type="hidden" name="token_test_parse" value="{{ token_test_parse }}">
 	<input type="hidden" name="token_board_status" value="{{ token_board_status }}">
+	<input type="hidden" name="token_post_threads" value="{{ token_post_threads }}">
+	<input type="hidden" name="token_post_replies" value="{{ token_post_replies }}">
 	<input type="hidden" name="token_post_book" value="{{ token_post_book }}">
-	<input type="hidden" name="token_delete_book" value="{{ token_delete_book }}">
 	<table>
 		<tr>
 	            <th>{% trans 'Bible Book' %}</th>
@@ -39,9 +40,6 @@
                     <button type="button" id="next_chapter">&gt;</button>
 		    &nbsp;&nbsp;
 		    <label><input type="checkbox" id="include_existing_boards"> Include Existing Boards</label>
-		    {% else %}
-		    &nbsp;&nbsp;
-                    <button type="button" id="next_book_btn">&gt;</button>
 		    {% endif %}
 	            </td>
 	        </tr>
@@ -82,19 +80,10 @@
 <tr>
     <th>CREATE_ALL</th>
     <td><pre>
-	POST BOOK ON BOARD CREATE:
+	FAST MODE: 
 	<input type="checkbox" name="bible_create_all" id="bible_create_all" {% if config.bible_create_all %}checked{% endif %}>
     </td></pre>
 </tr>
-		{% if not new %}
-		<tr>
-		    <th>REPOST_ALL</th>
-		    <td><pre>
-	REPOST ALL BIBLE BOOKS:
-	<input type="checkbox" name="bible_repost_all" id="bible_repost_all">
-		    </td></pre>
-		</tr>
-		{% endif %}
 		<tr>
 			<th>{% trans 'URI' %}</th>
 			<td>
@@ -132,7 +121,8 @@
 			<button type="button" name="get_status" id="get_status">Get Status</button>
 			<button type="button" name="do_post_book" id="do_post_book">Post Book</button>
 			<button type="button" onclick="history.back()">(Webpage Back)</button>                        <br>
-			<button type="button" name="do_delete_book" id="do_delete_book">Delete Book</button>
+			<button type="button" name="do_post_threads" id="do_post_threads">Post Chapter Threads</button>
+        		<button type="button" name="do_post_replies" id="do_post_replies">Post Verse Replies</button>
 			</td>
 		</tr>		
 		{% endif %}
@@ -246,45 +236,19 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     });
 
-    var repostAllCheckbox = document.getElementById('bible_repost_all');
-    var postBookBtn = document.getElementById('do_post_book');
-    if (repostAllCheckbox && postBookBtn) {
-	var referrer = document.referrer;
-	var currentURL = window.location.href;
-	var isSamePage = referrer === currentURL;
-	var fromEditPage = referrer.includes('/mod.php?/edit_bible/') && !isSamePage;
-
-	if (localStorage.getItem('bible_repost_all') === 'true' && fromEditPage) {
-	    repostAllCheckbox.checked = true;
-	    postBookBtn.textContent = '(re)Post Book';
-	} else {
-	    repostAllCheckbox.checked = false;
-	    localStorage.removeItem('bible_repost_all');
-	    postBookBtn.textContent = 'Post Book';
-	}
-	repostAllCheckbox.addEventListener('change', function() {
-	    if (this.checked) {
-		localStorage.setItem('bible_repost_all', 'true');
-		postBookBtn.textContent = '(re)Post Book';
-	    } else {
-		localStorage.removeItem('bible_repost_all');
-		postBookBtn.textContent = 'Post Book';
-	    }
-	});
-
-	if (repostAllCheckbox.checked && fromEditPage) {
-	    setTimeout(function() {
-		postBookBtn.click();
-	    }, 100);
-	}
-    }
-
     var status = document.getElementById('posts_status');
     var nextChapter = document.getElementById('next_chapter');
+    var btnGetStatus, btnPostBook, btnPostThreads, btnPostReplies;
     if(status) {
-        document.getElementById('get_status').addEventListener('click', board_status);	/*doesn't exist on NEW page*/
-        document.getElementById('do_post_book').addEventListener('click', do_book);
-        document.getElementById('do_delete_book').addEventListener('click', do_delete_book);
+        btnGetStatus = document.getElementById('get_status');
+        btnPostBook = document.getElementById('do_post_book');
+        btnPostThreads = document.getElementById('do_post_threads');
+        btnPostReplies = document.getElementById('do_post_replies');
+
+        btnGetStatus.addEventListener('click', board_status);
+        btnPostBook.addEventListener('click', do_book);
+        btnPostThreads.addEventListener('click', do_threads);
+        btnPostReplies.addEventListener('click', do_replies);
 
 	if(bible_create_all) {
 	    do_book();
@@ -308,7 +272,15 @@ document.addEventListener('DOMContentLoaded', function() {
     	    }
 	});
     }
-    function board_status() {	
+    function board_status() {
+        if (btnGetStatus) {
+            btnGetStatus.disabled = true;
+            if (btnPostBook) btnPostBook.disabled = true;
+            if (btnPostThreads) btnPostThreads.disabled = true;
+            if (btnPostReplies) btnPostReplies.disabled = true;
+        }
+        if (status) status.style.color = '';
+
         var tokenStatus = document.querySelector('input[name="token_board_status"]');
         var params = new URLSearchParams();
         params.append('uri', uriValue);
@@ -322,25 +294,49 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.text())
         .then(text => {
-            status.textContent = text || '(no response)';
+            if (status) {
+                status.textContent = text || '(no response)';
+                if (text && (text.includes('ERROR:') || text.includes('Error:'))) {
+                    status.style.color = 'red';
+                }
+            }
+            if (btnGetStatus) {
+                btnGetStatus.disabled = false;
+                if (btnPostBook) btnPostBook.disabled = false;
+                if (btnPostThreads) btnPostThreads.disabled = false;
+                if (btnPostReplies) btnPostReplies.disabled = false;
+            }
         })
         .catch(err => {
-            status.textContent = 'Error: ' + err;
+            if (status) {
+                status.textContent = 'Error: ' + err;
+                status.style.color = 'red';
+            }
+            if (btnGetStatus) {
+                btnGetStatus.disabled = false;
+                if (btnPostBook) btnPostBook.disabled = false;
+                if (btnPostThreads) btnPostThreads.disabled = false;
+                if (btnPostReplies) btnPostReplies.disabled = false;
+            }
         });
     };
     function do_book() {
-	if (repostAllCheckbox && repostAllCheckbox.checked) {
-	    do_repost_sequence();
-	} else {
-	    do_post_only();
-	}
-    }
-    function do_post_only() {
-	status.textContent = "Writing Book....";
+        if (status) {
+            status.textContent = "Writing Book....";
+            status.style.color = '';
+        }
+        if (btnPostBook) {
+            btnPostBook.disabled = true;
+            if (btnGetStatus) btnGetStatus.disabled = true;
+            if (btnPostThreads) btnPostThreads.disabled = true;
+            if (btnPostReplies) btnPostReplies.disabled = true;
+        }
+
         var tokenBook = document.querySelector('input[name="token_post_book"]');
 	var params = new URLSearchParams();
 	params.append('uri', uriValue);
 	params.append('token', tokenBook.value);
+	console.log("Posting book of URI:", uriValue);
 
 	fetch('/mod.php?/bible-post-book', {
 	    method: 'POST',
@@ -350,101 +346,53 @@ document.addEventListener('DOMContentLoaded', function() {
 	})
 	.then(response => response.text())
 	.then(text => {
-	    if (text && text.includes('ERROR')) {
-		status.textContent = text;
+	    if (text && (text.includes('ERROR:') || text.includes('Error:'))) {
+	        if (status) {
+	            status.textContent = text;
+	            status.style.color = 'red';
+	        }
+	        if (btnPostBook) {
+	            btnPostBook.disabled = false;
+	            if (btnGetStatus) btnGetStatus.disabled = false;
+	            if (btnPostThreads) btnPostThreads.disabled = false;
+	            if (btnPostReplies) btnPostReplies.disabled = false;
+	        }
 	    } else {
-		board_status();
+	        board_status();
 	    }
 	})
 	.catch(err => {
-	    status.textContent = 'Error: ' + err;
-	});
-    }
-    function do_repost_sequence() {
-	if (!repostAllCheckbox.checked) {
-	    status.textContent = 'REPOST stopped (unchecked)';
-	    return;
-	}
-	status.textContent = "REPOST: Deleting...";
-	var tokenDel = document.querySelector('input[name="token_delete_book"]');
-	var delParams = new URLSearchParams();
-	delParams.append('uri', uriValue);
-	delParams.append('token', tokenDel.value);
-	fetch('/mod.php?/bible-delete-book', {
-	    method: 'POST',
-	    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-	    body: delParams.toString(),
-	    credentials: 'same-origin'
-	})
-	.then(response => response.text())
-	.then(delText => {
-	    if (delText.includes('ERROR')) {
-		status.textContent = 'STOPPED: ' + delText;
-		return Promise.reject('fail');
+	    if (status) {
+	        status.textContent = 'Error: ' + err;
+	        status.style.color = 'red';
 	    }
-	    status.textContent = "REPOST: Posting...";
-	    var tokenBook = document.querySelector('input[name="token_post_book"]');
-	    var postParams = new URLSearchParams();
-	    postParams.append('uri', uriValue);
-	    postParams.append('token', tokenBook.value);
-	    return fetch('/mod.php?/bible-post-book', {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-		body: postParams.toString(),
-		credentials: 'same-origin'
-	    });
-	})
-	.then(response => response.text())
-	.then(postText => {
-	    if (postText && postText.includes('ERROR')) {
-		status.textContent = 'STOPPED: ' + postText;
-		return Promise.reject('fail');
-	    }
-	    status.textContent = "REPOST: Fetching status...";
-	    var tokenStatus = document.querySelector('input[name="token_board_status"]');
-	    var statusParams = new URLSearchParams();
-	    statusParams.append('uri', uriValue);
-	    statusParams.append('token', tokenStatus.value);
-	    return fetch('/mod.php?/board-status', {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-		body: statusParams.toString(),
-		credentials: 'same-origin'
-	    });
-	})
-	.then(response => response.text())
-	.then(statusText => {
-	    status.textContent = "REPOST: Done. " + statusText + " Next in 2s...";
-	    setTimeout(() => {
-		if (!repostAllCheckbox.checked) {
-		    status.textContent = 'REPOST stopped (unchecked)';
-		    return;
-		}
-		var nextURI = getNextBibleBookURI(uriValue);
-		if (nextURI !== uriValue) {
-		    window.location.href = '/mod.php?/edit_bible/' + nextURI;
-		} else {
-		    status.textContent = 'REPOST COMPLETE!';
-		    localStorage.removeItem('bible_repost_all');
-		    repostAllCheckbox.checked = false;
-		}
-	    }, 2000);
-	})
-	.catch(err => {
-	    if (err !== 'fail') {
-		status.textContent = 'ERROR: ' + err;
+	    if (btnPostBook) {
+	        btnPostBook.disabled = false;
+	        if (btnGetStatus) btnGetStatus.disabled = false;
+	        if (btnPostThreads) btnPostThreads.disabled = false;
+	        if (btnPostReplies) btnPostReplies.disabled = false;
 	    }
 	});
-    }
-    function do_delete_book() {
-	status.textContent = "Deleting Book....";
-	var tokenDelete = document.querySelector('input[name="token_delete_book"]');
+    };
+    function do_threads() {
+        if (status) {
+            status.textContent = "Writing Chapters-Only....";
+            status.style.color = '';
+        }
+        if (btnPostThreads) {
+            btnPostThreads.disabled = true;
+            if (btnGetStatus) btnGetStatus.disabled = true;
+            if (btnPostBook) btnPostBook.disabled = true;
+            if (btnPostReplies) btnPostReplies.disabled = true;
+        }
+
+    	var tokenThreads = document.querySelector('input[name="token_post_threads"]');
 	var params = new URLSearchParams();
 	params.append('uri', uriValue);
-	params.append('token', tokenDelete.value);
-	console.log("Deleting book for URI:", uriValue);
+	params.append('token', tokenThreads.value);
+	console.log("Posting threads for URI:", uriValue, "token:", tokenThreads.value);
 
-	fetch('/mod.php?/bible-delete-book', {
+	fetch('/mod.php?/bible-post-threads', {
 	    method: 'POST',
 	    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 	    body: params.toString(),
@@ -452,44 +400,86 @@ document.addEventListener('DOMContentLoaded', function() {
 	})
 	.then(response => response.text())
 	.then(text => {
-	    status.textContent = text || '(no response)';
+	    if (text && (text.includes('ERROR:') || text.includes('Error:'))) {
+	        if (status) {
+	            status.textContent = text;
+	            status.style.color = 'red';
+	        }
+	        if (btnPostThreads) {
+	            btnPostThreads.disabled = false;
+	            if (btnGetStatus) btnGetStatus.disabled = false;
+	            if (btnPostBook) btnPostBook.disabled = false;
+	            if (btnPostReplies) btnPostReplies.disabled = false;
+	        }
+	    } else {
+	        board_status();
+	    }
 	})
 	.catch(err => {
-	    status.textContent = 'Error: ' + err;
+	    if (status) {
+	        status.textContent = 'Error: ' + err;
+	        status.style.color = 'red';
+	    }
+	    if (btnPostThreads) {
+	        btnPostThreads.disabled = false;
+	        if (btnGetStatus) btnGetStatus.disabled = false;
+	        if (btnPostBook) btnPostBook.disabled = false;
+	        if (btnPostReplies) btnPostReplies.disabled = false;
+	    }
 	});
     };
+    function do_replies() {
+        if (status) {
+            status.textContent = "Writing Verses-Only....";
+            status.style.color = '';
+        }
+        if (btnPostReplies) {
+            btnPostReplies.disabled = true;
+            if (btnGetStatus) btnGetStatus.disabled = true;
+            if (btnPostBook) btnPostBook.disabled = true;
+            if (btnPostThreads) btnPostThreads.disabled = true;
+        }
 
-    var nextBookBtn = document.getElementById('next_book_btn');
-    if (nextBookBtn) {
-	nextBookBtn.addEventListener('click', function() {
-	    var nextURI = getNextBibleBookURI(uriValue);
-	    if (nextURI !== uriValue) {
-		window.location.href = '/mod.php?/edit_bible/' + nextURI;
+    	var tokenReplies = document.querySelector('input[name="token_post_replies"]');
+	var params = new URLSearchParams();
+	params.append('uri', uriValue);
+	params.append('token', tokenReplies.value);
+
+	fetch('/mod.php?/bible-post-replies', {
+	    method: 'POST',
+	    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+	    body: params.toString(),
+	    credentials: 'same-origin'
+	})
+	.then(response => response.text())
+	.then(text => {
+	    if (text && (text.includes('ERROR:') || text.includes('Error:'))) {
+	        if (status) {
+	            status.textContent = text;
+	            status.style.color = 'red';
+	        }
+	        if (btnPostReplies) {
+	            btnPostReplies.disabled = false;
+	            if (btnGetStatus) btnGetStatus.disabled = false;
+	            if (btnPostBook) btnPostBook.disabled = false;
+	            if (btnPostThreads) btnPostThreads.disabled = false;
+	        }
+	    } else {
+	        board_status();
+	    }
+	})
+	.catch(err => {
+	    if (status) {
+	        status.textContent = 'Error: ' + err;
+	        status.style.color = 'red';
+	    }
+	    if (btnPostReplies) {
+	        btnPostReplies.disabled = false;
+	        if (btnGetStatus) btnGetStatus.disabled = false;
+	        if (btnPostBook) btnPostBook.disabled = false;
+	        if (btnPostThreads) btnPostThreads.disabled = false;
 	    }
 	});
-    }
-
-    function getNextBibleBookURI(currentURI) {
-	if (typeof bible_index === 'undefined') {
-	    alert('Bible index not loaded');
-	    return currentURI;
-	}
-	var currentIndex = -1;
-	for (var i = 0; i < bible_index.length; i++) {
-	    if (bible_index[i].osisID === currentURI) {
-		currentIndex = i;
-		break;
-	    }
-	}
-	if (currentIndex === -1) {
-	    alert('Current book not found in index');
-	    return currentURI;
-	}
-	if (currentIndex >= bible_index.length - 1) {
-	    alert('Done! This is the last book (Revelation).');
-	    return currentURI;
-	}
-	return bible_index[currentIndex + 1].osisID;
-    }
+    };
 });
 </script>

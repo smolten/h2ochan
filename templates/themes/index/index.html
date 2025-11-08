@@ -28,7 +28,6 @@
 		<legend>Boards</legend>
 		<ul style="margin-block-start: 0;">
 			<li class="boardlinksurl"><a href="/KJB">King James Bible<a></li>
-                        <br>
 			{% for board in boards %}
 				<li class="boardlinksurl">
 					<a href="{{ config.board_path|sprintf(board.uri) }}">
