@@ -92,6 +92,7 @@
 		    <td><pre>
 	REPOST ALL BIBLE BOOKS:
 	<input type="checkbox" name="bible_repost_all" id="bible_repost_all">
+	Delay (seconds): <input type="number" name="bible_repost_delay" id="bible_repost_delay" value="2" min="0.1" step="0.1" style="width: 60px;">
 		    </td></pre>
 		</tr>
 		{% endif %}
@@ -247,6 +248,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     var repostAllCheckbox = document.getElementById('bible_repost_all');
+    var repostDelayInput = document.getElementById('bible_repost_delay');
     var postBookBtn = document.getElementById('do_post_book');
     if (repostAllCheckbox && postBookBtn) {
 	var referrer = document.referrer;
@@ -421,7 +423,9 @@ document.addEventListener('DOMContentLoaded', function() {
 	})
 	.then(response => response.text())
 	.then(statusText => {
-	    status.textContent = "REPOST: Done. " + statusText + " Next in 2s...";
+	    var delaySeconds = parseFloat(repostDelayInput.value) || 2;
+	    var delayMs = Math.max(100, delaySeconds * 1000);
+	    status.textContent = "REPOST: Done. " + statusText + " Next in " + delaySeconds + "s...";
 	    setTimeout(() => {
 		if (!repostAllCheckbox.checked) {
 		    status.textContent = 'REPOST stopped (unchecked)';
@@ -435,7 +439,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		    localStorage.removeItem('bible_repost_all');
 		    repostAllCheckbox.checked = false;
 		}
-	    }, 2000);
+	    }, delayMs);
 	})
 	.catch(err => {
 	    if (err !== 'fail') {
