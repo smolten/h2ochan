@@ -27,6 +27,7 @@
     let loading = false;
     let urlUpdateTimer = null;
     let scrollTimer = null;
+    let scrollPollInterval = null;  // Interval for polling scroll position
     let userHasScrolled = false;
     let loadingEnabled = false;  // Don't load until user scrolls
     let initialPreloadDone = false;  // Track if we've done initial preload
@@ -1031,7 +1032,34 @@
     }
 
     /**
-     * Handle scroll events (debounced)
+     * Check scroll position and load content if needed
+     * Called by polling interval
+     */
+    function checkScrollPosition() {
+        // Skip if programmatically adjusting scroll or not enabled
+        if (isAdjustingScroll || !loadingEnabled || loading) {
+            return;
+        }
+
+        const { left, right } = getColumnsFromEdge();
+        const columnWidth = getColumnWidth();
+
+        console.log(`Scroll check: left=${left.toFixed(2)} cols, right=${right.toFixed(2)} cols, threshold=${config.loadThreshold}, columnWidth=${columnWidth.toFixed(0)}px`);
+
+        // Load more content if nearing edges
+        // Check right edge first (more specific condition)
+        if (right < config.loadThreshold) {
+            console.log('Near right edge, loading next chapters');
+            loadMoreChapters('after');
+        } else if (left < config.loadThreshold && (initialPreloadDone || thread.scrollLeft > 50)) {
+            // Only check left edge if NOT near right edge
+            console.log('Near left edge, loading previous chapters');
+            loadMoreChapters('before');
+        }
+    }
+
+    /**
+     * Handle scroll events - for URL updates
      */
     function onScroll() {
         // Skip if this is a programmatic scroll adjustment
@@ -1041,50 +1069,19 @@
 
         if (!userHasScrolled) {
             userHasScrolled = true;
-            // Enable loading after a short delay (user has intentionally scrolled)
-            setTimeout(function() {
-                loadingEnabled = true;
-                console.log('Infinite scroll loading enabled');
-            }, 1000);
+            // Enable loading immediately when user scrolls
+            loadingEnabled = true;
+            console.log('Infinite scroll loading enabled by user scroll');
         }
 
-        // Don't do anything if loading not yet enabled
-        if (!loadingEnabled) {
-            return;
+        // Debounce URL updates
+        if (urlUpdateTimer) {
+            clearTimeout(urlUpdateTimer);
         }
 
-        // Debounce the actual scroll handling
-        if (scrollTimer) {
-            clearTimeout(scrollTimer);
-        }
-
-        scrollTimer = setTimeout(function() {
-            const { left, right } = getColumnsFromEdge();
-            const columnWidth = getColumnWidth();
-
-            console.log(`Scroll check: left=${left.toFixed(2)} cols, right=${right.toFixed(2)} cols, threshold=${config.loadThreshold}, columnWidth=${columnWidth.toFixed(0)}px`);
-
-            // Load more content if nearing edges
-            // Check right edge first (more specific condition)
-            if (right < config.loadThreshold) {
-                console.log('Near right edge, loading next chapters');
-                loadMoreChapters('after');
-            } else if (left < config.loadThreshold && (initialPreloadDone || thread.scrollLeft > 50)) {
-                // Only check left edge if NOT near right edge
-                console.log('Near left edge, loading previous chapters');
-                loadMoreChapters('before');
-            }
-
-            // Update URL after scrolling stops
-            if (urlUpdateTimer) {
-                clearTimeout(urlUpdateTimer);
-            }
-
-            urlUpdateTimer = setTimeout(function() {
-                updateURL();
-            }, config.urlUpdateDelay);
-
-        }, 150);  // Debounce scroll handling to reduce overhead
+        urlUpdateTimer = setTimeout(function() {
+            updateURL();
+        }, config.urlUpdateDelay);
     }
 
     /**
@@ -1178,12 +1175,15 @@
         updateSentries();
         initSentryObserver();
 
+        // Start polling scroll position every 100ms
+        scrollPollInterval = setInterval(checkScrollPosition, 100);
+
         console.log(`Bible infinite scroll initialized on ${boardURI}, chapter ${currentChapter}`);
 
-        // Enable loading immediately for sentries, but delay aggressive preloading
+        // Enable loading immediately for sentries and polling
         loadingEnabled = true;
 
-        // Delay preloading until page is fully loaded and idle (3 seconds)
+        // Start preloading immediately (non-blocking)
         setTimeout(function() {
 
             // Check if content is too short (no scrollbar)
@@ -1248,7 +1248,7 @@
             } else {
                 initialPreloadDone = true;
             }
-        }, 100);  // Wait 100ms before preloading (non-blocking)
+        }, 0);  // Start preloading immediately (non-blocking)
     }
 
     // Initialize when DOM is ready
