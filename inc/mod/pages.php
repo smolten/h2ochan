@@ -1600,12 +1600,19 @@ function mod_view_board(Context $ctx, $boardName, $page_no = 1) {
 
 	// Add Bible book navigation if this is a Bible board
 	global $board;
+	error_log("[mod_view_board] Checking Bible navigation for board: " . $board['uri']);
+	error_log("[mod_view_board] isbible=" . (isset($config['isbible']) ? ($config['isbible'] ? 'true' : 'false') : 'not set'));
+	error_log("[mod_view_board] path_index=" . (isset($config['bible']['path_index']) ? $config['bible']['path_index'] : 'not set'));
+
 	if (isset($config['isbible']) && $config['isbible'] && isset($config['bible']['path_index'])) {
+		error_log("[mod_view_board] Getting Bible navigation...");
 		$bibleNav = getBibleBookNavigation($board['uri'], $config['bible']['path_index']);
+		error_log("[mod_view_board] Bible nav result: " . json_encode($bibleNav));
 		$page['board']['linkPrev'] = $bibleNav['linkPrev'];
 		$page['board']['linkNext'] = $bibleNav['linkNext'];
 		$page['board']['titlePrev'] = $bibleNav['titlePrev'];
 		$page['board']['titleNext'] = $bibleNav['titleNext'];
+		error_log("[mod_view_board] Set page board navigation links");
 	}
 
 	echo Element($config['file_board_index'], $page);
