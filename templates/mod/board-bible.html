@@ -281,6 +281,21 @@ document.addEventListener('DOMContentLoaded', function() {
 	}
     }
 
+    if (repostDelayInput) {
+	var referrer = document.referrer;
+	var fromEditPage = referrer.includes('/mod.php?/edit_bible/');
+
+	if (fromEditPage && localStorage.getItem('bible_repost_delay')) {
+	    repostDelayInput.value = localStorage.getItem('bible_repost_delay');
+	} else {
+	    repostDelayInput.value = '2';
+	}
+
+	repostDelayInput.addEventListener('input', function() {
+	    localStorage.setItem('bible_repost_delay', this.value);
+	});
+    }
+
     var status = document.getElementById('posts_status');
     var nextChapter = document.getElementById('next_chapter');
     if(status) {
