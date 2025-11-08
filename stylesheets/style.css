@@ -234,6 +234,7 @@ div.post.op hr {
   margin: 0.5em 0;
   padding: 0;
   padding-bottom: 0.2em;
+  position: relative;
 }
 .nointro {
   margin: 0 0;
