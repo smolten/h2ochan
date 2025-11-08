@@ -1157,9 +1157,11 @@
 
         console.log(`Bible infinite scroll initialized on ${boardURI}, chapter ${currentChapter}`);
 
-        // Preload chapters if needed to enable scrolling
+        // Enable loading immediately for sentries, but delay aggressive preloading
+        loadingEnabled = true;
+
+        // Delay preloading until page is fully loaded and idle (3 seconds)
         setTimeout(function() {
-            loadingEnabled = true;
 
             // Check if content is too short (no scrollbar)
             const scrollWidth = thread.scrollWidth;
@@ -1223,7 +1225,7 @@
             } else {
                 initialPreloadDone = true;
             }
-        }, 100);
+        }, 3000);  // Wait 3 seconds before aggressive preloading
     }
 
     // Initialize when DOM is ready
