@@ -256,6 +256,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	var isSamePage = referrer === currentURL;
 	var fromEditPage = referrer.includes('/mod.php?/edit_bible/') && !isSamePage;
 
+	// Restore repost_all checkbox state
 	if (localStorage.getItem('bible_repost_all') === 'true' && fromEditPage) {
 	    repostAllCheckbox.checked = true;
 	    postBookBtn.textContent = '(re)Post Book';
@@ -264,6 +265,19 @@ document.addEventListener('DOMContentLoaded', function() {
 	    localStorage.removeItem('bible_repost_all');
 	    postBookBtn.textContent = 'Post Book';
 	}
+
+	// Restore delay value or reset to 2s
+	if (fromEditPage) {
+	    var savedDelay = localStorage.getItem('bible_repost_delay');
+	    if (savedDelay !== null) {
+		repostDelayInput.value = savedDelay;
+	    }
+	} else {
+	    // Reset to default 2s when coming from mod.php? (not edit_bible)
+	    repostDelayInput.value = '2';
+	    localStorage.removeItem('bible_repost_delay');
+	}
+
 	repostAllCheckbox.addEventListener('change', function() {
 	    if (this.checked) {
 		localStorage.setItem('bible_repost_all', 'true');
@@ -271,6 +285,14 @@ document.addEventListener('DOMContentLoaded', function() {
 	    } else {
 		localStorage.removeItem('bible_repost_all');
 		postBookBtn.textContent = 'Post Book';
+	    }
+	});
+
+	// Save delay value to localStorage when changed
+	repostDelayInput.addEventListener('input', function() {
+	    var delayValue = parseFloat(this.value);
+	    if (!isNaN(delayValue) && delayValue >= 0.1) {
+		localStorage.setItem('bible_repost_delay', this.value);
 	    }
 	});
 
