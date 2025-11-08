@@ -4246,10 +4246,19 @@ function mod_set_lock_all($ctx, bool $lock) {
         exit;
     }
 
+    // Rebuild only user boards (not bible boards)
+    $user_boards = listBoards(true, null, true);  // $check_bible = true means non-bible boards only
+    foreach ($user_boards as $board_data) {
+        $board_uri = $board_data['uri'];
+        openBoard($board_uri);
+        buildIndex();
+    }
+
+    // Rebuild themes for boards
     Vichan\Functions\Theme\rebuild_themes('boards');
 
     // return from mod/lock to og page
-    echo '<script>history.back();</script>';    
+    echo '<script>history.back();</script>';
     exit;
 }
 // create index of bible book names given xml of entire bible
