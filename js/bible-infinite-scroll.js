@@ -19,7 +19,8 @@
         columnsToLoad: 2,  // Load this many chapters at a time
         loadThreshold: 2,  // Start loading when within this many columns of edge (want 2+ cols outside view)
         urlUpdateDelay: 250,  // Delay before updating URL (ms)
-        sentryDistance: '200px'  // Distance for IntersectionObserver sentries
+        sentryDistance: '200px',  // Distance for IntersectionObserver sentries
+        debug: false  // Enable debug logging
     };
 
     // State
@@ -1042,18 +1043,15 @@
         }
 
         const { left, right } = getColumnsFromEdge();
-        const columnWidth = getColumnWidth();
-
-        console.log(`Scroll check: left=${left.toFixed(2)} cols, right=${right.toFixed(2)} cols, threshold=${config.loadThreshold}, columnWidth=${columnWidth.toFixed(0)}px`);
 
         // Load more content if nearing edges
         // Check right edge first (more specific condition)
         if (right < config.loadThreshold) {
-            console.log('Near right edge, loading next chapters');
+            if (config.debug) console.log('Near right edge, loading next chapters');
             loadMoreChapters('after');
         } else if (left < config.loadThreshold && (initialPreloadDone || thread.scrollLeft > 50)) {
             // Only check left edge if NOT near right edge
-            console.log('Near left edge, loading previous chapters');
+            if (config.debug) console.log('Near left edge, loading previous chapters');
             loadMoreChapters('before');
         }
     }
