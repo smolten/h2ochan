@@ -369,7 +369,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	}
     }
     function do_post_only() {
-	status.textContent = "Writing Book....";
+	status.textContent = "Posting & Rebuilding...";
         var tokenBook = document.querySelector('input[name="token_post_book"]');
 	var params = new URLSearchParams();
 	params.append('uri', uriValue);
@@ -415,7 +415,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		status.textContent = 'STOPPED: ' + delText;
 		return Promise.reject('fail');
 	    }
-	    status.textContent = "REPOST: Posting...";
+	    status.textContent = "REPOST: Posting & Rebuilding...";
 	    var tokenBook = document.querySelector('input[name="token_post_book"]');
 	    var postParams = new URLSearchParams();
 	    postParams.append('uri', uriValue);
