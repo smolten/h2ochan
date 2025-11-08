@@ -937,12 +937,13 @@ function mod_bible_delete_book(Context $ctx) {
     if (!$bookURI)
         error("Missing or invalid book URI.");
 
-    // Open board to get config
+    // Open board to get board-specific config
     if (!openBoard($bookURI))
         error("Board not found: $bookURI");
 
-    // Safety check: Only delete from bible boards
-    $isBibleBoard = isset($config['isbible']) && $config['isbible'];
+    // Safety check: Only delete from bible boards (use board-specific config)
+    $boardConfig = $board['config'] ?? [];
+    $isBibleBoard = isset($boardConfig['isbible']) && $boardConfig['isbible'];
 
     if (!$isBibleBoard) {
         echo "ERROR: Refusing to delete non-bible board '$bookURI'. This board does not have config.isbible set to true.";
