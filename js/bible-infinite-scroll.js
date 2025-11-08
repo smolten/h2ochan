@@ -471,11 +471,18 @@
     /**
      * Find the correct insertion point for a chapter based on chapter number
      * Returns the post element to insert before, or null to append at end
+     * Only compares chapters within the current book (boardURI)
      */
     function findInsertionPoint(chapterNum) {
         const allPosts = thread.querySelectorAll('.post.bible');
 
         for (let post of allPosts) {
+            // Skip posts from other books (cross-book chapters)
+            const postBook = post.getAttribute('data-book');
+            if (postBook && postBook !== boardURI) {
+                continue; // This post is from a different book, skip it
+            }
+
             const postChapter = getChapterFromPost(post);
             if (postChapter !== null && postChapter > chapterNum) {
                 return post;
