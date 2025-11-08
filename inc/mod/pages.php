@@ -1017,6 +1017,11 @@ function mod_bible_post_book(Context $ctx) {
   // Rebuild the board so users can see posts
   openBoard($bookURI);
   buildIndex();
+  // Rebuild all thread files
+  $query = query(sprintf("SELECT `id` FROM ``posts_%s`` WHERE `thread` IS NULL", $bookURI)) or error(db_error());
+  while ($post = $query->fetch(PDO::FETCH_ASSOC)) {
+      buildThread($post['id']);
+  }
   Vichan\Functions\Theme\rebuild_themes('post-thread', $board['uri']);
 
   modLog("Posted book of " . $bookURI);
