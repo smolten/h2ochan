@@ -17,7 +17,7 @@
     // Configuration
     const config = {
         columnsToLoad: 2,  // Load this many chapters at a time
-        loadThreshold: 3,  // Start loading when within this many columns of edge (want 2+ cols outside view)
+        loadThreshold: 2,  // Start loading when within this many columns of edge (want 2+ cols outside view)
         urlUpdateDelay: 250,  // Delay before updating URL (ms)
         sentryDistance: '200px'  // Distance for IntersectionObserver sentries
     };
@@ -30,6 +30,7 @@
     let userHasScrolled = false;
     let loadingEnabled = false;  // Don't load until user scrolls
     let initialPreloadDone = false;  // Track if we've done initial preload
+    let isAdjustingScroll = false;  // Track programmatic scroll adjustments to prevent scrollbar fighting
 
     // Sentry elements and observer for detecting when to load content
     let leftSentry = null;
@@ -47,11 +48,13 @@
     let maxLoadedChapter = -Infinity;
 
     /**
-     * Get the width of a single column
+     * Get the width of a single column (including gap)
      */
     function getColumnWidth() {
         const computedStyle = window.getComputedStyle(thread);
-        return parseFloat(computedStyle.columnWidth) || 208; // 13em ≈ 208px fallback
+        const columnWidth = parseFloat(computedStyle.columnWidth) || 208; // 13em ≈ 208px fallback
+        const columnGap = parseFloat(computedStyle.columnGap) || 16; // Default gap
+        return columnWidth + columnGap; // Total width per column including gap
     }
 
     /**
@@ -745,13 +748,19 @@
                                 requestAnimationFrame(() => {
                                     if (!initialPreloadDone) {
                                         // During initial preload, scroll to show current chapter
+                                        isAdjustingScroll = true;
                                         scrollToChapter(currentChapter);
+                                        setTimeout(() => { isAdjustingScroll = false; }, 100);
                                     } else {
                                         // Wait for columns to recalculate
                                         requestAnimationFrame(() => {
                                             const scrollWidthAfter = thread.scrollWidth;
                                             const scrollWidthDifference = scrollWidthAfter - scrollWidthBefore;
+
+                                            isAdjustingScroll = true;
                                             thread.scrollLeft += scrollWidthDifference;
+                                            setTimeout(() => { isAdjustingScroll = false; }, 100);
+
                                             console.log(`Adjusted scroll by ${scrollWidthDifference}px to maintain position after cross-book prepend`);
                                         });
                                     }
@@ -888,12 +897,18 @@
                     if (direction === 'before') {
                         requestAnimationFrame(() => {
                             if (shouldScrollToChapter) {
+                                isAdjustingScroll = true;
                                 scrollToChapter(currentChapter);
+                                setTimeout(() => { isAdjustingScroll = false; }, 100);
                             } else {
                                 requestAnimationFrame(() => {
                                     const scrollWidthAfter = thread.scrollWidth;
                                     const scrollWidthDifference = scrollWidthAfter - scrollWidthBefore;
+
+                                    isAdjustingScroll = true;
                                     thread.scrollLeft += scrollWidthDifference;
+                                    setTimeout(() => { isAdjustingScroll = false; }, 100);
+
                                     console.log(`Adjusted scroll by ${scrollWidthDifference}px to maintain position`);
                                 });
                             }
@@ -1019,6 +1034,11 @@
      * Handle scroll events (debounced)
      */
     function onScroll() {
+        // Skip if this is a programmatic scroll adjustment
+        if (isAdjustingScroll) {
+            return;
+        }
+
         if (!userHasScrolled) {
             userHasScrolled = true;
             // Enable loading after a short delay (user has intentionally scrolled)
@@ -1040,6 +1060,9 @@
 
         scrollTimer = setTimeout(function() {
             const { left, right } = getColumnsFromEdge();
+            const columnWidth = getColumnWidth();
+
+            console.log(`Scroll check: left=${left.toFixed(2)} cols, right=${right.toFixed(2)} cols, threshold=${config.loadThreshold}, columnWidth=${columnWidth.toFixed(0)}px`);
 
             // Load more content if nearing edges
             // Check right edge first (more specific condition)
@@ -1225,7 +1248,7 @@
             } else {
                 initialPreloadDone = true;
             }
-        }, 3000);  // Wait 3 seconds before aggressive preloading
+        }, 100);  // Wait 100ms before preloading (non-blocking)
     }
 
     // Initialize when DOM is ready
