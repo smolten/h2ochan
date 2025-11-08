@@ -858,7 +858,9 @@
             }
 
             if (chaptersToLoad.length === 0) {
-                console.log(`No chapters to load in direction '${direction}'`);
+                if (config.debug) {
+                    console.log(`No chapters to load in direction '${direction}'`);
+                }
                 loading = false;
                 return;
             }
@@ -1178,8 +1180,8 @@
 
         console.log(`Bible infinite scroll initialized on ${boardURI}, chapter ${currentChapter}`);
 
-        // Enable loading immediately for sentries and polling
-        loadingEnabled = true;
+        // Don't enable automatic loading until after initial preload completes
+        // This prevents infinite loading loops during preload
 
         // Start preloading immediately (non-blocking)
         setTimeout(function() {
@@ -1200,14 +1202,17 @@
                             loadMoreChapters('after').then(() => {
                                 // Only mark preload done after BOTH operations complete
                                 initialPreloadDone = true;
+                                loadingEnabled = true;
                             });
                         } else if (bibleNav && bibleNav.next) {
                             // At end of book, load next book
                             loadMoreChapters('after').then(() => {
                                 initialPreloadDone = true;
+                                loadingEnabled = true;
                             });
                         } else {
                             initialPreloadDone = true;
+                            loadingEnabled = true;
                         }
                     });
                 } else if (bibleNav && bibleNav.previous) {
@@ -1218,9 +1223,11 @@
                             loadMoreChapters('after').then(() => {
                                 // Only mark preload done after BOTH operations complete
                                 initialPreloadDone = true;
+                                loadingEnabled = true;
                             });
                         } else {
                             initialPreloadDone = true;
+                            loadingEnabled = true;
                         }
                     });
                 } else {
@@ -1228,7 +1235,12 @@
                     if (bibleNav && currentChapter < bibleNav.current.chapters) {
                         loadMoreChapters('after').then(() => {
                             initialPreloadDone = true;
+                            loadingEnabled = true;
                         });
+                    } else {
+                        // Nothing to preload, enable loading immediately
+                        initialPreloadDone = true;
+                        loadingEnabled = true;
                     }
                 }
             } else if (currentChapter > 1) {
@@ -1236,15 +1248,18 @@
                 console.log('Preloading previous chapter to enable leftward scrolling');
                 loadMoreChapters('before').then(() => {
                     initialPreloadDone = true;
+                    loadingEnabled = true;
                 });
             } else if (currentChapter === 1 && bibleNav && bibleNav.previous) {
                 // Chapter 1, preload previous book
                 console.log('Preloading previous book to enable leftward scrolling');
                 loadMoreChapters('before').then(() => {
                     initialPreloadDone = true;
+                    loadingEnabled = true;
                 });
             } else {
                 initialPreloadDone = true;
+                loadingEnabled = true;
             }
         }, 0);  // Start preloading immediately (non-blocking)
     }
