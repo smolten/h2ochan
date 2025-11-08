@@ -453,6 +453,34 @@
     }
 
     /**
+     * Get chapter number from a post element
+     */
+    function getChapterFromPost(postElement) {
+        const chapterMarker = postElement.querySelector('.post_no.chapter');
+        if (chapterMarker) {
+            return parseInt(chapterMarker.textContent);
+        }
+        return null;
+    }
+
+    /**
+     * Find the correct insertion point for a chapter based on chapter number
+     * Returns the post element to insert before, or null to append at end
+     */
+    function findInsertionPoint(chapterNum) {
+        const allPosts = thread.querySelectorAll('.post.bible');
+
+        for (let post of allPosts) {
+            const postChapter = getChapterFromPost(post);
+            if (postChapter !== null && postChapter > chapterNum) {
+                return post;
+            }
+        }
+
+        return null; // Insert at end
+    }
+
+    /**
      * Load a specific chapter and extract its posts
      */
     async function loadChapter(chapterNum) {
@@ -466,7 +494,8 @@
             return null;
         }
 
-        const url = `/${boardURI}/${chapterNum}.html`;
+        // Chapter 1 is at index.html, other chapters are at /N.html
+        const url = chapterNum === 1 ? `/${boardURI}/` : `/${boardURI}/${chapterNum}.html`;
         console.log(`Fetching chapter ${chapterNum} from ${url}`);
 
         try {
@@ -836,63 +865,39 @@
             for (const chapterNum of chaptersToLoad) {
                 const postsHTML = await loadChapter(chapterNum);
                 if (postsHTML) {
-                    // Get fresh reference to first element for each chapter
-                    const currentAllPosts = thread.querySelectorAll('.post.bible');
-                    const currentFirstElement = currentAllPosts[0];
+                    // Find the correct sorted position for this chapter
+                    const insertionPoint = findInsertionPoint(chapterNum);
+                    const scrollWidthBefore = thread.scrollWidth;
 
-                    if (direction === 'before' && currentFirstElement) {
-                        console.log(`Prepending chapter ${chapterNum}`);
+                    if (insertionPoint) {
+                        // Insert before the insertion point
+                        console.log(`Inserting chapter ${chapterNum} in sorted order before chapter ${getChapterFromPost(insertionPoint)}`);
+                        insertionPoint.insertAdjacentHTML('beforebegin', postsHTML);
+                    } else {
+                        // Append at end
+                        console.log(`Appending chapter ${chapterNum} at end`);
+                        const lastPost = thread.querySelectorAll('.post.bible');
+                        if (lastPost.length > 0) {
+                            lastPost[lastPost.length - 1].insertAdjacentHTML('afterend', postsHTML);
+                        } else {
+                            thread.insertAdjacentHTML('beforeend', postsHTML);
+                        }
+                    }
 
-                        // Record scrollWidth before insertion
-                        const scrollWidthBefore = thread.scrollWidth;
-
-                        // Insert before first post
-                        currentFirstElement.insertAdjacentHTML('beforebegin', postsHTML);
-
-                        // Adjust scroll position to maintain view
+                    // Adjust scroll position if loading before current view
+                    if (direction === 'before') {
                         requestAnimationFrame(() => {
                             if (shouldScrollToChapter) {
-                                // During initial preload, scroll to show the current chapter
                                 scrollToChapter(currentChapter);
                             } else {
-                                // Wait for columns to recalculate
                                 requestAnimationFrame(() => {
                                     const scrollWidthAfter = thread.scrollWidth;
                                     const scrollWidthDifference = scrollWidthAfter - scrollWidthBefore;
                                     thread.scrollLeft += scrollWidthDifference;
-                                    console.log(`Adjusted scroll by ${scrollWidthDifference}px to maintain reference post position`);
+                                    console.log(`Adjusted scroll by ${scrollWidthDifference}px to maintain position`);
                                 });
                             }
                         });
-                    } else if (direction === 'after' && referenceElement) {
-                        console.log(`Appending chapter ${chapterNum} AFTER last element`);
-                        // Insert after last post (no scroll adjustment needed)
-                        referenceElement.insertAdjacentHTML('afterend', postsHTML);
-                    } else {
-                        console.log(`${direction === 'before' ? 'Prepending' : 'Appending'} chapter ${chapterNum} to thread (fallback)`);
-                        // Fallback: prepend or append based on direction
-                        if (direction === 'before') {
-                            // Record scrollWidth before insertion
-                            const scrollWidthBefore = thread.scrollWidth;
-
-                            thread.insertAdjacentHTML('afterbegin', postsHTML);
-
-                            requestAnimationFrame(() => {
-                                if (shouldScrollToChapter) {
-                                    scrollToChapter(currentChapter);
-                                } else {
-                                    // Wait for columns to recalculate
-                                    requestAnimationFrame(() => {
-                                        const scrollWidthAfter = thread.scrollWidth;
-                                        const scrollWidthDifference = scrollWidthAfter - scrollWidthBefore;
-                                        thread.scrollLeft += scrollWidthDifference;
-                                        console.log(`Adjusted scroll by ${scrollWidthDifference}px (fallback)`);
-                                    });
-                                }
-                            });
-                        } else {
-                            thread.insertAdjacentHTML('beforeend', postsHTML);
-                        }
                     }
                 }
             }
