@@ -1348,3 +1348,10 @@ a.post_no.verse {
 .post.op.bible:has(.chapter-placeholder) {
     display: none;
 }
+
+/* Mobile optimizations for Bible boards */
+@media (max-width: 480px) {
+    .thread.bible {
+        column-width: 11em;  /* Narrower columns on mobile */
+    }
+}
