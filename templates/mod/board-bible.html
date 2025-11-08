@@ -281,6 +281,21 @@ document.addEventListener('DOMContentLoaded', function() {
 	}
     }
 
+    if (repostDelayInput) {
+	var referrer = document.referrer;
+	var fromEditPage = referrer.includes('/mod.php?/edit_bible/');
+
+	if (fromEditPage && localStorage.getItem('bible_repost_delay')) {
+	    repostDelayInput.value = localStorage.getItem('bible_repost_delay');
+	} else {
+	    repostDelayInput.value = '2';
+	}
+
+	repostDelayInput.addEventListener('input', function() {
+	    localStorage.setItem('bible_repost_delay', this.value);
+	});
+    }
+
     var status = document.getElementById('posts_status');
     var nextChapter = document.getElementById('next_chapter');
     if(status) {
@@ -423,7 +438,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	})
 	.then(response => response.text())
 	.then(statusText => {
-	    var delaySeconds = parseFloat(repostDelayInput.value) || 2;
+	    var delaySeconds = repostDelayInput ? Math.max(0.1, parseFloat(repostDelayInput.value) || 0.1) : 2;
 	    var delayMs = Math.max(100, delaySeconds * 1000);
 	    status.textContent = "REPOST: Done. " + statusText + " Next in " + delaySeconds + "s...";
 	    setTimeout(() => {
