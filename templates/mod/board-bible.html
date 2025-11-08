@@ -438,6 +438,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     function do_delete_book() {
 	status.textContent = "Deleting Book....";
+	status.style.color = '';
 	var tokenDelete = document.querySelector('input[name="token_delete_book"]');
 	var params = new URLSearchParams();
 	params.append('uri', uriValue);
@@ -452,10 +453,17 @@ document.addEventListener('DOMContentLoaded', function() {
 	})
 	.then(response => response.text())
 	.then(text => {
-	    status.textContent = text || '(no response)';
+	    if (text && (text.includes('ERROR:') || text.includes('Error:'))) {
+		status.textContent = text;
+		status.style.color = 'red';
+	    } else {
+		status.textContent = text || '(no response)';
+		status.style.color = '';
+	    }
 	})
 	.catch(err => {
-	    status.textContent = 'Error: ' + err;
+	    status.textContent = 'ERROR: ' + err;
+	    status.style.color = 'red';
 	});
     };
 

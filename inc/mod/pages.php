@@ -610,6 +610,7 @@ function mod_edit_board_bible(Context $ctx, $boardName) {
          			'token_post_threads' => make_secure_link_token('bible-post-threads'),
 				'token_post_replies' => make_secure_link_token('bible-post-replies'),
 				'token_post_book' => make_secure_link_token('bible-post-book'),
+				'token_delete_book' => make_secure_link_token('bible-delete-book'),
 	                        'bible_path_full' => $bible_path_full,
                                 'bible_path_index' => $bible_path_index,
                                 'bible_index' => $bible_index,
