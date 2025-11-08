@@ -438,7 +438,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	})
 	.then(response => response.text())
 	.then(statusText => {
-	    var delaySeconds = parseFloat(repostDelayInput.value) || 2;
+	    var delaySeconds = repostDelayInput ? (parseFloat(repostDelayInput.value) || 2) : 2;
 	    var delayMs = Math.max(100, delaySeconds * 1000);
 	    status.textContent = "REPOST: Done. " + statusText + " Next in " + delaySeconds + "s...";
 	    setTimeout(() => {
