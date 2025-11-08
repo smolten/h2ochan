@@ -1357,6 +1357,13 @@ a.post_no.verse {
     display: none;
 }
 
+/* Hide posts during prepend to prevent jitter */
+.post.bible[data-inserting="true"] {
+    visibility: hidden;
+    position: absolute;
+    pointer-events: none;
+}
+
 /* Mobile optimizations for Bible boards */
 @media (max-width: 480px) {
     .thread.bible {

@@ -78,6 +78,45 @@
     }
 
     /**
+     * Prepend content without jitter by hiding it during layout calculation
+     * @param {Element} insertBeforeElement - Element to insert before
+     * @param {string} htmlContent - HTML content to insert
+     * @param {Function} scrollAdjustCallback - Function to call after layout to adjust scroll
+     */
+    function prependWithoutJitter(insertBeforeElement, htmlContent, scrollAdjustCallback) {
+        // Create a temporary wrapper to parse the HTML and mark posts as inserting
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlContent;
+
+        // Mark all posts as inserting to hide them during layout
+        const newPosts = tempDiv.querySelectorAll('.post.bible');
+        newPosts.forEach(post => {
+            post.setAttribute('data-inserting', 'true');
+        });
+
+        // Insert the marked content
+        insertBeforeElement.insertAdjacentHTML('beforebegin', tempDiv.innerHTML);
+
+        // After layout calculation, adjust scroll and reveal content
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                // Execute the scroll adjustment callback
+                if (scrollAdjustCallback) {
+                    scrollAdjustCallback();
+                }
+
+                // Reveal the newly inserted content
+                requestAnimationFrame(() => {
+                    const insertedPosts = thread.querySelectorAll('.post.bible[data-inserting="true"]');
+                    insertedPosts.forEach(post => {
+                        post.removeAttribute('data-inserting');
+                    });
+                });
+            });
+        });
+    }
+
+    /**
      * Create or update sentry elements for IntersectionObserver
      * These sentries sit at the edges and trigger loading when they become visible
      */
@@ -744,27 +783,23 @@
                                 // Record scrollWidth before insertion
                                 const scrollWidthBefore = thread.scrollWidth;
 
-                                firstPost.insertAdjacentHTML('beforebegin', postsHTML);
-
-                                // Adjust scroll position to maintain view
-                                requestAnimationFrame(() => {
+                                // Use jitter-free prepending
+                                prependWithoutJitter(firstPost, postsHTML, () => {
                                     if (!initialPreloadDone) {
                                         // During initial preload, scroll to show current chapter
                                         isAdjustingScroll = true;
                                         scrollToChapter(currentChapter);
                                         setTimeout(() => { isAdjustingScroll = false; }, 100);
                                     } else {
-                                        // Wait for columns to recalculate
-                                        requestAnimationFrame(() => {
-                                            const scrollWidthAfter = thread.scrollWidth;
-                                            const scrollWidthDifference = scrollWidthAfter - scrollWidthBefore;
+                                        // Adjust scroll to maintain position
+                                        const scrollWidthAfter = thread.scrollWidth;
+                                        const scrollWidthDifference = scrollWidthAfter - scrollWidthBefore;
 
-                                            isAdjustingScroll = true;
-                                            thread.scrollLeft += scrollWidthDifference;
-                                            setTimeout(() => { isAdjustingScroll = false; }, 100);
+                                        isAdjustingScroll = true;
+                                        thread.scrollLeft += scrollWidthDifference;
+                                        setTimeout(() => { isAdjustingScroll = false; }, 100);
 
-                                            console.log(`Adjusted scroll by ${scrollWidthDifference}px to maintain position after cross-book prepend`);
-                                        });
+                                        console.log(`Adjusted scroll by ${scrollWidthDifference}px to maintain position after cross-book prepend`);
                                     }
                                 });
                             }
@@ -816,20 +851,16 @@
                                 // Record scrollWidth before insertion
                                 const scrollWidthBefore = thread.scrollWidth;
 
-                                firstPost.insertAdjacentHTML('beforebegin', postsHTML);
-
-                                // Adjust scroll position to maintain view
-                                requestAnimationFrame(() => {
+                                // Use jitter-free prepending
+                                prependWithoutJitter(firstPost, postsHTML, () => {
                                     if (!initialPreloadDone) {
                                         scrollToChapter(currentChapter);
                                     } else {
-                                        // Wait for columns to recalculate
-                                        requestAnimationFrame(() => {
-                                            const scrollWidthAfter = thread.scrollWidth;
-                                            const scrollWidthDifference = scrollWidthAfter - scrollWidthBefore;
-                                            thread.scrollLeft += scrollWidthDifference;
-                                            console.log(`Adjusted scroll by ${scrollWidthDifference}px to maintain position after cross-book prepend`);
-                                        });
+                                        // Adjust scroll to maintain position
+                                        const scrollWidthAfter = thread.scrollWidth;
+                                        const scrollWidthDifference = scrollWidthAfter - scrollWidthBefore;
+                                        thread.scrollLeft += scrollWidthDifference;
+                                        console.log(`Adjusted scroll by ${scrollWidthDifference}px to maintain position after cross-book prepend`);
                                     }
                                 });
                             }
@@ -881,29 +912,17 @@
                     const scrollWidthBefore = thread.scrollWidth;
 
                     if (insertionPoint) {
-                        // Insert before the insertion point
+                        // Insert before the insertion point (prepending)
                         console.log(`Inserting chapter ${chapterNum} in sorted order before chapter ${getChapterFromPost(insertionPoint)}`);
-                        insertionPoint.insertAdjacentHTML('beforebegin', postsHTML);
-                    } else {
-                        // Append at end
-                        console.log(`Appending chapter ${chapterNum} at end`);
-                        const lastPost = thread.querySelectorAll('.post.bible');
-                        if (lastPost.length > 0) {
-                            lastPost[lastPost.length - 1].insertAdjacentHTML('afterend', postsHTML);
-                        } else {
-                            thread.insertAdjacentHTML('beforeend', postsHTML);
-                        }
-                    }
 
-                    // Adjust scroll position if loading before current view
-                    if (direction === 'before') {
-                        requestAnimationFrame(() => {
-                            if (shouldScrollToChapter) {
-                                isAdjustingScroll = true;
-                                scrollToChapter(currentChapter);
-                                setTimeout(() => { isAdjustingScroll = false; }, 100);
-                            } else {
-                                requestAnimationFrame(() => {
+                        if (direction === 'before') {
+                            // Use jitter-free prepending
+                            prependWithoutJitter(insertionPoint, postsHTML, () => {
+                                if (shouldScrollToChapter) {
+                                    isAdjustingScroll = true;
+                                    scrollToChapter(currentChapter);
+                                    setTimeout(() => { isAdjustingScroll = false; }, 100);
+                                } else {
                                     const scrollWidthAfter = thread.scrollWidth;
                                     const scrollWidthDifference = scrollWidthAfter - scrollWidthBefore;
 
@@ -912,9 +931,21 @@
                                     setTimeout(() => { isAdjustingScroll = false; }, 100);
 
                                     console.log(`Adjusted scroll by ${scrollWidthDifference}px to maintain position`);
-                                });
-                            }
-                        });
+                                }
+                            });
+                        } else {
+                            // Regular insertion (no jitter risk when inserting in middle/appending)
+                            insertionPoint.insertAdjacentHTML('beforebegin', postsHTML);
+                        }
+                    } else {
+                        // Append at end (no jitter risk)
+                        console.log(`Appending chapter ${chapterNum} at end`);
+                        const lastPost = thread.querySelectorAll('.post.bible');
+                        if (lastPost.length > 0) {
+                            lastPost[lastPost.length - 1].insertAdjacentHTML('afterend', postsHTML);
+                        } else {
+                            thread.insertAdjacentHTML('beforeend', postsHTML);
+                        }
                     }
                 }
             }
