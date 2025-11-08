@@ -965,6 +965,19 @@ function mod_bible_post_threads(Context $ctx, bool $log=true) {
     if (!$bookURI)
         error("Missing or invalid book URI.");
 
+    // Open the board to ensure it exists and get board-specific config
+    if (!openBoard($bookURI))
+        error("Board not found: $bookURI");
+
+    // DROP and recreate the posts table to reset AUTO_INCREMENT
+    error_log("[mod_bible_post_threads] Dropping and recreating posts_{$bookURI} table");
+    $query = query(sprintf('DROP TABLE IF EXISTS ``posts_%s``', $bookURI)) or error(db_error());
+
+    // Recreate the table with AUTO_INCREMENT=1
+    $query = Element('posts.sql', array('board' => $bookURI));
+    query($query) or error(db_error());
+    error_log("[mod_bible_post_threads] Created fresh posts_{$bookURI} table");
+
     // Get the full book title from the Bible index
     $fullName = getBibleBookFullName($bookURI, $config['bible']['path_index']);
     if (empty($fullName)) {
@@ -1600,19 +1613,15 @@ function mod_view_board(Context $ctx, $boardName, $page_no = 1) {
 
 	// Add Bible book navigation if this is a Bible board
 	global $board;
-	error_log("[mod_view_board] Checking Bible navigation for board: " . $board['uri']);
-	error_log("[mod_view_board] isbible=" . (isset($config['isbible']) ? ($config['isbible'] ? 'true' : 'false') : 'not set'));
-	error_log("[mod_view_board] path_index=" . (isset($config['bible']['path_index']) ? $config['bible']['path_index'] : 'not set'));
+	// Use board-specific config, not global config
+	$boardConfig = $board['config'] ?? $config;
 
-	if (isset($config['isbible']) && $config['isbible'] && isset($config['bible']['path_index'])) {
-		error_log("[mod_view_board] Getting Bible navigation...");
+	if (isset($boardConfig['isbible']) && $boardConfig['isbible'] && isset($config['bible']['path_index'])) {
 		$bibleNav = getBibleBookNavigation($board['uri'], $config['bible']['path_index']);
-		error_log("[mod_view_board] Bible nav result: " . json_encode($bibleNav));
 		$page['board']['linkPrev'] = $bibleNav['linkPrev'];
 		$page['board']['linkNext'] = $bibleNav['linkNext'];
 		$page['board']['titlePrev'] = $bibleNav['titlePrev'];
 		$page['board']['titleNext'] = $bibleNav['titleNext'];
-		error_log("[mod_view_board] Set page board navigation links");
 	}
 
 	echo Element($config['file_board_index'], $page);
