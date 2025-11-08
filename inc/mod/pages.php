@@ -941,9 +941,11 @@ function mod_bible_delete_book(Context $ctx) {
     if (!openBoard($bookURI))
         error("Board not found: $bookURI");
 
+    // Re-get global config after openBoard() has loaded board-specific settings
+    global $config;
+
     // Safety check: Only delete from bible boards (use board-specific config)
-    $boardConfig = $board['config'] ?? $config;
-    $isBibleBoard = isset($boardConfig['isbible']) && $boardConfig['isbible'];
+    $isBibleBoard = isset($config['isbible']) && $config['isbible'];
 
     if (!$isBibleBoard) {
         echo "ERROR: Refusing to delete non-bible board '$bookURI'. This board does not have config.isbible set to true.";
@@ -1033,6 +1035,9 @@ function mod_bible_post_threads(Context $ctx, bool $log=true) {
     // Open the board to ensure it exists and get board-specific config
     if (!openBoard($bookURI))
         error("Board not found: $bookURI");
+
+    // Re-get global config after openBoard() has loaded board-specific settings
+    global $config;
 
     // TRUNCATE deletes all rows and resets AUTO_INCREMENT to 0
     error_log("[mod_bible_post_threads] Truncating posts_{$bookURI} table");
