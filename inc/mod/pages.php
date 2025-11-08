@@ -969,14 +969,10 @@ function mod_bible_post_threads(Context $ctx, bool $log=true) {
     if (!openBoard($bookURI))
         error("Board not found: $bookURI");
 
-    // DROP and recreate the posts table to reset AUTO_INCREMENT
-    error_log("[mod_bible_post_threads] Dropping and recreating posts_{$bookURI} table");
-    $query = query(sprintf('DROP TABLE IF EXISTS ``posts_%s``', $bookURI)) or error(db_error());
-
-    // Recreate the table with AUTO_INCREMENT=1
-    $query = Element('posts.sql', array('board' => $bookURI));
-    query($query) or error(db_error());
-    error_log("[mod_bible_post_threads] Created fresh posts_{$bookURI} table");
+    // TRUNCATE deletes all rows and resets AUTO_INCREMENT to 0
+    error_log("[mod_bible_post_threads] Truncating posts_{$bookURI} table");
+    $query = query(sprintf('TRUNCATE TABLE ``posts_%s``', $bookURI)) or error(db_error());
+    error_log("[mod_bible_post_threads] Truncated posts_{$bookURI}, AUTO_INCREMENT reset to 1");
 
     // Get the full book title from the Bible index
     $fullName = getBibleBookFullName($bookURI, $config['bible']['path_index']);
