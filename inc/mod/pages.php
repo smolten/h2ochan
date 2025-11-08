@@ -925,6 +925,69 @@ function mod_all_boards_status(Context $ctx)
     exit;
 }
 
+function mod_bible_delete_book(Context $ctx) {
+    global $board, $mod;
+    $config = $ctx->get('config');
+
+    if (!hasPermission($config['mod']['manageboards'], $board['uri']))
+        error($config['error']['noaccess']);
+
+    $bookURI = isset($_POST['uri']) ? preg_replace('/[^a-zA-Z0-9]/', '', $_POST['uri']) : '';
+    if (!$bookURI)
+        error("Missing or invalid book URI.");
+
+    // Open board to get config
+    if (!openBoard($bookURI))
+        error("Board not found: $bookURI");
+
+    // Safety check: Only delete from bible boards
+    $isBibleBoard = isset($config['isbible']) && $config['isbible'];
+
+    if (!$isBibleBoard) {
+        echo "ERROR: Refusing to delete non-bible board '$bookURI'. This board does not have config.isbible set to true.";
+        modLog("Delete book BLOCKED: " . $bookURI . " (NOT a bible board)");
+        return;
+    }
+
+    // TRUNCATE deletes all posts and resets AUTO_INCREMENT
+    try {
+        $query = query(sprintf("TRUNCATE TABLE ``posts_%s``", $bookURI)) or error(db_error());
+        error_log("[mod_bible_delete_book] Truncated posts_{$bookURI}");
+
+        // Delete static files in the board directory
+        $boardDir = $board['uri'] . '/';
+        if (is_dir($boardDir)) {
+            // Delete all .html and .json files but keep directory structure
+            $files = glob($boardDir . '*.{html,json}', GLOB_BRACE);
+            foreach ($files as $file) {
+                if (is_file($file)) {
+                    unlink($file);
+                }
+            }
+
+            // Delete files in res/ subdirectory
+            $resDir = $boardDir . 'res/';
+            if (is_dir($resDir)) {
+                $resFiles = glob($resDir . '*.{html,json}', GLOB_BRACE);
+                foreach ($resFiles as $file) {
+                    if (is_file($file)) {
+                        unlink($file);
+                    }
+                }
+            }
+
+            error_log("[mod_bible_delete_book] Deleted static files from {$boardDir}");
+        }
+
+        echo "Successfully deleted all posts and static files from bible board '$bookURI'.";
+        modLog("Deleted book: " . $bookURI . " (posts truncated, static files removed)");
+
+    } catch (Exception $e) {
+        echo "ERROR: Failed to delete book '$bookURI': " . $e->getMessage();
+        modLog("Delete book FAILED: " . $bookURI . " - " . $e->getMessage());
+    }
+}
+
 function mod_bible_post_book(Context $ctx) {
   global $mod, $board;
   mod_bible_post_threads($ctx, false);
