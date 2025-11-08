@@ -15,7 +15,7 @@
 <body>
 	{{ boardlist.top }}
 	<header style="text-align: center;">
-		<span style="display: inline-block; vertical-align: middle;">
+		<span style="display: inline-block; vertical-align: middle; position: relative;">
 	    		{% include 'h2o/icon_toggle.html' %}
 			<h1 style="display: inline-block; margin: 0; vertical-align: middle;">{{ settings.title }}</h1>
 		</span>
@@ -28,6 +28,7 @@
 		<legend>Boards</legend>
 		<ul style="margin-block-start: 0;">
 			<li class="boardlinksurl"><a href="/KJB">King James Bible<a></li>
+			<br>
 			{% for board in boards %}
 				<li class="boardlinksurl">
 					<a href="{{ config.board_path|sprintf(board.uri) }}">

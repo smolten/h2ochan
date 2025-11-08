@@ -7,6 +7,7 @@
 #}
 
 {% set h2oicon = settings.icon ?? '../templates/themes/index/h2ochanIcon.png' %}
+{% set cross = '../templates/themes/index/goldcross_shutterstock.png' %}
 
 {# base rotation #}
 {% set rotation = -35 %}
@@ -18,3 +19,6 @@
 {% set boardstyle = settings.icon is defined ? '' : 'height:3em;' %}
 
 <img class="icon" src="{{ h2oicon|e }}" style="{{ boardstyle }}transform: rotate({{ rotation }}deg);">
+{% if config.isbible %}
+<img class="icon" src="{{ cross|e }}" style="{{ boardstyle}}transform: rotate(-25deg); position: absolute; top: -0.55em; left: 0.1em;">
+{% endif%}

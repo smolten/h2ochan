@@ -40,8 +40,9 @@
 	{% if pm %}<div class="top_notice">You have <a href="?/PM/{{ pm.id }}">an unread PM</a>{% if pm.waiting > 0 %}, plus {{ pm.waiting }} more waiting{% endif %}.</div><hr />{% endif %}
 	{% if config.url_banner %}<img class="board_image" src="{{ config.url_banner }}" {% if config.banner_width or config.banner_height %}style="{% if config.banner_width %}width:{{ config.banner_width }}px{% endif %};{% if config.banner_height %}height:{{ config.banner_height }}px{% endif %}" {% endif %}alt="" />{% endif %}
 	<header style="text-align: center;">
-		<span style="display: inline-block; vertical-align:middle;">
-			<img class="icon" src="../templates/themes/index/h2ochanIcon.png" style="height:3em;transform: rotate(35deg);">
+		<span style="display: inline-block; vertical-align:middle; position: relative;">
+			{% set config = config|merge({'isbible': true}) %}
+			{% include 'h2o/icon_toggle.html' %}
 			<h1 style="display:inline-block; vertical-align:text-bottom; margin-bottom:0.25em;">/KJB/ - King James Bible</h1>
 		</span>
 		<div class="subtitle">An Unofficial Publication of the King James Bible for Anonymous</div>
