@@ -1359,7 +1359,14 @@ a.post_no.verse {
     page-break-inside: auto !important;  /* Fallback */
     orphans: 2;  /* Minimum 2 lines at bottom of column before break */
     widows: 2;   /* Minimum 2 lines at top of column after break */
-    display: block;  /* Ensure block display for proper breaking */
+    display: inherit;  /* Inherit display from parent for proper breaking */
+    margin: 0;  /* Remove default margins */
+    padding: 0;  /* Remove default padding */
+}
+
+/* Hide the <br/> that follows bible posts to prevent extra spacing */
+.thread.bible .post + br {
+    display: none;
 }
 
 /* Also allow child elements to break */
@@ -1370,7 +1377,7 @@ a.post_no.verse {
     page-break-inside: auto !important;
     orphans: 2;
     widows: 2;
-    display: block;
+    display: inherit;
 }
 
 /* Hide Chapter 2+ placeholder OPs */
