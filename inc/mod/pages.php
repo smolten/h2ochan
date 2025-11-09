@@ -1010,7 +1010,7 @@ function mod_bible_post_book(Context $ctx) {
 
   $statusMsg = "Posted book {$bookURI}: {$threadCount} threads, {$replyCount} replies";
 
-  if ($threadCount % 2 == 1 || $replyCount % 2 == 1) {
+  if ($threadCount == 0 || $replyCount == 0) {
     $statusMsg = '<span style="color: red;">ERROR: ' . $statusMsg . '</span>';
   }
 
