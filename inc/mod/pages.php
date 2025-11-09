@@ -1011,7 +1011,7 @@ function mod_bible_post_book(Context $ctx) {
   $statusMsg = "Posted book {$bookURI}: {$threadCount} threads, {$replyCount} replies";
 
   if ($threadCount == 0 || $replyCount == 0) {
-    $statusMsg = '<span style="color: red;">ERROR: ' . $statusMsg . '</span>';
+    $statusMsg = '<span style="color: red;">ERROR: ZERO CHAPTERS or ZERO REPLIES posted!!!</span>';
   }
 
   echo nl2br($statusMsg) . "<br/>";
