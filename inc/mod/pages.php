@@ -1174,7 +1174,7 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
         }
         $threadId = $chapterToThreadId[$chapter];
 
-        // Post ALL verses (verse 1 as OP, rest as replies)
+        // Post ALL verses (including verse 1) as replies
         for ($verse = 1; $verse <= count($verses); $verse++) {
             if (!isset($verses[$verse])) {
                 continue; // Skip if this verse doesn't exist
@@ -1196,52 +1196,24 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
             $slug = substr($slug, 0, 256); // db char limit
 
             try {
-                if ($verse == 1) {
-                    // Verse 1: Insert as an OP (thread = NULL initially)
-                    $query = prepare("
-                        INSERT INTO ``posts_{$bookURI}``
-                        (thread, subject, email, name, trip, capcode, body, body_nomarkup, time, bump,
-                         files, num_files, filehash, password, ip, sticky, locked, cycle, sage, embed, slug, verse)
-                        VALUES
-                        (NULL, NULL, NULL, NULL, NULL, NULL, :body, :body_nomarkup, :faketime, :faketime,
-                         NULL, 0, NULL, SUBSTRING(MD5(RAND()),1,12), :ip, 0, 0, 0, 0, NULL, :slug, :verse)
-                    ");
+                $query = prepare("
+                    INSERT INTO ``posts_{$bookURI}``
+                    (thread, subject, email, name, trip, capcode, body, body_nomarkup, time, bump,
+                     files, num_files, filehash, password, ip, sticky, locked, cycle, sage, embed, slug, verse)
+                    VALUES
+                    (:thread, NULL, NULL, NULL, NULL, NULL, :body, :body_nomarkup, :faketime, :faketime,
+                     NULL, 0, NULL, SUBSTRING(MD5(RAND()),1,12), :ip, 0, 0, 0, 0, NULL, :slug, :verse)
+                ");
 
-                    $query->bindValue(':body', $body);
-                    $query->bindValue(':body_nomarkup', $body_nomarkup);
-                    $query->bindValue(':faketime', 1000 - $chapter - ($verse / 1000));
-                    $query->bindValue(':ip', '127.0.0.1');
-                    $query->bindValue(':slug', $slug);
-                    $query->bindValue(':verse', $verse);
+                $query->bindValue(':thread', $threadId);
+                $query->bindValue(':body', $body);
+                $query->bindValue(':body_nomarkup', $body_nomarkup);
+                $query->bindValue(':faketime', 1000 - $chapter - ($verse / 1000)); // Order by chapter then verse
+                $query->bindValue(':ip', '127.0.0.1');
+                $query->bindValue(':slug', $slug);
+                $query->bindValue(':verse', $verse);
 
-                    $query->execute();
-
-                    // Get the inserted ID and update thread to point to itself
-                    $verse1Id = $ctx->get('pdo')->lastInsertId();
-                    $updateQuery = prepare("UPDATE ``posts_{$bookURI}`` SET thread = :id WHERE id = :id");
-                    $updateQuery->bindValue(':id', $verse1Id);
-                    $updateQuery->execute();
-                } else {
-                    // Verses 2+: Insert as replies to the thread
-                    $query = prepare("
-                        INSERT INTO ``posts_{$bookURI}``
-                        (thread, subject, email, name, trip, capcode, body, body_nomarkup, time, bump,
-                         files, num_files, filehash, password, ip, sticky, locked, cycle, sage, embed, slug, verse)
-                        VALUES
-                        (:thread, NULL, NULL, NULL, NULL, NULL, :body, :body_nomarkup, :faketime, :faketime,
-                         NULL, 0, NULL, SUBSTRING(MD5(RAND()),1,12), :ip, 0, 0, 0, 0, NULL, :slug, :verse)
-                    ");
-
-                    $query->bindValue(':thread', $threadId);
-                    $query->bindValue(':body', $body);
-                    $query->bindValue(':body_nomarkup', $body_nomarkup);
-                    $query->bindValue(':faketime', 1000 - $chapter - ($verse / 1000));
-                    $query->bindValue(':ip', '127.0.0.1');
-                    $query->bindValue(':slug', $slug);
-                    $query->bindValue(':verse', $verse);
-
-                    $query->execute();
-                }
+                $query->execute();
 
             } catch (PDOException $e) {
                 // Collect error details
