@@ -1351,7 +1351,7 @@ a.post_no.verse {
     height: calc(80vh);
     column-width: 13em;
     column-fill: auto;
-    column-gap: 1em;  /* Control gap between columns */
+    column-gap: 0.1em;  /* Control gap between columns */
 }
 
 /* Allow posts to break across columns to reduce gaps */
