@@ -1346,6 +1346,7 @@ a.post_no.verse {
 /* Bible board infinite scroll styling */
 .thread.bible {
     overflow-x: auto;
+    overflow-y: hidden;
     text-align: justify;
     height: calc(80vh);
     column-width: 13em;
@@ -1378,6 +1379,19 @@ a.post_no.verse {
     orphans: 2;
     widows: 2;
     display: inherit;
+}
+
+/* Keep bookmark with verse number - prevent break between nointro and body */
+.thread.bible .post p.nointro {
+    break-after: avoid !important;
+    -webkit-column-break-after: avoid !important;
+    page-break-after: avoid !important;
+}
+
+.thread.bible .post .body {
+    break-before: avoid !important;
+    -webkit-column-break-before: avoid !important;
+    page-break-before: avoid !important;
 }
 
 /* Hide Chapter 2+ placeholder OPs */
