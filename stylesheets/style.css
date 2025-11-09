@@ -1359,6 +1359,14 @@ a.post_no.verse {
     widows: 2;   /* Minimum 2 lines at top of column after break */
 }
 
+/* Also allow child elements to break */
+.thread.bible .post p,
+.thread.bible .post .body {
+    break-inside: auto;
+    orphans: 2;
+    widows: 2;
+}
+
 /* Hide Chapter 2+ placeholder OPs */
 .post.op.bible:has(.chapter-placeholder) {
     display: none;
