@@ -1352,6 +1352,13 @@ a.post_no.verse {
     column-fill: auto;
 }
 
+/* Allow posts to break across columns to reduce gaps */
+.thread.bible .post {
+    break-inside: auto;  /* Allow breaking inside posts */
+    orphans: 2;  /* Minimum 2 lines at bottom of column before break */
+    widows: 2;   /* Minimum 2 lines at top of column after break */
+}
+
 /* Hide Chapter 2+ placeholder OPs */
 .post.op.bible:has(.chapter-placeholder) {
     display: none;
