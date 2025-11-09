@@ -1354,17 +1354,23 @@ a.post_no.verse {
 
 /* Allow posts to break across columns to reduce gaps */
 .thread.bible .post {
-    break-inside: auto;  /* Allow breaking inside posts */
+    break-inside: auto !important;  /* Allow breaking inside posts */
+    -webkit-column-break-inside: auto !important;  /* Safari/Chrome */
+    page-break-inside: auto !important;  /* Fallback */
     orphans: 2;  /* Minimum 2 lines at bottom of column before break */
     widows: 2;   /* Minimum 2 lines at top of column after break */
+    display: block;  /* Ensure block display for proper breaking */
 }
 
 /* Also allow child elements to break */
 .thread.bible .post p,
 .thread.bible .post .body {
-    break-inside: auto;
+    break-inside: auto !important;
+    -webkit-column-break-inside: auto !important;
+    page-break-inside: auto !important;
     orphans: 2;
     widows: 2;
+    display: block;
 }
 
 /* Hide Chapter 2+ placeholder OPs */
