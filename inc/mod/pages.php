@@ -1108,11 +1108,30 @@ function mod_bible_post_threads(Context $ctx, bool $log=true) {
         }
     }
 
+    // Count actual threads created
+    $countQuery = prepare("SELECT COUNT(*) FROM ``posts_{$bookURI}`` WHERE verse = 0");
+    $countQuery->execute();
+    $threadCount = $countQuery->fetchColumn();
+
+    // Count actual replies created
+    $replyCountQuery = prepare("SELECT COUNT(*) FROM ``posts_{$bookURI}`` WHERE verse > 0");
+    $replyCountQuery->execute();
+    $replyCount = $replyCountQuery->fetchColumn();
+
     // Log summary including errors
     $note = "Posted chapter thread OPs for book $bookURI";
     if ($chapterNumbers && count($chapterNumbers) > 0) {
         $note .= " (Chapter {$chapterNumbers[0]} = Book Title: $fullName)";
     }
+    $note .= " - {$threadCount} threads, {$replyCount} replies";
+
+    // Prepend ERROR if threads or replies is zero
+    $hasError = false;
+    if ($threadCount == 0 || $replyCount == 0) {
+        $note = '<span style="color: red;">ERROR: ' . $note . '</span>';
+        $hasError = true;
+    }
+
     if (!empty($errors)) {
         $note .= " -- ERROR(S):\n";
         foreach ($errors as $err) {
@@ -1120,7 +1139,7 @@ function mod_bible_post_threads(Context $ctx, bool $log=true) {
         }
     }
 
-    if($log || !empty($errors))
+    if($log || !empty($errors) || $hasError)
     	modLog($note);
     echo nl2br($note);  // For web output with line breaks
 
@@ -1226,8 +1245,27 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
         }
     }
 
+    // Count actual threads created
+    $countQuery = prepare("SELECT COUNT(*) FROM ``posts_{$bookURI}`` WHERE verse = 0");
+    $countQuery->execute();
+    $threadCount = $countQuery->fetchColumn();
+
+    // Count actual replies created
+    $replyCountQuery = prepare("SELECT COUNT(*) FROM ``posts_{$bookURI}`` WHERE verse > 0");
+    $replyCountQuery->execute();
+    $replyCount = $replyCountQuery->fetchColumn();
+
     // Log summary including errors
     $note = "Posted all verse replies for {$bookURI} (including Chapter 1 Verse 1)";
+    $note .= " - {$threadCount} threads, {$replyCount} replies";
+
+    // Prepend ERROR if threads or replies is zero
+    $hasError = false;
+    if ($threadCount == 0 || $replyCount == 0) {
+        $note = '<span style="color: red;">ERROR: ' . $note . '</span>';
+        $hasError = true;
+    }
+
     if (!empty($errors)) {
         $note .= " -- Errors encountered:\n";
         foreach ($errors as $err) {
@@ -1235,7 +1273,7 @@ function mod_bible_post_replies(Context $ctx, bool $log=true) {
         }
     }
 
-    if($log || !empty($errors))
+    if($log || !empty($errors) || $hasError)
         modLog($note);
     echo nl2br($note);  // For web output with line breaks
 
