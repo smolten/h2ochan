@@ -997,7 +997,24 @@ function mod_bible_post_book(Context $ctx) {
   mod_bible_post_threads($ctx, false);
   mod_bible_post_replies($ctx, false);
 
-  $bookURI = isset($_POST['uri']) ? preg_replace('/[^a-zA-Z0-9]/', '', $_POST['uri']) : '';   
+  $bookURI = isset($_POST['uri']) ? preg_replace('/[^a-zA-Z0-9]/', '', $_POST['uri']) : '';
+
+  // Validate that both threads and replies were created
+  $threadCountQuery = prepare("SELECT COUNT(*) FROM ``posts_{$bookURI}`` WHERE verse = 0");
+  $threadCountQuery->execute();
+  $threadCount = $threadCountQuery->fetchColumn();
+
+  $replyCountQuery = prepare("SELECT COUNT(*) FROM ``posts_{$bookURI}`` WHERE verse > 0");
+  $replyCountQuery->execute();
+  $replyCount = $replyCountQuery->fetchColumn();
+
+  $statusMsg = "Posted book {$bookURI}: {$threadCount} threads, {$replyCount} replies";
+
+  if ($threadCount == 0 || $replyCount == 0) {
+    $statusMsg = '<span style="color: red;">ERROR: ' . $statusMsg . '</span>';
+  }
+
+  echo nl2br($statusMsg) . "<br/>";
 
   // CLEAR fast mode from config.....
   $config = $ctx->get('config');
