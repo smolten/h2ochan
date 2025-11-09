@@ -1384,7 +1384,6 @@ a.post_no.verse {
 
 /* Make verse 1 (chapter markers) stand out more */
 .thread.bible .post:has(.post_no.chapter) {
-    font-weight: bold;
     background-color: rgba(214, 218, 240, 0.3);
     padding: 0.5em 0.3em;
 }
